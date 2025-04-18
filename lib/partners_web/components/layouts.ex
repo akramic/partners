@@ -14,26 +14,6 @@ defmodule PartnersWeb.Layouts do
   def app(assigns) do
     ~H"""
     <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-        <%= if @current_scope do %>
-          <li>
-            {@current_scope.user.email}
-          </li>
-          <li>
-            <.link href={~p"/users/settings"}>Settings</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-          </li>
-        <% else %>
-          <li>
-            <.link href={~p"/users/register"}>Register</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-in"}>Log in</.link>
-          </li>
-        <% end %>
-      </ul>
       <div class="mx-auto max-w-2xl space-y-4">
         {render_slot(@inner_block)}
       </div>
