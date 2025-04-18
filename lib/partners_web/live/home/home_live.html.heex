@@ -57,7 +57,7 @@
         >
           <hgroup class="relative flex items-center justify-center py-10 text-center">
             <Typography.h3 class="text-white">
-              No scams, no fakes, no bots <br /> For serious Aussie singles only
+              The site for grown-ups <br /> Serious Aussie singles only
             </Typography.h3>
           </hgroup>
           <aside>
@@ -93,7 +93,7 @@
             </p>
           </button>
 
-          <.link href="#hero" aria-label="Learn more about our features">
+          <.link href="#hero" class="my-8" aria-label="Learn more about our features">
             <figure class="flex flex-col items-center justify-center">
               <Typography.p class="font-semibold text-white">Learn more</Typography.p>
               <.icon name="hero-chevron-down" class="text-white" />
@@ -103,6 +103,28 @@
       </div>
     </header>
   </section>
+
+  <Layout.hero_section id="testimonials">
+    <:header>
+      I'm OK, You're OK.
+    </:header>
+    <:content>
+      <Typography.p>
+        <%!-- Sure to be loved by you. <span class="text-3xl" aria-hidden="true">&#128149;</span> --%>
+        You're ready to meet someone special.
+      </Typography.p>
+      <Typography.p>
+        You've matured. You've had your fill of frivolous dates and are comfortable with commitment - with the right person, of-course.
+      </Typography.p>
+      <Typography.p>
+        You're in the right place. This is a site for grown-ups.
+      </Typography.p>
+      <Typography.h5>
+        This is for you.
+      </Typography.h5>
+    </:content>
+  </Layout.hero_section>
+  <div class="divider divider-neutral"></div>
 
   <Layout.section_container>
     <Layout.hero_section id="hero">
@@ -122,15 +144,15 @@
 
             <div class="mx-auto max-w-2xl px-4 pt-16 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:pt-32">
               <div class="lg:col-start-2">
-                <h2 id="safe-features-heading" class="font-medium">
+                <Typography.p class="font-medium ">
                   Our innovative approach is designed to filter out potential scammers, fakes, and bots.
-                </h2>
-                <p class="my-10 text-2xl font-bold tracking-tight">
+                </Typography.p>
+                <Typography.h4 class="my-10 font-bold">
                   🔒 How We Protect Aussie Singles
-                </p>
-                <p class="mt-4">
+                </Typography.h4>
+                <Typography.p class="mt-4">
                   We've obsessed over every detail and pain-point to develop a platform that filters out scammers and bots.
-                </p>
+                </Typography.p>
 
                 <dl
                   class="mt-10 grid grid-cols-1 gap-x-8 gap-y-10 text-sm sm:grid-cols-2"
@@ -139,26 +161,34 @@
                   <div>
                     <dt class="font-medium ">Live Video Profiles</dt>
                     <dd class="mt-2 ">
-                      All video profiles are recorded in-app so we see the <em>real</em>
-                      you. See real smiles, hear real voices. No more catfishing.
+                      <Typography.p class="font-extralight">
+                        All video profiles are recorded in-app so we see the <em>real</em>
+                        you. See real smiles, hear real voices. No more catfishing.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">Live Photo Checks</dt>
                     <dd class="mt-2 ">
-                      No uploaded pics. Snap your profile photo in-app. We make sure you're you.
+                      <Typography.p class="font-extralight">
+                        No uploaded pics. Snap your profile photo in-app. We make sure you're you.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">Verification by email and SMS</dt>
                     <dd class="mt-2 ">
-                      We verify all profiles by email and SMS to ensure you're a real person.
+                      <Typography.p class="font-extralight">
+                        We verify all profiles by email and SMS to ensure you're a real person.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
-                    <dt class="font-medium ">In-app blocking and reporting</dt>
+                    <dt class="font-medium ">No tolerance for bad behaviour</dt>
                     <dd class="mt-2 ">
-                      Connect with singles in your city or suburb. Search for your perfect match by location.
+                      <Typography.p class="font-extralight">
+                        We don't tolerate bad behaviour. Report any inappropriate behaviour and we will take action.
+                      </Typography.p>
                     </dd>
                   </div>
                 </dl>
@@ -168,16 +198,17 @@
         </article>
       </:content>
     </Layout.hero_section>
+    <div class="divider divider-neutral"></div>
 
     <Layout.section_quote
-      class="my-10 rounded-md shadow-2xl"
+      class="rounded-md"
       author="Maya Angelou"
       bio="American memoirist, poet, and civil rights activist"
       quote="Have enough courage to trust love one more time and always one more time."
       image_url="/images/couple.jpg"
       alt_text="passionate couple"
     />
-
+    <div class="divider divider-neutral"></div>
     <Layout.hero_section id="features">
       <:header>
         Unleash your &#128293;
@@ -195,15 +226,15 @@
 
             <div class="mx-auto max-w-2xl px-4 pt-16 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:pt-32">
               <div class="lg:col-start-2">
-                <h2 id="features-heading" class="font-medium ">
+                <Typography.p class="font-medium ">
                   Re-discover the unbridled joy of a new love.
-                </h2>
-                <p class="my-10 text-2xl font-bold tracking-tight ">
-                  We make it easy to create genuine connections with genuine people.
-                </p>
-                <p class="mt-4 ">
+                </Typography.p>
+                <Typography.h4 class="my-10 font-bold">
+                  Make genuine connections with genuine people.
+                </Typography.h4>
+                <Typography.p class="mt-4 ">
                   Wave good-bye to the endless swiping and say hello to real, authentic connections.
-                </p>
+                </Typography.p>
 
                 <dl
                   class="mt-10 grid grid-cols-1 gap-x-8 gap-y-10 text-sm sm:grid-cols-2"
@@ -211,38 +242,50 @@
                 >
                   <div>
                     <dt class="font-medium ">Live Video Chat</dt>
-                    <dd class="mt-2  ">
-                      Really get to know your match with video chat. See their engaging smile, hear their voice. No more catfishing.
+                    <dd class="mt-2">
+                      <Typography.p class="font-extralight">
+                        Really get to know your match with video chat. See their engaging smile, hear their voice. No more catfishing.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
-                    <dt class="font-medium ">Lounge Chat</dt>
+                    <dt class="font-medium ">Chat Lounge</dt>
                     <dd class="mt-2 ">
-                      Relax and meet new people in our Lounge Chat. No pressure, just good vibes.
+                      <Typography.p class="font-extralight">
+                        Relax and meet new people in our Lounge. No pressure, just good vibes.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">Live Private Chat</dt>
                     <dd class="mt-2 ">
-                      Connect with your match in private chat. Share your thoughts, dreams, and more. No interruptions. Arrange a video call when you're ready.
+                      <Typography.p class="font-extralight">
+                        Connect with your match in private chat. Share your thoughts, dreams, and more. No interruptions. Arrange a video call when you're ready.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">In-app Voice Messaging</dt>
                     <dd class="mt-2 ">
-                      See a profile you like? Send a voice message to introduce yourself.
+                      <Typography.p class="font-extralight">
+                        See a profile you like? Send a voice message to introduce yourself.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">Advanced Search</dt>
                     <dd class="mt-2 ">
-                      Connect with singles in your city or suburb. Search for your perfect match by location.
+                      <Typography.p class="font-extralight">
+                        Connect with singles in your city or suburb. Search for your perfect match by location.
+                      </Typography.p>
                     </dd>
                   </div>
                   <div>
                     <dt class="font-medium ">Personal Dashboard</dt>
                     <dd class="mt-2 t">
-                      Your personal dashboard keeps track of your matches, messages, and more.
+                      <Typography.p class="font-extralight">
+                        Your personal dashboard keeps track of your matches, messages, and more.
+                      </Typography.p>
                     </dd>
                   </div>
                 </dl>
@@ -252,7 +295,7 @@
         </article>
       </:content>
     </Layout.hero_section>
-
+    <div class="divider divider-neutral"></div>
     <Layout.hero_section id="testimonials">
       <:header>
         Loved by Singles Across Australia
@@ -262,8 +305,8 @@
           Sure to be loved by you. <span class="text-3xl" aria-hidden="true">&#128149;</span>
         </Typography.p>
         <section class="grid gap-8 md:grid-cols-2" aria-label="User testimonials">
-          <blockquote class="bg-accent-100 border-content-100 rounded p-6 shadow-md">
-            <Typography.p class="italic">
+          <blockquote class="bg-accent-100 border-content-100 rounded p-6 shadow-xl">
+            <Typography.p class="font-extralight ">
               Finally an app where I don't waste time on scammers!
             </Typography.p>
             <footer class="mt-4 flex justify-center gap-3">
@@ -271,8 +314,8 @@
               <cite class="font-semibold">Sarah, 32 - Bondi</cite>
             </footer>
           </blockquote>
-          <blockquote class="bg-accent-100 border-accent-400 rounded p-6 shadow-md">
-            <Typography.p class="italic">
+          <blockquote class="bg-accent-100 border-accent-400 rounded p-6 shadow-xl">
+            <Typography.p class="font-extralight ">
               Met my partner here - actual video profiles make all the difference
             </Typography.p>
             <footer class="mt-4 flex justify-center gap-3 ">
@@ -283,8 +326,8 @@
         </section>
       </:content>
     </Layout.hero_section>
-
-    <section id="pricing" class="pb-24 sm:pb-32" aria-labelledby="pricing-heading">
+    <div class="divider divider-neutral"></div>
+    <section id="pricing" class="fade pb-24 sm:pb-32" aria-labelledby="pricing-heading">
       <div class="py-24 sm:py-32">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <header class="mx-auto max-w-4xl text-center">
@@ -295,16 +338,13 @@
               Dive in and test the water
             </Typography.h2>
 
-            <article class="rounded-xl border bg-gradient-to-r from-slate-900 to-slate-600 p-6 shadow-lg">
+            <article class="rounded-xl border bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white">
               <Typography.p class="text-pretty text-center text-lg font-semibold sm:text-xl/8">
                 7-Day Free Trial
               </Typography.p>
               <Typography.p class="text-pretty text-center text-lg font-semibold  sm:text-xl/8">
                 No payment required
               </Typography.p>
-              <%!-- <Typography.h3 class="text-pretty font-semibold tracking-tight text-zinc-50 sm:text-balance ">
-              Start for free!
-            </Typography.h3> --%>
 
               <div>
                 <button
@@ -326,9 +366,10 @@
               <h3 class="text-3xl font-semibold tracking-tight ">
                 Simple affordable pricing
               </h3>
-              <p class="text-base/7 mt-6 ">
+
+              <Typography.p class="mt-6">
                 We believe in honest, transparent pricing. No hidden fees, no surprises.
-              </p>
+              </Typography.p>
               <div class="mt-10 flex items-center gap-x-4">
                 <h4 class="text-sm/6 flex-none font-semibold">
                   What's included
@@ -340,11 +381,10 @@
                 class="text-sm/6 mt-8 grid grid-cols-1 gap-4  sm:grid-cols-2 sm:gap-6"
                 aria-label="Features included in subscription"
               >
-                <li class="flex gap-x-3">
+                <li class="flex gap-x-3 items-center">
                   <svg
-                    class="h-6 w-5 flex-none"
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
                     viewBox="0 0 20 20"
-                    fill="currentColor"
                     aria-hidden="true"
                     data-slot="icon"
                   >
@@ -354,13 +394,14 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  Unlimited Private chat access
+                  <Typography.p>
+                    Unlimited Private chat access
+                  </Typography.p>
                 </li>
-                <li class="flex gap-x-3">
+                <li class="flex gap-x-3 items-center">
                   <svg
-                    class=" h-6 w-5 flex-none"
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
                     viewBox="0 0 20 20"
-                    fill="currentColor"
                     aria-hidden="true"
                     data-slot="icon"
                   >
@@ -370,13 +411,14 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  Unlimited Lounge chat access
+                  <Typography.p>
+                    Unlimited Lounge chat access
+                  </Typography.p>
                 </li>
-                <li class="flex gap-x-3">
+                <li class="flex gap-x-3 items-center">
                   <svg
-                    class="h-6 w-5 flex-none"
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
                     viewBox="0 0 20 20"
-                    fill="currentColor"
                     aria-hidden="true"
                     data-slot="icon"
                   >
@@ -386,13 +428,14 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  Unlimited Voice Messaging
+                  <Typography.p>
+                    Unlimited Voice Messaging
+                  </Typography.p>
                 </li>
-                <li class="flex gap-x-3">
+                <li class="flex gap-x-3 items-center">
                   <svg
-                    class=" h-6 w-5 flex-none"
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
                     viewBox="0 0 20 20"
-                    fill="currentColor"
                     aria-hidden="true"
                     data-slot="icon"
                   >
@@ -402,13 +445,14 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  Unlimited Search and Matches
+                  <Typography.p>
+                    Unlimited Search and Matches
+                  </Typography.p>
                 </li>
-                <li class="flex gap-x-3">
+                <li class="flex gap-x-3 items-center">
                   <svg
-                    class=" h-6 w-5 flex-none"
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
                     viewBox="0 0 20 20"
-                    fill="currentColor"
                     aria-hidden="true"
                     data-slot="icon"
                   >
@@ -418,8 +462,10 @@
                       clip-rule="evenodd"
                     />
                   </svg>
-                  1000 minutes of Videocalls.<br />
-                  You can always add more minutes if you need them.
+                  <Typography.p>
+                    1000 minutes of Videocalls.<br />
+                    You can always add more minutes if you need them.
+                  </Typography.p>
                 </li>
               </ul>
             </div>
@@ -462,8 +508,8 @@
       </div>
     </section>
     <div class="hidden" aria-hidden="true">
-      Dating app for Sydney, Melbourne, Brisbane singles. Verified Australian profiles only.
-      Safe dating with video verification. Meet real people in your city.
+      Dating for grown-ups. Find your soulmate in Sydney, Melbourne, Brisbane, Perth and countless other cities. Verified Australian profiles only.
+      Safe dating with video verification. Meet real people in your suburb.
     </div>
   </Layout.section_container>
 </PartnersWeb.Layouts.app>

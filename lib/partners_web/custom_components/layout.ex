@@ -44,8 +44,9 @@ defmodule PartnersWeb.CustomComponents.Layout do
 
   def section_container(assigns) do
     ~H"""
-    <main class="divide-y divide-gray-200" {@rest}>
+    <main class="" {@rest}>
       {render_slot(@inner_block)}
+
     </main>
     """
   end
@@ -61,12 +62,13 @@ defmodule PartnersWeb.CustomComponents.Layout do
 
   def hero_section(assigns) do
     ~H"""
-    <section class="py-24 sm:py-32" {@rest}>
+    <section class="fade py-24 sm:py-32" {@rest}>
       <div class="mx-auto max-w-7xl space-y-6 px-6 text-center sm:space-y-12 sm:px-8">
         <Typography.h1 class="text-pretty font-semibold tracking-tight sm:text-balance">
           {render_slot(@header)}
         </Typography.h1>
         {render_slot(@content)}
+
       </div>
     </section>
     """
@@ -88,7 +90,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
   def section_quote(assigns) do
     ~H"""
     <section
-      class={["isolate overflow-hidden px-6 py-16 sm:py-20 md:py-24 lg:px-8 lg:py-28", @class]}
+      class={["fade isolate overflow-hidden px-6 py-16 sm:py-20 md:py-24 lg:px-8 lg:py-28", @class]}
       {@rest}
     >
       <div class="relative mx-auto max-w-2xl lg:max-w-4xl">
@@ -126,6 +128,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
           </figcaption>
         </figure>
       </div>
+
     </section>
     """
   end

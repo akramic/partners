@@ -37,11 +37,7 @@ daisyUI theme plugin. You can update this file by fetching the latest version wi
 
 */
 
-/* @plugin "../vendor/daisyui"; */
-
-@plugin "../vendor/daisyui" {
-  themes: false;
-}
+@plugin "../vendor/daisyui";
 
 @plugin "../vendor/daisyui-theme" {
   name: "dark";
@@ -126,4 +122,20 @@ daisyUI theme plugin. You can update this file by fetching the latest version wi
 
 html {
   scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade {
+    scale: 0.6;
+    opacity: 0;
+    animation: fade-in linear forwards;
+    animation-timeline: view();
+    animation-range: entry;
+  }
+  @keyframes fade-in {
+    to {
+      scale: 1;
+      opacity: 1;
+    }
+  }
 }
