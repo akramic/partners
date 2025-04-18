@@ -20,7 +20,10 @@ defmodule PartnersWeb.Router do
   scope "/", PartnersWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", Home.HomeLive
+  
+
+    # get "/", PageController, :home
   end
 
   # Other scopes may use custom stacks.
