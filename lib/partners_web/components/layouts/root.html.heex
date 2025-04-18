@@ -29,6 +29,26 @@
   </head>
   <body class="flex flex-col min-h-screen">
     <main class="flex-grow">
+      <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
+        <%= if @current_scope do %>
+          <li>
+            {@current_scope.user.email}
+          </li>
+          <li>
+            <.link href={~p"/users/settings"}>Settings</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+          </li>
+        <% else %>
+          <li>
+            <.link href={~p"/users/register"}>Register</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-in"}>Log in</.link>
+          </li>
+        <% end %>
+      </ul>
       {@inner_content}
     </main>
 
@@ -140,10 +160,10 @@
           </svg>
         </a>
 
-        <p class="text-sm font-semibold opacity-70">
+        <p class="text-sm font-semibold opacity-60">
           Really Useful Software Pty Limited.
         </p>
-        <p class="text-sm opacity-60">
+        <p class="text-sm opacity-70">
           We're proudly Australian owned and operated.
         </p>
         <p class="text-xs opacity-60">

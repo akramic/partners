@@ -7,6 +7,19 @@
 # General application configuration
 import Config
 
+config :partners, :scopes,
+  user: [
+    default: true,
+    module: Partners.Accounts.Scope,
+    assign_key: :current_scope,
+    access_path: [:user, :id],
+    schema_key: :user_id,
+    schema_type: :binary_id,
+    schema_table: :users,
+    test_data_fixture: Partners.AccountsFixtures,
+    test_login_helper: :register_and_log_in_user
+  ]
+
 config :partners,
   ecto_repos: [Partners.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
