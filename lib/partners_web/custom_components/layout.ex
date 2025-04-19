@@ -46,7 +46,6 @@ defmodule PartnersWeb.CustomComponents.Layout do
     ~H"""
     <main class="" {@rest}>
       {render_slot(@inner_block)}
-
     </main>
     """
   end
@@ -68,7 +67,6 @@ defmodule PartnersWeb.CustomComponents.Layout do
           {render_slot(@header)}
         </Typography.h1>
         {render_slot(@content)}
-
       </div>
     </section>
     """
@@ -128,107 +126,173 @@ defmodule PartnersWeb.CustomComponents.Layout do
           </figcaption>
         </figure>
       </div>
-
     </section>
     """
   end
 
-  def footer(assigns) do
+  attr :flash, :map, default: %{}, doc: "the map of flash messages"
+  attr :current_scope, :map, default: %{}, doc: "the current scope of the user"
+
+  def site_header(assigns) do
     ~H"""
-    <footer
-      class="relative mt-auto border-t border-gray-300 text-gray-900"
-      role="contentinfo"
-      aria-label="Site footer"
-    >
-      <div class="mx-auto px-3 py-2 sm:px-4 sm:py-4">
-        <div class="flex flex-col items-center text-center">
-          <div class="flex items-center justify-center gap-2 ">
-            <h3 class="text-base font-semibold text-gray-900 sm:text-lg">
-              Loving Partners
-            </h3>
-            <span class="inline-block">
-              <.link href={~p"/"} aria-label="Loving Partners - Home">
-                <svg
-                  class="h-4 opacity-80 sm:h-5"
-                  version="1.1"
-                  viewBox="0 0 8 8"
-                  xmlns="http://www.w3.org/2000/svg"
-                  role="img"
-                  aria-labelledby="footer-logo-title"
-                >
-                  <title id="footer-logo-title">Loving Partners Heart Logo</title>
-                  >
-                  <g transform="translate(-105.77 -147.51)">
-                    <path
-                      d="m107.81 154.52c0.0364-0.0376 0.46798-0.25452 0.95911-0.48205 0.49113-0.22752 1.1104-0.5417 1.3761-0.69816 1.3322-0.78442 2.3456-1.8509 2.6369-2.7749 0.10423-0.33066 0.10402-0.377-3e-3 -0.7674-0.15175-0.55137-0.36756-0.86481-0.75037-1.0898-0.28133-0.16536-0.37686-0.1851-0.87792-0.18138-0.46173 3e-3 -0.67396 0.0437-1.1872 0.22514-0.69083 0.24424-0.61982 0.2484-1.5578-0.0913-0.79461-0.28776-1.2584-0.21097-1.7032 0.282-0.23108 0.25608-0.24805 0.30328-0.24805 0.68998 0 0.76052 0.59501 1.7369 1.4151 2.3221 0.24033 0.17149 0.43695 0.34207 0.43695 0.37906 0 0.21485-1.0165-0.43425-1.5302-0.9771-0.46842-0.49503-0.70962-0.96747-0.8217-1.6095-0.1225-0.70169-0.0288-1.063 0.392-1.5114 0.54435-0.58005 1.3903-0.65757 2.5632-0.23487 0.55818 0.20116 0.62088 0.19879 1.0906-0.0413 1.0627-0.54307 2.4147-0.3756 2.9425 0.36449 0.26496 0.37152 0.41261 1.0055 0.37709 1.619-0.0247 0.42673-0.0694 0.57579-0.31256 1.0432-0.65 1.2494-2.1513 2.4306-4.0932 3.2206-0.73475 0.29888-1.2242 0.43789-1.1038 0.31353z"
-                      fill="#fb3915"
-                      stroke="#fb3915"
-                      stroke-width=".26458"
-                    />
-                  </g>
-                </svg>
-              </.link>
-            </span>
-          </div>
-          <p class="mt-1 max-w-md text-sm leading-snug text-gray-700 sm:mt-2 sm:leading-normal">
-            Authentic smiles, mutual respect and genuine interactions.<br />
-            Get started today to make that meaningful connection.
-          </p>
-          <nav aria-label="Footer links" class="mt-2 sm:mt-4">
-            <ul class="flex gap-4 text-xs uppercase text-gray-800 sm:gap-8">
-              <li>
-                <.link
-                  href="#"
-                  class="[&:is(:hover,:focus)]:text-gray-900 [&:is(:hover,:focus)]:underline rounded-sm underline-offset-4 transition-colors duration-200 focus-visible:ring-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                  aria-label="About Loving Partners"
-                >
-                  About
-                </.link>
-              </li>
-              <li>
-                <.link
-                  href="#"
-                  class="[&:is(:hover,:focus)]:text-gray-900 [&:is(:hover,:focus)]:underline rounded-sm underline-offset-4 transition-colors duration-200 focus-visible:ring-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                  aria-label="Contact Loving Partners"
-                >
-                  Contact
-                </.link>
-              </li>
-              <li>
-                <.link
-                  href="#"
-                  class="[&:is(:hover,:focus)]:text-gray-900 [&:is(:hover,:focus)]:underline rounded-sm underline-offset-4 transition-colors duration-200 focus-visible:ring-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                  aria-label="Privacy Policy"
-                >
-                  Privacy
-                </.link>
-              </li>
-            </ul>
-          </nav>
+    <header class=" flex justify-between items-center px-4 w-full py-2 bg-transparent z-10">
+      <div>
+        <.link href={~p"/"}>
+          <img
+            src={~p"/images/heart.svg"}
+            alt="Logo"
+            class=" transition transform ease-in duration-300 hover:-rotate-360  h-6 w-6"
+          />
+        </.link>
+      </div>
+
+      <PartnersWeb.Layouts.theme_toggle />
+
+      <ul
+        class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
+        role="menu"
+        aria-label="User account navigation"
+      >
+        <%= if @current_scope do %>
+          <li>
+            <.link href={~p"/users/settings"}>Settings</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+          </li>
+        <% else %>
+          <li>
+            <.link href={~p"/users/register"}>Register</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-in"}>Log in</.link>
+          </li>
+        <% end %>
+      </ul>
+    </header>
+    """
+  end
+
+  def site_footer(assigns) do
+    ~H"""
+    <footer class="w-full max-w-[1980px] mx-auto border-t border-zinc-500/50 footer footer-horizontal footer-center bg-base-300 text-base-content p-4">
+      <p class="text-lg">Share and get 100 video call minutes on us!</p>
+      <nav class="w-full max-w-2xl p-4 rounded-full bg-base-100">
+        <div class="w-full max-w-lg flex justify-around items-center">
+          <a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="fill-current"
+            >
+              <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z">
+              </path>
+            </svg>
+          </a>
+          <a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="fill-current"
+            >
+              <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.901 1.153ZM17.61 20.644h2.039L6.486 3.24H4.298L17.61 20.644Z" />
+            </svg>
+          </a>
+          <a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="fill-current"
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12 0C5.373 0 0 5.373 0 12c0 2.027.503 3.938 1.386 5.613L.05 23.5l6.033-1.359c1.613.8 3.42 1.235 5.29 1.284h.467c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.6c-1.78 0-3.548-.48-5.08-1.394l-.365-.217-3.778.99 1.01-3.686-.239-.378c-1.007-1.602-1.537-3.448-1.538-5.338 0-5.52 4.48-10 10-10s10 4.48 10 10c0 5.52-4.48 10-10 10z" />
+            </svg>
+          </a>
+          <a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              class="fill-current"
+            >
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+            </svg>
+          </a>
+          <a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              class="fill-current"
+            >
+              <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
+            </svg>
+          </a>
         </div>
-      </div>
-      <div class="border-t border-gray-300 py-2 text-center sm:py-3">
-        <span class="mx-1 inline-block w-8 sm:mx-2 sm:w-8">
-          <svg
-            role="img"
-            aria-labelledby="opera-house-title opera-house-desc"
-            viewBox="0 0 122.88 46.23"
-          >
-            <title id="opera-house-title">Sydney Opera House</title>
-            <desc id="opera-house-desc">
-              Iconic silhouette of the Sydney Opera House, representing our Australian heritage
-            </desc>
-            <path
-              class="fill-primary-600"
-              d="M0,39.24h122.88v6.98H0V39.24L0,39.24z M37.21,36.86H20.95c-2.41-9.67-7.33-15.69-13.46-19.87 c1.52,2.78,2.72,16.77,3.4,19.85l-3.75,0.01C7,34.48,5.96,17.93,4.72,15.42c5.46,0.21,10.69,1.4,15.65,4.09 c-0.24-3.34-1.99-9.1-3.69-12.54c8.24,0.32,16.11,2.24,23.53,6.68l-5.66-13.6c16.77-0.73,31.34,7.9,42.4,20.13 c2.5,2.76,4.8,5.83,6.83,9.33c3.8-5.19,8.19-9.8,13.78-13.23c6.73-4.13,11.96-5.25,19.57-5.65l-0.07,0.05 c-2.15,7.08-2.11,16.86-1.01,26.19h-4.69c-0.19-9.82,0.14-19.34,3.03-24.18c-8.6,6.84-14.69,15.31-16.41,24.17l-25.65,0.02 C68.43,19.48,54.91,7.99,41.63,4.26l5.06,14.02c5.36,4.5,10.47,10.57,15.27,18.58H39.3c-3.36-13.48-10.22-21.88-18.76-27.7 c2.05,3.76,4.43,9.85,5.43,14.13C29.92,26.55,33.68,30.98,37.21,36.86L37.21,36.86z"
-            />
+      </nav>
+      <aside>
+        <a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1280 1016">
+            <g transform="translate(0,1016) scale(0.1,-0.1)" class="fill-yellow-500" stroke="none">
+              <path d="M11715 10153 c-230 -56 -396 -142 -525 -272 -100 -102 -134 -160
+                -158 -271 -21 -96 -62 -421 -62 -495 0 -42 -20 -75 -57 -94 -32 -17 -215 -41
+                -309 -41 l-80 0 -185 183 c-215 215 -349 329 -511 437 -190 126 -352 180 -456
+                151 -83 -23 -96 -59 -68 -191 36 -170 123 -332 364 -680 121 -176 173 -242
+                203 -262 l41 -27 -31 -15 c-37 -20 -38 -25 -45 -204 l-6 -143 -39 -47 c-106
+                -127 -165 -261 -190 -429 -16 -103 -14 -137 10 -188 72 -154 236 -236 542
+                -272 l68 -8 -176 -190 -177 -190 -151 -17 c-383 -44 -689 -121 -975 -247 -294
+                -128 -611 -365 -1136 -850 -184 -170 -291 -291 -396 -447 -253 -378 -412 -873
+                -475 -1477 -19 -183 -38 -635 -30 -698 l6 -45 -140 -169 c-90 -108 -141 -177
+                -141 -192 0 -54 -119 -252 -268 -447 -71 -92 -346 -358 -494 -477 -268 -215
+                -543 -360 -883 -464 -129 -40 -125 -39 -935 -100 -118 -8 -541 -40 -940 -70
+                -399 -30 -795 -60 -880 -66 -106 -8 -296 -36 -600 -90 -245 -43 -499 -87 -565
+                -99 -357 -62 -746 -132 -792 -141 -45 -9 -53 -14 -62 -41 -30 -85 -2 -168 80
+                -242 l54 -49 405 7 c439 7 1284 20 2410 36 393 6 979 15 1301 20 l586 9 224
+                80 c531 188 857 320 1161 471 254 127 366 216 1033 819 319 288 594 537 612
+                554 l31 29 92 -38 c51 -21 94 -45 96 -53 10 -33 66 -139 94 -177 23 -32 41
+                -44 87 -58 74 -23 169 -71 180 -90 5 -8 5 -73 1 -143 -3 -70 -12 -227 -18
+                -348 -24 -472 -70 -816 -132 -992 -19 -56 -20 -68 -10 -114 12 -50 59 -155 88
+                -193 15 -22 24 -23 514 -81 791 -92 1584 -157 2375 -194 519 -25 485 -25 550
+                -2 116 41 176 103 161 167 -9 37 -126 151 -189 184 -26 14 -47 27 -47 30 0 3
+                44 2 98 -3 53 -4 212 -8 352 -9 326 -2 426 14 546 85 39 23 54 39 54 58 0 47
+                -150 165 -305 241 -45 22 -57 23 -120 16 -99 -12 -241 -1 -375 29 -130 29
+                -213 57 -355 121 l-100 45 -195 8 c-107 4 -384 15 -615 24 -815 31 -795 30
+                -842 54 -49 24 -86 75 -104 141 -13 52 -7 266 17 540 40 468 108 828 209 1119
+                47 135 75 188 120 231 78 74 173 233 229 382 l24 62 0 -170 c0 -132 4 -190 20
+                -266 25 -122 81 -242 122 -263 56 -29 81 -18 97 45 9 35 10 35 22 12 20 -37
+                82 -102 112 -118 34 -17 71 -18 87 -2 16 16 15 60 0 77 -11 10 -5 19 26 44 22
+                18 53 43 69 57 l29 25 -15 76 -14 76 45 102 44 102 -91 267 -91 267 43 35
+                c221 181 450 470 695 879 79 131 80 133 96 110 29 -45 64 -154 81 -254 19
+                -112 23 -455 6 -513 -5 -18 -71 -129 -147 -248 l-137 -215 -93 -256 c-84 -231
+                -92 -259 -81 -282 15 -32 47 -38 82 -15 l27 17 -31 -48 c-38 -59 -41 -101 -8
+                -116 18 -8 36 -4 91 21 73 33 96 33 96 0 0 -25 -33 -92 -68 -139 -25 -33 -25
+                -34 -6 -48 14 -11 38 -14 90 -10 89 5 177 44 251 111 83 75 95 120 233 916
+                l119 685 21 475 c12 261 27 601 34 755 7 158 9 319 5 370 -29 345 -201 785
+                -504 1289 l-73 121 -72 355 -73 355 7 280 7 280 61 60 c166 164 285 442 379
+                885 31 144 36 225 23 336 l-6 51 -106 16 c-59 9 -118 18 -132 21 -14 2 -34 2
+                -45 -1z m-2480 -7440 c-3 -21 -16 -123 -30 -228 -44 -330 -90 -555 -118 -572
+                -14 -9 -1 542 16 662 8 55 18 108 22 119 8 18 77 55 103 56 8 0 11 -11 7 -37z" />
+            </g>
           </svg>
-        </span>
-        <p class="text-[10px] leading-tight text-gray-700 sm:text-xs sm:leading-normal">
-          &copy; 2024 - {DateTime.utc_now().year} Loving Partners. A Proudly Australian Business
-          <br class="sm:hidden" /> All rights reserved.
+        </a>
+
+        <p class="text-sm font-semibold opacity-60">
+          Really Useful Software Pty Limited.
         </p>
-      </div>
+        <p class="text-sm opacity-70">
+          We're proudly Australian owned and operated.
+        </p>
+        <p class="text-xs opacity-60">
+          Copyright © 2024 - {Date.utc_today().year} - All right reserved
+        </p>
+      </aside>
     </footer>
     """
   end

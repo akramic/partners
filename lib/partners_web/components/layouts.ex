@@ -11,9 +11,14 @@ defmodule PartnersWeb.Layouts do
 
   embed_templates "layouts/*"
 
+  @doc """
+  This is the main app layout. It is used for most pages in the application.
+  """
+
   def app(assigns) do
     ~H"""
     <main>
+      <PartnersWeb.CustomComponents.Layout.site_header />
       {render_slot(@inner_block)}
     </main>
     <.flash_group flash={@flash} />
@@ -75,15 +80,18 @@ defmodule PartnersWeb.Layouts do
       <div class="absolute w-[33%] h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-[33%] [[data-theme=dark]_&]:left-[66%] transition-[left]" />
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "system"})} class="flex p-2">
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon
+          name="hero-computer-desktop-micro"
+          class="size-5 opacity-75 hover:opacity-100 cursor-pointer"
+        />
       </button>
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "light"})} class="flex p-2">
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-sun-micro" class="size-5 opacity-75 hover:opacity-100 cursor-pointer" />
       </button>
 
       <button phx-click={JS.dispatch("phx:set-theme", detail: %{theme: "dark"})} class="flex p-2">
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name="hero-moon-micro" class="size-5 opacity-75 hover:opacity-100 cursor-pointer" />
       </button>
     </div>
     """
