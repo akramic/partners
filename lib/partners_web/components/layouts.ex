@@ -11,35 +11,12 @@ defmodule PartnersWeb.Layouts do
 
   embed_templates "layouts/*"
 
-  attr :current_scope, :map, default: nil, doc: "the current user scope"
-  attr :flash, :map, default: %{}, doc: "the map of flash messages"
-  slot :inner_block, doc: "the optional inner block that renders the content"
-
   def app(assigns) do
     ~H"""
     <main>
-      <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-        <%= if @current_scope do %>
-          <li>
-            {@current_scope.user.email}
-          </li>
-          <li>
-            <.link href={~p"/users/settings"}>Settings</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-          </li>
-        <% else %>
-          <li>
-            <.link href={~p"/users/register"}>Register</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-in"}>Log in</.link>
-          </li>
-        <% end %>
-      </ul>
       {render_slot(@inner_block)}
     </main>
+    <.flash_group flash={@flash} />
     """
   end
 
@@ -58,6 +35,7 @@ defmodule PartnersWeb.Layouts do
     <div id={@id} aria-live="polite">
       <.flash kind={:info} flash={@flash} />
       <.flash kind={:error} flash={@flash} />
+      <.flash kind={:success} flash={@flash} />
 
       <.flash
         id="client-error"
