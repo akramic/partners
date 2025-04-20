@@ -14,4 +14,28 @@ defmodule PartnersWeb.Home.HomeLive do
 
     {:ok, socket}
   end
+
+  @impl true
+  def handle_event("get_api_key", %{}, socket) do
+    # Handle the event to get the API key here
+    socket =
+      socket
+      |> push_event("get_api_key", %{
+        api_key: get_api_key()
+      })
+
+    {:noreply, socket}
+  end
+
+
+ @impl true
+  def handle_event("ip_registry_data", %{ "data" => data}, socket) do
+    IO.inspect(data)
+    {:noreply, socket}
+  end
+
+
+
+
+  defp get_api_key(), do: Application.get_env(:partners, :ip_registry_api_key)
 end

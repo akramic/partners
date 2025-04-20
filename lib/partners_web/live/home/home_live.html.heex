@@ -1,6 +1,7 @@
 <!-- Container for entire page with min-height to push footer down -->
 <PartnersWeb.Layouts.app flash={@flash} current_scope={@current_scope}>
-  <Layouts.flash_group flash={@flash} />
+
+  <span id={"IPRegistryHook"} phx-hook="IPRegistryHook"></span>
   <section
     class="relative mx-auto flex min-h-screen w-full flex-grow flex-col overflow-hidden"
     aria-labelledby="hero-title"

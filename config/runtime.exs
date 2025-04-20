@@ -117,3 +117,14 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+# Used for IP checking
+ip_registry_api_key =
+  System.get_env("IP_REGISTRY_API_KEY") ||
+    raise """
+    environment variable IP_REGISTRY_API_KEY is missing.
+    """
+
+config :partners, :ip_registry_api_key, ip_registry_api_key
+
+IO.inspect()
