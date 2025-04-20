@@ -36,6 +36,29 @@
             Re-ignite your passion for life
           </h1>
         </article>
+        <%!-- Feed --%>
+
+        <ul
+          id="feed"
+          phx-update="stream"
+          class="flex flex-col items-end h-30 w-full overflow-hidden"
+        >
+          <li
+            :for={{id, feed} <- @streams.feed}
+            class={[
+              "feed flex flex-col items-center justify-center p-4 rounded text-xs transition transform duration-1000 linear"
+            ]}
+            id={id}
+          >
+            <p class="text-[10px]">{feed.action}</p>
+            <p class="max-w-28 overflow-hidden text-ellipsis">{feed.username}</p>
+            <img src={feed.flag_url} class="h-9 w-18" />
+            <p>{feed.region_name}</p>
+            <p>{feed.time_zone}</p>
+          </li>
+        </ul>
+
+        <%!-- End Feed --%>
 
         <footer>
           <div>
@@ -94,36 +117,9 @@
         </footer>
       </div>
     </header>
-    <%!-- Feed --%>
-
-    <ul
-      id="feed"
-      phx-update="stream"
-      class=" bg-base-100/40 absolute p-4 bottom-0 mx-auto overflow-hidden w-full flex"
-    >
-      <li
-        :for={{id, feed} <- @streams.feed}
-        class={["new_stream_item flex w-full"]}
-        id={id}
-        phx-mounted={
-          JS.transition(
-            {
-              "ease-in duration-[1s]",
-              "-translate-x-100",
-              "translate-x-0"
-            },
-            time: 1000
-          )
-        }
-      >
-        <img src={feed.flag_url} class="h-12 w-24" />
-      </li>
-    </ul>
-
-    <%!-- End Feed --%>
   </section>
 
-  <Layout.section_container id="hero">
+  <Layout.section_container class="relative" id="hero">
     <Layout.hero_section>
       <:header>
         I'm OK. You're OK.

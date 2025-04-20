@@ -30,7 +30,7 @@ defmodule PartnersWeb.Home.HomeLive do
           username: "Anon",
           region_name: "Queensland",
           region_code_code: "AU-QLD",
-          time_zone: "Australian Eastern Standard Time",
+          time_zone: "AEST",
           flag_url: ~p"/images/flags/#{@flags["AU-QLD"]}",
           action: "Viewing",
           id: :os.system_time(:seconds) |> Integer.to_string()
@@ -71,7 +71,7 @@ defmodule PartnersWeb.Home.HomeLive do
 
     region_name = response["location"]["region"]["name"]
     region_code = response["location"]["region"]["code"]
-    time_zone = response["time_zone"]["name"]
+    time_zone = response["time_zone"]["abbreviation"]
     flag_url = @flags[region_code]
 
     maybe_send_admin_email(responseHeaders["ipregistry-credits-remaining"])
@@ -89,15 +89,15 @@ defmodule PartnersWeb.Home.HomeLive do
       |> stream_insert(
         :feed,
         %{
-          username: "Anon",
+          username: "Areallylongnameherethatgoesonforever",
           region_name: "Queensland",
           region_code_code: "AU-QLD",
-          time_zone: "Australian Eastern Standard Time",
+          time_zone: "AEST",
           flag_url: ~p"/images/flags/#{@flags["AU-QLD"]}",
-          action: "Viewing",
+          action: "Viewing Now",
           id: :os.system_time(:seconds) |> Integer.to_string()
         },
-        at: 1
+        at: 0
       )
 
     {:noreply, socket}
