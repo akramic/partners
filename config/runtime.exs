@@ -127,4 +127,4 @@ ip_registry_api_key =
 
 config :partners, :ip_registry_api_key, ip_registry_api_key
 
-IO.inspect()
+
