@@ -1,6 +1,5 @@
 <!-- Container for entire page with min-height to push footer down -->
 <PartnersWeb.Layouts.app flash={@flash} current_scope={@current_scope}>
-  <span id="IPRegistryHook" phx-hook="IPRegistryHook"></span>
   <section
     class="relative mx-auto flex min-h-screen w-full flex-grow flex-col overflow-hidden"
     aria-labelledby="hero-title"
@@ -40,21 +39,22 @@
 
         <ul
           id="feed"
+          phx-hook="IPRegistryHook"
           phx-update="stream"
           class="flex flex-col items-end h-30 w-full overflow-hidden"
         >
           <li
             :for={{id, feed} <- @streams.feed}
             class={[
-              "feed flex flex-col items-center justify-center p-4 rounded text-xs transition transform duration-1000 linear"
+              "feed mx-2 bg-gray-800/30 text-white flex flex-col items-center justify-center p-4 rounded text-xs transition transform duration-1000 linear"
             ]}
             id={id}
           >
             <p class="text-[10px]">{feed.action}</p>
             <p class="max-w-28 overflow-hidden text-ellipsis">{feed.username}</p>
-            <img src={feed.flag_url} class="h-9 w-18" />
-            <p>{feed.region_name}</p>
-            <p>{feed.time_zone}</p>
+            <img src={feed.flag_url} class="my-1 h-9 w-18" />
+            <p class="text-[10px]">{feed.region_name}</p>
+            <p class="text-[10px]">{feed.time_zone}</p>
           </li>
         </ul>
 

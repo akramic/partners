@@ -5,42 +5,72 @@ defmodule PartnersWeb.Home.HomeLive do
 
   @threshold 2000
 
-  # Region codes ISO 3166-2
-  @flags %{
-    "AU-NSW" => "New_South_Wales.svg",
-    "AU-QLD" => "Queensland.svg",
-    "AU-SA" => "South_Australia.svg",
-    "AU-TAS" => "Tasmania.svg",
-    "AU-VIC" => "Victoria.svg",
-    "AU-WA" => "Western_Australia.svg",
-    "AU-ACT" => "Australian_Capital_Territory.svg",
-    "AU-NT" => "Northern_Territory.svg"
+  # Region codes ISO 3166-2 with associated data
+  @australian_regions %{
+    "AU-NSW" => %{
+      flag: "New_South_Wales.svg",
+      name: "New South Wales",
+      # Australian Eastern Standard Time
+      time_zone: "AEST"
+    },
+    "AU-QLD" => %{
+      flag: "Queensland.svg",
+      name: "Queensland",
+      # Australian Eastern Standard Time
+      time_zone: "AEST"
+    },
+    "AU-SA" => %{
+      flag: "South_Australia.svg",
+      name: "South Australia",
+      # Australian Central Standard Time
+      time_zone: "ACST"
+    },
+    "AU-TAS" => %{
+      flag: "Tasmania.svg",
+      name: "Tasmania",
+      # Australian Eastern Standard Time
+      time_zone: "AEST"
+    },
+    "AU-VIC" => %{
+      flag: "Victoria.svg",
+      name: "Victoria",
+      # Australian Eastern Standard Time
+      time_zone: "AEST"
+    },
+    "AU-WA" => %{
+      flag: "Western_Australia.svg",
+      name: "Western Australia",
+      # Australian Western Standard Time
+      time_zone: "AWST"
+    },
+    "AU-ACT" => %{
+      flag: "Australian_Capital_Territory.svg",
+      name: "Australian Capital Territory",
+      # Australian Eastern Standard Time
+      time_zone: "AEST"
+    },
+    "AU-NT" => %{
+      flag: "Northern_Territory.svg",
+      name: "Northern Territory",
+      # Australian Central Standard Time
+      time_zone: "ACST"
+    }
   }
 
   @impl true
   def mount(_params, _session, socket) do
+    {:ok, timer_ref} = :timer.send_interval(8000, self(), :tick)
+
     socket =
       socket
       |> assign(page_title: "Home")
       |> assign_new(:current_scope, fn -> %{} end)
       |> stream(:feed, [])
-      |> stream_insert(
-        :feed,
-        %{
-          username: "Anon",
-          region_name: "Queensland",
-          region_code_code: "AU-QLD",
-          time_zone: "AEST",
-          flag_url: ~p"/images/flags/#{@flags["AU-QLD"]}",
-          action: "Viewing",
-          id: :os.system_time(:seconds) |> Integer.to_string()
-        },
-        at: 0
-      )
+      |> assign(timer_ref: timer_ref)
 
     # |> put_flash(:success, "Welcome to Phoenix LiveView!")
     if connected?(socket) do
-      PartnersWeb.Endpoint.subscribe("home")
+      PartnersWeb.Endpoint.subscribe("home_feed")
     end
 
     {:ok, socket}
@@ -66,13 +96,19 @@ defmodule PartnersWeb.Home.HomeLive do
         },
         socket
       ) do
-    IO.inspect(response, label: "IP Data")
-    IO.inspect(responseHeaders, label: "Response Headers")
-
     region_name = response["location"]["region"]["name"]
     region_code = response["location"]["region"]["code"]
     time_zone = response["time_zone"]["abbreviation"]
-    flag_url = @flags[region_code]
+
+    # Broadcast the new feed item to all connected clients
+    PartnersWeb.Endpoint.broadcast("home_feed", "new_feed_item", %{
+      username: "Anonymous",
+      region_name: region_name,
+      region_code_code: region_code,
+      time_zone: time_zone,
+      flag_url: ~p"/images/flags/#{@australian_regions[region_code][:flag]}",
+      action: "Viewing Now"
+    })
 
     maybe_send_admin_email(responseHeaders["ipregistry-credits-remaining"])
 
@@ -84,21 +120,19 @@ defmodule PartnersWeb.Home.HomeLive do
   def handle_event("ip_registry_data", %{"status" => "OK", "result" => result}, socket) do
     IO.inspect(result, label: "Response Data")
 
-    socket =
-      socket
-      |> stream_insert(
-        :feed,
-        %{
-          username: "Areallylongnameherethatgoesonforever",
-          region_name: "Queensland",
-          region_code_code: "AU-QLD",
-          time_zone: "AEST",
-          flag_url: ~p"/images/flags/#{@flags["AU-QLD"]}",
-          action: "Viewing Now",
-          id: :os.system_time(:seconds) |> Integer.to_string()
-        },
-        at: 0
-      )
+    region_name = result["location"]["region"]["name"]
+    region_code = result["location"]["region"]["code"]
+    time_zone = result["time_zone"]["abbreviation"]
+
+    # Broadcast the new feed item to all connected clients
+    PartnersWeb.Endpoint.broadcast("home_feed", "new_feed_item", %{
+      username: "Anonymous",
+      region_name: region_name,
+      region_code_code: region_code,
+      time_zone: time_zone,
+      flag_url: ~p"/images/flags/#{@australian_regions[region_code][:flag]}",
+      action: "Viewing Now"
+    })
 
     {:noreply, socket}
   end
@@ -108,6 +142,66 @@ defmodule PartnersWeb.Home.HomeLive do
     # Handle the error case here
     IO.inspect(error)
     {:noreply, socket}
+  end
+
+  # Handle broadcasted event from the server
+  # This is the event that is sent from the server when a new feed item is created
+  @impl true
+  def handle_info(
+        %{
+          topic: "home_feed",
+          event: "new_feed_item",
+          payload: payload
+        },
+        socket
+      ) do
+    socket =
+      socket
+      |> stream_insert(
+        :feed,
+        Map.merge(payload, %{
+          id: :os.system_time(:seconds) |> Integer.to_string()
+        }),
+        at: 0
+      )
+
+    {:noreply, socket}
+  end
+
+  # Handle the tick event from the timer
+  # This is the event that is sent from the server every 8 seconds
+  # to generate a random feed item
+  @impl true
+  def handle_info(:tick, socket) do
+    # Let's assign random feed data to the socket
+    {region_code, %{name: region_name, flag: flag_svg_name, time_zone: time_zone}} =
+      random_region()
+
+    socket =
+      socket
+      |> stream_insert(
+        :feed,
+        %{
+          username: "Anon",
+          region_name: region_name,
+          region_code_code: region_code,
+          time_zone: time_zone,
+          flag_url: ~p"/images/flags/#{flag_svg_name}",
+          action: "Viewing",
+          id: :os.system_time(:seconds) |> Integer.to_string()
+        },
+        at: 0
+      )
+
+    {:noreply, socket}
+  end
+
+  @impl true
+
+  def terminate({:shutdown, reason}, socket) when reason in [:closed, :left] do
+    # Unsubscribe from the topic when the socket is closed
+    :timer.cancel(socket.assigns.timer_ref)
+    {:stop, :normal, socket}
   end
 
   defp get_api_key(), do: Application.get_env(:partners, :ip_registry_api_key)
@@ -122,8 +216,14 @@ defmodule PartnersWeb.Home.HomeLive do
       IO.puts("Credits remaining #{amount}. No need to send email")
     end
   end
+
+  defp random_region() do
+    # Generate a random region code from the @flags map
+    Enum.random(@australian_regions)
+  end
 end
 
+# Example of the response data from the IP registry API
 # Response Data: %{
 #   "carrier" => %{"mcc" => nil, "mnc" => nil, "name" => nil},
 #   "company" => %{

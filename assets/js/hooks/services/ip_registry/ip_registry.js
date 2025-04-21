@@ -142,9 +142,7 @@ https://ipregistry.co/docs/endpoints#origin-ip
 
 */
 
-
-
 const base_url = "https://api.ipregistry.co/?key=";
 
 // Create a partially applied function that returns a function requiring the api key for ipregistry api call
-export const buildURL = (key) => `${base_url}${key}`
+export const buildURL = (key) => `${base_url}${key}`;
