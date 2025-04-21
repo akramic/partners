@@ -8,6 +8,7 @@ defmodule PartnersWeb.Layouts do
   in regular views and live views.
   """
   use PartnersWeb, :html
+  alias PartnersWeb.CustomComponents
 
   embed_templates "layouts/*"
 
@@ -18,7 +19,7 @@ defmodule PartnersWeb.Layouts do
   def app(assigns) do
     ~H"""
     <main>
-      <PartnersWeb.CustomComponents.Layout.site_header />
+      <PartnersWeb.CustomComponents.Layout.site_header current_scope={@current_scope}/>
       {render_slot(@inner_block)}
     </main>
     <.flash_group flash={@flash} />

@@ -20,9 +20,6 @@ defmodule PartnersWeb.Router do
   scope "/", PartnersWeb do
     pipe_through :browser
 
-    live "/", Home.HomeLive
-  
-
     # get "/", PageController, :home
   end
 
@@ -67,6 +64,7 @@ defmodule PartnersWeb.Router do
 
     live_session :current_user,
       on_mount: [{PartnersWeb.UserAuth, :mount_current_scope}] do
+      live "/", Home.HomeLive
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
