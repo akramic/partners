@@ -132,69 +132,98 @@ defmodule PartnersWeb.CustomComponents.Layout do
 
   def site_header(assigns) do
     ~H"""
-    <header class=" flex justify-between items-center px-4 w-full py-2 bg-transparent z-10">
-      <div>
-        <.link href={~p"/"}>
-          <img
-            src={~p"/images/heart.svg"}
-            alt="Logo"
-            class=" transition transform ease-in duration-300 hover:-rotate-360  h-6 w-6"
-          />
-        </.link>
-      </div>
+    <div>
+      <header class=" flex justify-between items-center px-4 w-full py-2 bg-transparent z-10">
+        <div>
+          <.link href={~p"/"}>
+            <img
+              src={~p"/images/heart.svg"}
+              alt="Logo"
+              class=" transition transform ease-in duration-300 hover:-rotate-360  h-6 w-6"
+            />
+          </.link>
+        </div>
 
-      <PartnersWeb.Layouts.theme_toggle />
+        <PartnersWeb.Layouts.theme_toggle />
 
-      <ul
-        class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
-        role="menu"
-        aria-label="User account navigation"
-      >
-        <%= if @current_scope do %>
-          <li>
-            <.link href={~p"/users/settings"}>Settings</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-          </li>
-        <% else %>
-          <li>
-            <.link href={~p"/users/register"}>Register</.link>
-          </li>
-          <li>
-            <.link href={~p"/users/log-in"}>Log in</.link>
-          </li>
-        <% end %>
-      </ul>
-      <nav>
-      <label class="btn btn-circle swap swap-rotate">
-        <!-- this hidden checkbox controls the state -->
-        <input type="checkbox" />
+        <ul
+          class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
+          role="menu"
+          aria-label="User account navigation"
+        >
+          <%= if @current_scope do %>
+            <li>
+              <.link href={~p"/users/settings"}>Settings</.link>
+            </li>
+            <li>
+              <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+            </li>
+          <% else %>
+            <li>
+              <.link href={~p"/users/register"}>Register</.link>
+            </li>
+            <li>
+              <.link href={~p"/users/log-in"}>Log in</.link>
+            </li>
+          <% end %>
+        </ul>
+        <nav>
+          <label
+            phx-click={
+              JS.toggle(
+                to: "#backdrop",
+                in: {"ease-in-out duration-250", "-translate-x-full", "translate-x-0"},
+                out: {"ease-in-out duration-250", "translate-x-0", "-translate-x-full"},
+                time: 250
+              )
+            }
+            class="z-20 btn btn-circle swap swap-rotate"
+          >
+            <!-- this hidden checkbox controls the state -->
+            <input type="checkbox" />
 
     <!-- hamburger icon -->
-        <svg
-          class="swap-off fill-current"
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 512 512"
-        >
-          <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
-        </svg>
+            <svg
+              class="swap-off fill-current"
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 512 512"
+            >
+              <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
+            </svg>
 
     <!-- close icon -->
-        <svg
-          class="swap-on fill-current"
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 512 512"
-        >
-          <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
-        </svg>
-      </label>
-      </nav>
-    </header>
+            <svg
+              class="swap-on fill-current"
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 512 512"
+            >
+              <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
+            </svg>
+          </label>
+        </nav>
+      </header>
+
+      <%!-- This is the overlay --%>
+      <div id="backdrop" class="h-dvh w-screen absolute z-8 top-0 hidden bg-base-100/70">
+        <%!-- This is the element for both the menu and the backdrop --%>
+        <div class="flex h-full w-full justify-start">
+          <%!-- Menu sidebar --%>
+          <div class="p-4 md-p-8 min-w-1/2 bg-base-200 h-full flex flex-col">
+            <nav class="">
+              <h1>Menu</h1>
+            </nav>
+          </div>
+
+          <div class="flex h-full w-full  justify-center items-center">
+            <div class="bg-base-200 p-4 rounded-xl">Choose your poison</div>
+          </div>
+        </div>
+      </div>
+    </div>
     """
   end
 
