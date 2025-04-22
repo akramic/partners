@@ -42,11 +42,18 @@ defmodule PartnersWeb.CoreComponents do
   attr :id, :string, doc: "the optional id of flash container"
   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
   attr :title, :string, default: nil
-  attr :kind, :atom, values: [:info, :error, :success], doc: "used for styling and flash lookup"
+
+  attr :kind, :atom,
+    values: [:info, :error, :success, :warning],
+    doc: "used for styling and flash lookup"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
 
   slot :inner_block, doc: "the optional inner block that renders the flash message"
 
+  # NOTE: The AutoClearFlash hook is used to automatically clear the flash message and is only assigned if
+  # the kind is :info or :success. This means the user has to physically clear error and warning messages.
+  # The div also has a phx-remove attributre for transitions for when the flash element is removed from the DOM.
   def flash(assigns) do
     assigns = assign_new(assigns, :id, fn -> "flash-#{assigns.kind}" end)
 
@@ -55,17 +62,25 @@ defmodule PartnersWeb.CoreComponents do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+      phx-hook={if @kind in [:info, :success], do: "AutoClearFlash", else: nil}
       role="alert"
       class="toast toast-top toast-end z-50"
+      phx-remove={
+        JS.hide(
+          transition: {"transition-all transform ease-in duration-200", "opacity-100", "opacity-0"}
+        )
+      }
       {@rest}
     >
       <div class={[
         "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
         @kind == :info && "alert-info",
+        @kind == :warning && "alert-warning",
         @kind == :error && "alert-error",
         @kind == :success && "alert-success"
       ]}>
         <.icon :if={@kind == :info} name="hero-information-circle-mini" class="size-5 shrink-0" />
+        <.icon :if={@kind == :warning} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
         <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
         <.icon :if={@kind == :success} name="hero-check-circle-mini" class="size-5 shrink-0" />
         <div>

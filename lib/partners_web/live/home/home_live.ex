@@ -67,7 +67,7 @@ defmodule PartnersWeb.Home.HomeLive do
       |> assign_new(:current_scope, fn -> %{} end)
       |> stream(:feed, [])
       |> assign(timer_ref: timer_ref)
-      # |> put_flash(:success, "Welcome to Phoenix LiveView!")
+      # |> put_flash(:info, "Welcome to Phoenix LiveView!")
 
     if connected?(socket) do
       PartnersWeb.Endpoint.subscribe("home_feed")

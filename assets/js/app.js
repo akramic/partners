@@ -27,6 +27,21 @@ import topbar from "../vendor/topbar";
 // Import custom hooks
 import Hooks from "./hooks/hooks.js";
 
+// Hook to clear flash messages after a delay - also see the core-component module for changes to flash. We exclude error and warning messages by default
+Hooks.AutoClearFlash = {
+  mounted() {
+    // This hook is used to automatically clear flash messages after a delay.
+    const delay = 3000; // Delay in milliseconds
+    console.log(this.el.classList);
+    const ignoredIDs = ["client-error", "server-error"];
+    if (ignoredIDs.includes(this.el.id)) return;
+
+    setTimeout(() => {
+      this.pushEvent("lv:clear-flash");
+    }, delay);
+  },
+};
+
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");

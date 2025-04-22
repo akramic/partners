@@ -168,21 +168,28 @@ defmodule PartnersWeb.CustomComponents.Layout do
           <% end %>
         </ul>
         <nav>
-          <label
+          <button
+            type="button"
             phx-click={
-              JS.toggle(
+              %JS{}
+              |> JS.toggle(
                 to: "#backdrop",
-                in: {"ease-in-out duration-250", "-translate-x-full", "translate-x-0"},
-                out: {"ease-in-out duration-250", "translate-x-0", "-translate-x-full"},
-                time: 250
+                in: {"transform transition ease-in-out duration-200", "opacity-0", "opacity-70"},
+                out: {"transform transition ease-in-out duration-200", "opacity-70", "opacity-0"},
+                time: 200
+              )
+              |> JS.toggle(
+                to: "#side-bar",
+                in:
+                  {"transform transition ease-in-out duration-400 delay-100", "-translate-x-full",
+                   "translate-x-0"},
+                out:
+                  {"transform transition ease-in-out duration-400", "translate-x-0",
+                   "-translate-x-full"},
+                time: 400
               )
             }
-            class="z-20 btn btn-circle swap swap-rotate"
           >
-            <!-- this hidden checkbox controls the state -->
-            <input type="checkbox" />
-
-    <!-- hamburger icon -->
             <svg
               class="swap-off fill-current"
               xmlns="http://www.w3.org/2000/svg"
@@ -192,34 +199,29 @@ defmodule PartnersWeb.CustomComponents.Layout do
             >
               <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
             </svg>
-
-    <!-- close icon -->
-            <svg
-              class="swap-on fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
-              viewBox="0 0 512 512"
-            >
-              <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
-            </svg>
-          </label>
+          </button>
         </nav>
       </header>
 
       <%!-- This is the overlay --%>
-      <div id="backdrop" class="h-dvh w-screen absolute z-8 top-0 hidden bg-base-100/70">
+      <div
+        id="backdrop"
+        class="backdrop-blur-[2px] h-dvh w-full max-w-[1980px] mx-auto z-10 absolute hidden bg-base-100/70"
+      >
         <%!-- This is the element for both the menu and the backdrop --%>
-        <div class="flex h-full w-full justify-start">
+        <div class="flex flex-row h-full w-full justify-start">
           <%!-- Menu sidebar --%>
-          <div class="p-4 md-p-8 min-w-1/2 bg-base-200 h-full flex flex-col">
+          <div
+            id="side-bar"
+            class="-translate-x-full w-full p-4 md-p-8 basis-2/3 bg-base-100 h-full flex flex-col"
+          >
             <nav class="">
               <h1>Menu</h1>
             </nav>
           </div>
 
-          <div class="flex h-full w-full  justify-center items-center">
-            <div class="bg-base-200 p-4 rounded-xl">Choose your poison</div>
+          <div class="flex h-full w-full basis-1/3 justify-center items-center">
+            <div class="bg-base-200 invisible md:visible p-4 rounded-xl">Choose your poison</div>
           </div>
         </div>
       </div>
