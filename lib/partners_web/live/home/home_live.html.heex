@@ -20,6 +20,7 @@
       muted
       video_type="video/mp4"
       aria-label="Background video of fire igniting, symbolising the re-ignition of passion in life"
+      role="presentation"
     />
     <!-- Overlay for better text visibility -->
     <header class="bg-black/5 absolute inset-0 flex items-end ">
@@ -42,6 +43,7 @@
           phx-hook="IPRegistryHook"
           phx-update="stream"
           class="flex flex-col items-end h-30 w-full overflow-hidden"
+          aria-label="Recent user activity feed"
         >
           <li
             :for={{id, feed} <- @streams.feed}
@@ -140,7 +142,7 @@
         </Typography.h5>
       </:content>
     </Layout.hero_section>
-    <div class="divider divider-neutral"></div>
+    <div class="divider divider-neutral" role="separator"></div>
     <Layout.hero_section>
       <:header>
         Safe and Secure
@@ -212,7 +214,7 @@
         </article>
       </:content>
     </Layout.hero_section>
-    <div class="divider divider-neutral"></div>
+    <div class="divider divider-neutral" role="separator"></div>
 
     <Layout.section_quote
       class="rounded-md"
@@ -222,7 +224,7 @@
       image_url="/images/couple.jpg"
       alt_text="passionate couple"
     />
-    <div class="divider divider-neutral"></div>
+    <div class="divider divider-neutral" role="separator"></div>
     <Layout.hero_section id="features">
       <:header>
         Unleash your &#128293;
@@ -309,7 +311,7 @@
         </article>
       </:content>
     </Layout.hero_section>
-    <div class="divider divider-neutral"></div>
+    <div class="divider divider-neutral" role="separator"></div>
     <Layout.hero_section id="testimonials">
       <:header>
         Loved by Singles Across Australia
@@ -340,7 +342,7 @@
         </section>
       </:content>
     </Layout.hero_section>
-    <div class="divider divider-neutral"></div>
+    <div class="divider divider-neutral" role="separator"></div>
     <section id="pricing" class="fade pb-24 sm:pb-32" aria-labelledby="pricing-heading">
       <div class="py-24 sm:py-32">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
@@ -486,7 +488,11 @@
             <aside class="-mt-2 p-2 lg:mt-0 lg:w-full lg:max-w-md lg:shrink-0">
               <div class="ring-gray-900/5 relative overflow-hidden rounded-2xl border border-zinc-500  py-10 text-center ring-1 ring-inset lg:flex lg:flex-col lg:justify-center lg:py-16">
                 <!-- Launch Offer Ribbon -->
-                <div class="h-[250px] w-[375px] absolute top-0 -right-10 overflow-hidden opacity-90">
+                <div
+                  class="h-[250px] w-[375px] absolute top-0 -right-10 overflow-hidden opacity-90"
+                  role="complementary"
+                  aria-label="Special launch offer"
+                >
                   <div class="top-[20px] right-[-90px] w-[375px] absolute rotate-45 bg-gradient-to-r from-amber-200 to-amber-600 py-2 text-center shadow-md">
                     <p class="text-xl font-bold uppercase tracking-wide ">
                       <span style="font-size:30px;">&#127880;</span> Special <br />Launch Offer!

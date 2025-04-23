@@ -67,13 +67,20 @@ defmodule PartnersWeb.Home.HomeLive do
       |> assign_new(:current_scope, fn -> %{} end)
       |> stream(:feed, [])
       |> assign(timer_ref: timer_ref)
-      # |> put_flash(:info, "Welcome to Phoenix LiveView!")
+      # |> put_flash(:warning, "Welcome to Phoenix LiveView!")
 
     if connected?(socket) do
       PartnersWeb.Endpoint.subscribe("home_feed")
     end
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_params(_params, _url, socket) do
+    # Handle the params here if needed
+    IO.inspect("PARAMS CALLED ************************************")
+    {:noreply, socket}
   end
 
   # Handle the event from client to get the IP registry api_key
