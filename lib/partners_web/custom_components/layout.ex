@@ -189,7 +189,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
           >
             <!-- this hidden checkbox controls the state -->
             <input type="checkbox" aria-hidden="true" />
-            
+
     <!-- hamburger icon -->
             <svg
               class="swap-off fill-current"
@@ -202,7 +202,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
             >
               <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
             </svg>
-            
+
     <!-- close icon -->
             <svg
               class="swap-on fill-current"
@@ -238,12 +238,61 @@ defmodule PartnersWeb.CustomComponents.Layout do
             role="navigation"
             aria-labelledby="menu-heading"
           >
-            <nav class="" aria-label="Main navigation">
-              <h2 id="menu-heading" tabindex="-1">Menu</h2>
-              <%!-- Menu items would typically be here --%>
-              <ul role="menu">
-                <%!-- Add menu items with role="menuitem" if they exist --%>
-              </ul>
+            <nav
+              class="space-y-6 flex flex-col items-center justify-between h-full w-full"
+              aria-label="Main navigation "
+            >
+              <div class="space-y-6 w-full">
+                <h2 class="text-center" id="menu-heading" tabindex="-1">Where to?</h2>
+                <%!-- Add menu items with role="menuitem"  --%>
+
+                <ul class="menu bg-base-200 rounded-box w-full" role="menu">
+                  <li role="menuitem">
+                    <.menu_item hero_icon_name="hero-home" menu_label="Home" />
+                  </li>
+                  <li role="menuitem">
+                    <a class="flex justify-between items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Item 1
+                    </a>
+                  </li>
+                  <li role="menuitem">
+                    <a class="flex justify-between items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                      </svg>
+                      Item 3
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <footer>
+                <.company_logo />
+              </footer>
             </nav>
           </aside>
 
@@ -258,6 +307,25 @@ defmodule PartnersWeb.CustomComponents.Layout do
         </section>
       </dialog>
     </header>
+    """
+  end
+
+  @doc """
+  A menu item component for the sidebar menu.
+  """
+  attr :menu_label, :string, required: true, doc: "the label for the menu item"
+  attr :hero_icon_name, :string, required: true, doc: "the name of the hero icon to use"
+
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
+
+  def menu_item(assigns) do
+    ~H"""
+    <li role="menuitem">
+      <.link class="flex justify-between items-center">
+        <.icon name={@hero_icon_name} class="h-6 w-6" />
+        {@menu_label}
+      </.link>
+    </li>
     """
   end
 
@@ -337,10 +405,27 @@ defmodule PartnersWeb.CustomComponents.Layout do
       </nav>
       <aside>
         <%!-- Company logo of kangaroo --%>
+        <.company_logo />
 
-        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1280 1016">
-          <g transform="translate(0,1016) scale(0.1,-0.1)" class="fill-yellow-500" stroke="none">
-            <path d="M11715 10153 c-230 -56 -396 -142 -525 -272 -100 -102 -134 -160
+        <p class="text-sm font-semibold opacity-60">
+          Really Useful Software Pty Limited.
+        </p>
+        <p class="text-sm opacity-70">
+          We're proudly Australian owned and operated.
+        </p>
+        <p class="text-xs opacity-60">
+          Copyright © 2024 - {Date.utc_today().year} - All right reserved
+        </p>
+      </aside>
+    </footer>
+    """
+  end
+
+  def company_logo(assigns) do
+    ~H"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1280 1016">
+      <g transform="translate(0,1016) scale(0.1,-0.1)" class="fill-yellow-500" stroke="none">
+        <path d="M11715 10153 c-230 -56 -396 -142 -525 -272 -100 -102 -134 -160
                 -158 -271 -21 -96 -62 -421 -62 -495 0 -42 -20 -75 -57 -94 -32 -17 -215 -41
                 -309 -41 l-80 0 -185 183 c-215 215 -349 329 -511 437 -190 126 -352 180 -456
                 151 -83 -23 -96 -59 -68 -191 36 -170 123 -332 364 -680 121 -176 173 -242
@@ -378,20 +463,8 @@ defmodule PartnersWeb.CustomComponents.Layout do
                 885 31 144 36 225 23 336 l-6 51 -106 16 c-59 9 -118 18 -132 21 -14 2 -34 2
                 -45 -1z m-2480 -7440 c-3 -21 -16 -123 -30 -228 -44 -330 -90 -555 -118 -572
                 -14 -9 -1 542 16 662 8 55 18 108 22 119 8 18 77 55 103 56 8 0 11 -11 7 -37z" />
-          </g>
-        </svg>
-
-        <p class="text-sm font-semibold opacity-60">
-          Really Useful Software Pty Limited.
-        </p>
-        <p class="text-sm opacity-70">
-          We're proudly Australian owned and operated.
-        </p>
-        <p class="text-xs opacity-60">
-          Copyright © 2024 - {Date.utc_today().year} - All right reserved
-        </p>
-      </aside>
-    </footer>
+      </g>
+    </svg>
     """
   end
 end
