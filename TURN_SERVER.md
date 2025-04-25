@@ -344,73 +344,70 @@ Follow these steps to manually renew your TLS certificates:
 
 These manual steps are useful if you need to troubleshoot certificate issues or if you prefer to have more control over the certificate issuance and renewal process.
 
-### Example yml file for configuration
+### Example working yml file for configuration
 
 # eturnal STUN/TURN server configuration file.
-
 #
-
 # This file is written in YAML. The YAML format is indentation-sensitive, please
-
 # MAKE SURE YOU INDENT CORRECTLY.
-
 #
-
 # See: https://eturnal.net/doc/#Global_Configuration
 
 eturnal:
 
-## Shared secret for deriving temporary TURN credentials (default: $RANDOM):
+  ## Shared secret for deriving temporary TURN credentials (default: $RANDOM):
+  secret: "mylongsecret"
 
-secret: "makethisaverylongone"
+  ## The server's public IPv4 address (default: autodetected):
+  relay_ipv4_addr: "103.16.128.115"
+  ## The server's public IPv6 address (optional):
+  #relay_ipv6_addr: "2001:db8::4"
 
-## The server's public IPv4 address (default: autodetected):
+  listen:
+    -
+      ip: "::"
+      port: 3478
+      transport: udp
+      enable_turn: true
+    -
+      ip: "::"
+      port: 3478
+      transport: tcp
+      enable_turn: true
+    -
+      ip: "::"
+      port: 5349
+      transport: tls
+      enable_turn: true
 
-#relay_ipv4_addr: "203.0.113.4"
+  ## TLS certificate/key files (must be readable by 'eturnal' user!):
+  tls_crt_file: /etc/eturnal/tls/cert.pem
+  tls_key_file: /etc/eturnal/tls/key.pem
 
-## The server's public IPv6 address (optional):
+  ## UDP relay port range (usually, several ports per A/V call are required):
+  relay_min_port: 49152     # This is the default.
+  relay_max_port: 65535     # This is the default.
 
-#relay_ipv6_addr: "2001:db8::4"
+  ## Reject TURN relaying to the following addresses/networks:
+  blacklist_peers:
+    - recommended           # Expands to various addresses/networks recommended
+                            # to be blocked. This is the default.
 
-listen: -
-ip: "::"
-port: 3478
-transport: udp -
-ip: "::"
-port: 3478
-transport: tcp -
-ip: "::"
-port: 5349
-transport: tls
+  ## If 'true', close established calls on expiry of temporary TURN credentials:
+  strict_expiry: true      # This is the default.
 
-## TLS certificate/key files (must be readable by 'eturnal' user!):
+  ## Logging configuration:
+  log_level: info           # critical | error | warning | notice | info | debug
+  log_rotate_size: 10485760 # 10 MiB (default: unlimited, i.e., no rotation).
+  log_rotate_count: 10      # Keep 10 rotated log files.
+  #log_dir: stdout          # Enable for logging to the terminal/journal.
 
-tls_crt_file: /etc/eturnal/tls/cert.pem
-tls_key_file: /etc/eturnal/tls/key.pem
-
-## UDP relay port range (usually, several ports per A/V call are required):
-
-relay_min_port: 49152 # This is the default.
-relay_max_port: 65535 # This is the default.
-
-## Reject TURN relaying to the following addresses/networks:
-
-blacklist_peers: - recommended # Expands to various addresses/networks recommended # to be blocked. This is the default.
-
-## If 'true', close established calls on expiry of temporary TURN credentials:
-
-strict_expiry: false # This is the default.
-
-## Logging configuration:
-
-log_level: info # critical | error | warning | notice | info | debug
-log_rotate_size: 10485760 # 10 MiB (default: unlimited, i.e., no rotation).
-log_rotate_count: 10 # Keep 10 rotated log files.
-#log_dir: stdout # Enable for logging to the terminal/journal.
-
-## See: https://eturnal.net/doc/#Module_Configuration
-
-modules:
-mod_log_stun: {} # Log STUN queries (in addition to TURN sessions).
-#mod_stats_influx: {} # Log STUN/TURN events into InfluxDB.
-#mod_stats_prometheus: # Expose STUN/TURN and VM metrics to Prometheus. # ip: any # This is the default: Listen on all interfaces. # port: 8081 # This is the default. # tls: false # This is the default. # vm_metrics: true # This is the default.
+  ## See: https://eturnal.net/doc/#Module_Configuration
+  modules:
+    mod_log_stun: {}        # Log STUN queries (in addition to TURN sessions).
+    #mod_stats_influx: {}   # Log STUN/TURN events into InfluxDB.
+    #mod_stats_prometheus:  # Expose STUN/TURN and VM metrics to Prometheus.
+    #  ip: any              # This is the default: Listen on all interfaces.
+    #  port: 8081           # This is the default.
+    #  tls: false           # This is the default.
+    #  vm_metrics: true     # This is the default.
