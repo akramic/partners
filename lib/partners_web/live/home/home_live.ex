@@ -79,7 +79,6 @@ defmodule PartnersWeb.Home.HomeLive do
   @impl true
   def handle_params(_params, _url, socket) do
     # Handle the params here if needed
-    IO.inspect("PARAMS CALLED ************************************")
     {:noreply, socket}
   end
 

@@ -35,6 +35,11 @@ Please see mix.exs for updated dependencies.
 Dependencies, services and platform information is updated as external services are added to the app.
 
 ## STUN / TURN server https://eturnal.net/doc/
+`{sudo apt install extrepo
+sudo extrepo enable eturnal
+sudo apt update
+sudo apt install eturnal}`
+
 
 # See the configuration file in `{/etc/eturnal.yml}`. See the .env file in local development for login details.
 
@@ -47,6 +52,7 @@ A certificate is generated and renewed automatically using the bash script at ht
 - Use wget to install the script.
 - The turn server is not a webserver so a standalone certificate is issued using the command
   `{acme.sh --issue -d turn.loving.partners --alpn --tlsport 5349 --debug}`
+  `{acme.sh  --issue  -d turn.loving.partners  --standalone}`
 
 - Before this command can be issued, the port needs to be disabled with the command
   `{ sudo kill $(sudo lsof -t -i:5349) }`
