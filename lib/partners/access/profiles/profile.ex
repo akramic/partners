@@ -9,7 +9,7 @@ defmodule Partners.Access.Profiles.Profile do
   schema "profiles" do
     field :username, :string
     field :dob, :date
-    field :gender, :string
+    field :gender, Ecto.Enum, values: [:Male, :Female]
     field :marital_status, Ecto.Enum, values: [:Single, :Separated, :Divorced, :Widowed]
     field :terms, :boolean, default: false
     field :video_path, :string
@@ -24,8 +24,10 @@ defmodule Partners.Access.Profiles.Profile do
     timestamps(type: :utc_datetime)
   end
 
+  def new, do: %__MODULE__{}
+
   @doc false
-  def changeset(profile, attrs, user_scope) do
+  def registration_changeset(profile \\ new(), attrs) do
     profile
     |> cast(attrs, [
       :username,
@@ -45,6 +47,8 @@ defmodule Partners.Access.Profiles.Profile do
       :ip_data,
       :telephone
     ])
-    |> put_change(:user_id, user_scope.user.id)
+
+    # Scope is not required here as this is for a new user
+    # |> put_change(:user_id, user_scope.user.id)
   end
 end

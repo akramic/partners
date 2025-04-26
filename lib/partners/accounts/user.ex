@@ -1,6 +1,9 @@
 defmodule Partners.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
+
+  alias Partners.Access.Profiles.Profile
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "users" do
@@ -11,7 +14,39 @@ defmodule Partners.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
 
+    has_one :profile, Profile, foreign_key: :user_id, references: :id, on_delete: :delete_all
+
     timestamps(type: :utc_datetime)
+  end
+
+  @doc """
+    Changeset for registering a new user and profile.
+    We need to pass the following data structure to the changeset for this to work:
+
+      ```elixir
+      %{
+
+      email: "me@eample.com",
+        profile: %{
+        username: "me",
+        dob: ~D[2000-01-01],
+        gender: :Male,
+        marital_status: :Single,
+        terms: true,
+        ip_data: %{ some: "data" },
+        telephone: "1234567890"
+        }
+      }
+      ```
+  """
+
+  def new, do: %__MODULE__{}
+
+  def registration_changeset(user \\ new(), attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email])
+    |> validate_email(opts)
+    |> cast_assoc(:profile, required: true, with: &Profile.registration_changeset/2)
   end
 
   @doc """
@@ -83,11 +118,13 @@ defmodule Partners.Accounts.User do
   defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
+    |> validate_length(:password, min: 8, max: 72)
     # Examples of additional password validation:
-    # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
-    # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
+    |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
+    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
+      message: "at least one digit or punctuation character"
+    )
     |> maybe_hash_password(opts)
   end
 
