@@ -11,6 +11,24 @@ defmodule PartnersWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_scope_for_user
+    # Defined below
+    plug :put_user_token
+  end
+
+  # plug for above pipeline
+  defp put_user_token(conn, _) do
+    if current_scope = conn.assigns[:current_scope] do
+      token =
+        Phoenix.Token.sign(
+          conn,
+           Application.get_env(:partners, :auth_socket_secret_key),
+          current_scope.user.id
+        )
+
+      assign(conn, :auth_token, token)
+    else
+      conn
+    end
   end
 
   pipeline :api do

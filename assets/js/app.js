@@ -22,6 +22,8 @@ import "phoenix_html";
 // Establish Phoenix Socket and LiveView configuration.
 import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
+import "./auth_socket.js";
+
 import topbar from "../vendor/topbar";
 
 // Import custom hooks

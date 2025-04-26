@@ -26,6 +26,9 @@
         window.addEventListener("phx:set-theme", ({ detail: { theme } }) => setTheme(theme));
       })();
     </script>
+    <script>
+      window.auth_token = "<%= assigns[:auth_token] %>";
+    </script>
   </head>
   <body class="antialiased select-none bg-base-100 w-full">
     <div class="flex flex-col min-h-[100vh]">
