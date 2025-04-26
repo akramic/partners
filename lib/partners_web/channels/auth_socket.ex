@@ -11,7 +11,7 @@ defmodule PartnersWeb.AuthSocket do
   # Uncomment the following line to define a "room:*" topic
   # pointing to the `PartnersWeb.RoomChannel`:
   #
-  # channel "room:*", PartnersWeb.RoomChannel
+  channel "auth:*", PartnersWeb.AuthChannel
   #
   # To create a channel file, use the mix task:
   #
@@ -39,7 +39,8 @@ defmodule PartnersWeb.AuthSocket do
   @impl true
   def connect(%{"auth_token" => token}, socket) do
     case verify(socket, token) do
-      {:ok, _user_id} ->
+      {:ok, user_id} ->
+        socket = assign(socket, :user_id, user_id)
         {:ok, socket}
 
       {:error, err} ->
@@ -74,5 +75,5 @@ defmodule PartnersWeb.AuthSocket do
   #
   # Returning `nil` makes this socket anonymous.
   @impl true
-  def id(%{assigns: %{current_scope: %{user: user}}}), do: "auth_socket:#{user.id}"
+  def id(%{assigns: %{user_id: user_id}}), do: "auth_socket:#{user_id}"
 end

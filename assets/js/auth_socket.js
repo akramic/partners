@@ -6,6 +6,7 @@ import { Socket } from "phoenix";
 
 // And connect to the path in "lib/partners_web/endpoint.ex". We pass the
 // token for authentication. Read below how it should be used.
+
 let socket = new Socket("/auth_socket", {
   params: { auth_token: window.auth_token },
 });
@@ -53,10 +54,28 @@ let socket = new Socket("/auth_socket", {
 //     end
 //
 
+socket.onOpen((ev) => console.log("INFO: auth_socket OPEN", ev));
+socket.onError((ev) => console.error("Error: auth_socket ERROR", ev));
+socket.onClose((ev) => console.error("INFO: auth_socket CLOSE", ev));
 // Finally, connect to the socket if a token was provided.
-if (window.auth_token) {
-  socket.connect({ auth_token: window.auth_token });
-}
+
+socket.connect();
+
+let auth_channel = socket.channel(`auth:${window.user_id}`, {});
+
+auth_channel
+  .join()
+  .receive("ok", (resp) => {
+    console.log(`auth:${window.user_id} joined auth channel`, resp);
+  })
+  .receive("error", (resp) => {
+    console.log(`${window.user_id} Unable to join auth channel.`, resp);
+  });
+
+auth_channel.onError((e) =>
+  console.log("Auth channel join - something went wrong", e)
+);
+auth_channel.onClose((e) => console.log("Auth channel closed", e));
 
 // Now that you are connected, you can join channels with a topic.
 // Let's assume you have a channel with a topic named `room` and the

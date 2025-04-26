@@ -17,12 +17,12 @@ defmodule PartnersWeb.Router do
 
   # plug for above pipeline
   defp put_user_token(conn, _) do
-    if current_scope = conn.assigns[:current_scope] do
+    if conn.assigns.current_scope do
       token =
         Phoenix.Token.sign(
           conn,
-           Application.get_env(:partners, :auth_socket_secret_key),
-          current_scope.user.id
+          Application.get_env(:partners, :auth_socket_secret_key),
+          conn.assigns.current_scope.user.id
         )
 
       assign(conn, :auth_token, token)
