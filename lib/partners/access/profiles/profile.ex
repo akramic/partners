@@ -17,6 +17,8 @@ defmodule Partners.Access.Profiles.Profile do
     field :telephone, :string
     field :otp, :string, virtual: true
     field :stored_otp, :string, virtual: true
+    # For long and lat data
+    field :geom, Geo.PostGIS.Geometry
 
     # Associations
     belongs_to :user, User
