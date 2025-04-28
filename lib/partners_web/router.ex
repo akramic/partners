@@ -27,7 +27,7 @@ defmodule PartnersWeb.Router do
 
       assign(conn, :auth_token, token)
     else
-      conn
+      assign(conn, :auth_token, nil)
     end
   end
 

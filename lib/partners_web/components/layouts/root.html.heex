@@ -27,8 +27,12 @@
       })();
     </script>
     <script>
-      window.auth_token = "<%= assigns.auth_token %>";
-      window.user_id = "<%= assigns.current_scope.user.id %>";
+      window.auth_token = "<%= assigns[:auth_token] %>";
+      <%= if @current_scope do %>
+         window.user_id = "<%= assigns.current_scope.user.id %>"
+      <% else %>
+         window.user_id = null;
+      <% end %>
     </script>
   </head>
   <body class="antialiased select-none bg-base-100 w-full">
