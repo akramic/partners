@@ -61,7 +61,8 @@ defmodule Partners.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       # Added dependencies
-      {:geo_postgis, "~> 3.7"}
+      {:geo_postgis, "~> 3.7"},
+      {:csv, "~> 3.2"}
     ]
   end
 

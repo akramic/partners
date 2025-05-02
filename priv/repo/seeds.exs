@@ -9,3 +9,14 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+IO.puts("Running seed files...")
+
+# Evaluate seed files in order
+Code.eval_file("priv/repo/seeds/postcodes.exs")
+# Add more seed files as needed:
+# Code.eval_file("priv/repo/seeds/other_data.exs")
+
+IO.puts("All seeds completed successfully!")
+
+IO.puts("All seeds completed successfully!")
