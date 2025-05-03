@@ -17,4 +17,3 @@ Code.eval_file("priv/repo/seeds/postcodes.exs")
 Code.eval_file("priv/repo/seeds/occupations.exs")
 
 IO.puts("All seeds completed successfully!")
-

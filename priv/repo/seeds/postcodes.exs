@@ -1,5 +1,5 @@
 alias Partners.Repo
-alias Partners.Access.Demographics.Postcode
+alias Partners.Access.Demographics.Postcodes.Postcode
 import Ecto.Query
 
 # First check if there are already postcodes in the database

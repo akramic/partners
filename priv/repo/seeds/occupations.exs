@@ -1,5 +1,5 @@
 alias Partners.Repo
-alias Partners.Access.Demographics.Occupation
+alias Partners.Access.Demographics.Occupations.Occupation
 import Ecto.Query
 
 # First, check if there are already occupations in the database
