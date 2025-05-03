@@ -10,7 +10,7 @@ if postcodes_count == 0 do
   IO.puts("No postcodes found in the database. Starting seed process...")
 
   # Path to the Australian postcodes TSV file
-  tsv_file_path = Path.join(:code.priv_dir(:partners), "repo/seeds/seed_data/au.txt")
+  tsv_file_path = Path.join(:code.priv_dir(:partners), "repo/seeds/seed_data/postcodes.tsv")
 
   # Helper function to convert empty strings to nil
   empty_string_to_nil = fn

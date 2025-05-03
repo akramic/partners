@@ -12,6 +12,7 @@ defmodule Partners.Repo.Migrations.CreateProfiles do
       add :ip_data, :map, null: false
       add :telephone, :string, null: false
       add :video_path, :string
+      add :image_path, :string
 
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
 

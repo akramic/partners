@@ -5,6 +5,7 @@ defmodule Partners.Access.Profiles.Profile do
 
   alias Partners.Accounts.User
   alias Partners.Access.Demographics.Postcode
+  alias Partners.Access.Demographics.Occupation
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -15,17 +16,20 @@ defmodule Partners.Access.Profiles.Profile do
     field :marital_status, Ecto.Enum, values: [:Single, :Separated, :Divorced, :Widowed]
     field :terms, :boolean, default: false
     field :video_path, :string
+    field :image_path, :string
+    # Required in changeset
     field :ip_data, :map
     field :telephone, :string
     field :otp, :string, virtual: true
     field :stored_otp, :string, virtual: true
-    field :place_name, :string
+
     # For long and lat data
     field :geom, Geo.PostGIS.Geometry
 
     # Associations
     belongs_to :user, User
     belongs_to :postcode, Postcode
+    belongs_to :occupation, Occupation
 
     timestamps(type: :utc_datetime)
   end
@@ -56,6 +60,8 @@ defmodule Partners.Access.Profiles.Profile do
       :ip_data,
       :telephone
     ])
+    |> unsafe_validate_unique(:username, Partners.Repo)
+    |> unique_constraint(:username)
 
     # Scope is not required here as this is for a new user
     # |> put_change(:user_id, user_scope.user.id)
@@ -164,5 +170,17 @@ defmodule Partners.Access.Profiles.Profile do
         error -> Partners.Repo.rollback(error)
       end
     end)
+  end
+
+  @doc """
+  Changeset for updating a profile's occupation information.
+  This is separate from the registration changeset since occupation
+  is added after initial registration.
+  """
+  def occupation_changeset(profile, attrs) do
+    profile
+    |> cast(attrs, [:occupation_id])
+    |> validate_required([:occupation_id])
+    |> foreign_key_constraint(:occupation_id)
   end
 end

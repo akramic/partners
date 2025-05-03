@@ -1,0 +1,54 @@
+major-group-code sub-major-group-code	group	sub-major-group
+1	11	Managers	Business Administration and Promotion, and ICT Managers
+1	12	Managers	Chief Executives, General Managers and Legislators
+1	13	Managers	Construction, Production and Distribution Managers
+1	14	Managers	Education, Health, Welfare and Other Specialist Managers
+1	15	Managers	Farmers and Farm Managers
+1	16	Managers	Hospitality and Retail Managers
+1	17	Managers	Office Administration and Service Managers
+2	21	Professionals	Accounting and Finance Professionals
+2	22	Professionals	Business Professionals
+2	23	Professionals	Cultural and Social Professionals
+2	24	Professionals	Design, Engineering and Science Professionals
+2	25	Professionals	Education Professionals
+2	26	Professionals	Health Professionals
+2	27	Professionals	ICT Professionals
+2	28	Professionals	Legal Professionals
+2	29	Professionals	Other Professionals
+3	31	Technicians and Trades Workers	Building, Engineering, ICT and Scientific Technicians
+3	32	Technicians and Trades Workers	Chefs and Food Trades Workers
+3	33	Technicians and Trades Workers	Engineering Trades Workers
+3	34	Technicians and Trades Workers	Skilled Animal, Agricultural and Horticultural Workers
+3	35	Technicians and Trades Workers	Automotive Technicians and Trades Workers
+3	36	Technicians and Trades Workers	Building Completion and Related Trades Workers
+3	37	Technicians and Trades Workers	Building Structural Trades Workers
+3	38	Technicians and Trades Workers	Electrotechnology and Telecommunications Trades Workers
+3	39	Technicians and Trades Workers	Other Technicians and Trades Workers
+4	41	Community and Personal Service Workers	Community and Welfare Support Workers
+4	42	Community and Personal Service Workers	Aged Care and Disability Services and Support Workers
+4	43	Community and Personal Service Workers	Early Childhood Educators, Child Carers and Education Assistants
+4	44	Community and Personal Service Workers	Health Support Workers and Assistants
+4	45	Community and Personal Service Workers	Protective Service and Security Workers
+4	46	Community and Personal Service Workers	Personal Service, Sports and Fitness Workers
+4	47	Community and Personal Service Workers	Hospitality Workers
+5	51	Clerical and Administrative Workers	Contract, Program and Project Administrators
+5	52	Clerical and Administrative Workers	Executive and Legal Assistants and Secretaries
+5	53	Clerical and Administrative Workers	Financial Services and Insurance Workers and Brokers
+5	54	Clerical and Administrative Workers	Accounting and Related Clerks
+5	55	Clerical and Administrative Workers	Enquiry and Information Officers and Receptionists
+5	56	Clerical and Administrative Workers	General Clerical Workers
+5	57	Clerical and Administrative Workers	Supply Chain Support Workers
+5	59	Clerical and Administrative Workers	Other Clerical and Administrative Workers
+6	61	Sales Workers	Sales Support Workers
+6	62	Sales Workers	Sales Representatives and Agents
+6	63	Sales Workers	Sales Assistants and Salespersons
+7	71	Machinery Operators and Drivers	Road and Rail Drivers
+7	72	Machinery Operators and Drivers	Storepersons and Warehouse Supervisors
+7	73	Machinery Operators and Drivers	Machine and Stationary Plant Operators
+7	74	Machinery Operators and Drivers	Mobile Plant Operators
+8	81	Labourers	Cleaners and Laundry Workers
+8	82	Labourers	Construction and Mining Labourers
+8	83	Labourers	Factory Process Workers
+8	84	Labourers	Farm, Garden and Forestry Workers
+8	85	Labourers	Fast Food Cooks and Food Preparation Assistants
+8	89	Labourers	Other Labourers
