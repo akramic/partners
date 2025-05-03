@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Postcode.Postcode do
+defmodule Partners.Access.Demographics.Postcodes.Postcode do
   use Ecto.Schema
   import Ecto.Changeset
 

@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Postcode.PostcodesContext do
+defmodule Partners.Access.Demographics.Postcodes.PostcodesContext do
   @moduledoc """
   Context module for postcode-related operations.
 
@@ -9,7 +9,7 @@ defmodule Partners.Access.Demographics.Postcode.PostcodesContext do
   @behaviour Partners.Access.Behaviour.ContextBehaviour
 
   require Logger
-  alias Partners.Access.Demographics.Postcode.PostcodesAccess
+  alias Partners.Access.Demographics.Postcodes.PostcodesAccess
 
   # Use the access module directly
   @postcode_access PostcodesAccess

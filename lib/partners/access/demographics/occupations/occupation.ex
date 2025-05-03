@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Occupation.Occupation do
+defmodule Partners.Access.Demographics.Occupations.Occupation do
   use Ecto.Schema
   import Ecto.Changeset
 

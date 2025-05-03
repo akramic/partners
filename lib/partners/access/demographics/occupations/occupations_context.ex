@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Occupation.OccupationsContext do
+defmodule Partners.Access.Demographics.Occupations.OccupationsContext do
   @moduledoc """
   Context module for occupation-related operations.
 
@@ -9,7 +9,7 @@ defmodule Partners.Access.Demographics.Occupation.OccupationsContext do
   @behaviour Partners.Access.Behaviour.ContextBehaviour
 
   require Logger
-  alias Partners.Access.Demographics.Occupation.OccupationsAccess
+  alias Partners.Access.Demographics.Occupations.OccupationsAccess
 
   # Use the access module directly
   @occupation_access OccupationsAccess

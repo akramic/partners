@@ -4,8 +4,8 @@ defmodule Partners.Access.Profiles.Profile do
   import Ecto.Query
 
   alias Partners.Accounts.User
-  alias Partners.Access.Demographics.Postcode
-  alias Partners.Access.Demographics.Occupation
+  alias Partners.Access.Demographics.Postcodes.Postcode
+  alias Partners.Access.Demographics.Occupations.Occupation
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

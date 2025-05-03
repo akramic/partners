@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Postcode.PostcodesAccess do
+defmodule Partners.Access.Demographics.Postcodes.PostcodesAccess do
   @moduledoc """
   Access module for Postcode schema.
 
@@ -9,7 +9,7 @@ defmodule Partners.Access.Demographics.Postcode.PostcodesAccess do
 
   import Ecto.Query
   alias Partners.Repo
-  alias Partners.Access.Demographics.Postcode.Postcode
+  alias Partners.Access.Demographics.Postcodes.Postcode
 
   @impl true
   def store(attrs, :postcode) do

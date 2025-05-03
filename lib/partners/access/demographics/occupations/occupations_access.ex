@@ -1,4 +1,4 @@
-defmodule Partners.Access.Demographics.Occupation.OccupationsAccess do
+defmodule Partners.Access.Demographics.Occupations.OccupationsAccess do
   @moduledoc """
   Access module for Occupation schema.
 
@@ -9,7 +9,7 @@ defmodule Partners.Access.Demographics.Occupation.OccupationsAccess do
 
   import Ecto.Query
   alias Partners.Repo
-  alias Partners.Access.Demographics.Occupation.Occupation
+  alias Partners.Access.Demographics.Occupations.Occupation
 
   @impl true
   def store(attrs, :occupation) do
