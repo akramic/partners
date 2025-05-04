@@ -16,9 +16,7 @@ defmodule Partners.Services.Paypal do
     ```elixir
     # Creating a subscription for a user
     profile_id = "user_123"
-    return_url = "https://lovingpartners.com.au/subscription/success"
-    cancel_url = "https://lovingpartners.com.au/subscription/cancel"
-    Partners.Services.Paypal.create_subscription_url(profile_id, return_url, cancel_url)
+    Partners.Services.Paypal.create_subscription_url(profile_id)
     # => {:ok, %{subscription_id: "I-123456789", approve_url: "https://paypal.com/approval"}}
 
     # Suspend a subscription
@@ -67,8 +65,91 @@ defmodule Partners.Services.Paypal do
     end
     ```
 
+  ## Complete Subscription Flow
+
+  The complete flow for implementing PayPal subscriptions is as follows:
+
+  1. **Setup Phase** (done once during application deployment)
+     ```elixir
+     # 1. Create a product in PayPal (or use existing one)
+     {:ok, product_id} = Partners.Services.Paypal.create_product()
+
+     # 2. Create a subscription plan with that product
+     {:ok, plan_id} = Partners.Services.Paypal.create_subscription_plan(product_id)
+
+     # 3. Update the @subscription_plan_id_aud module attribute with this plan ID
+     # 4. Configure the webhook in PayPal Developer Dashboard to point to your /webhooks/subscriptions/paypal endpoint
+     ```
+
+  2. **Subscription Creation** (when a user wants to subscribe)
+     ```elixir
+     # 1. Generate a subscription URL for the user
+     {:ok, %{subscription_id: sub_id, approve_url: url}} =
+       Partners.Services.Paypal.create_subscription_url(user.profile_id)
+
+     # 2. Store the subscription_id in your database
+     Repo.update(user, %{paypal_subscription_id: sub_id, subscription_status: "PENDING"})
+
+     # 3. Redirect the user to the approve_url
+     conn |> redirect(external: url)
+     ```
+
+  3. **Handle User Return** (after user approves/cancels on PayPal's site)
+     ```elixir
+     # Your WebhookController.subscription_return/2 function will handle:
+     # - Success redirects to /subscriptions/paypal/success
+     # - Cancel redirects to /subscriptions/paypal/cancel
+     ```
+
+  4. **Process Webhook Events** (for status updates)
+     ```elixir
+     # Your WebhookController.paypal/2 function will receive events like:
+     # - PAYMENT.SALE.COMPLETED
+     # - BILLING.SUBSCRIPTION.ACTIVATED
+     # - BILLING.SUBSCRIPTION.CANCELLED
+     # - BILLING.SUBSCRIPTION.SUSPENDED
+     # - BILLING.SUBSCRIPTION.UPDATED
+     #
+     # These should be processed and broadcast to relevant parts of your app
+     ```
+
   All API interactions use the `req` HTTP client and retrieve credentials from environment
   variables. The module supports both sandbox (development/testing) and production environments.
+
+  ## Testing with PayPal Sandbox
+
+  The PayPal Sandbox environment provides a complete testing ecosystem for PayPal integrations.
+  Here's how to set up and test subscriptions with sandbox accounts:
+
+  1. **Creating Sandbox Accounts**
+     - Log in to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
+     - Navigate to "Sandbox" > "Accounts"
+     - Create two accounts:
+       - Business account (to receive payments)
+       - Personal account (to make payments)
+
+  2. **Testing Subscription Flow**
+     - Use the personal sandbox account to approve subscriptions
+     - Login credentials format: `sb-username@personal.example.com` with the password you set
+     - For testing credit cards, you can use:
+       - Card number: `4111111111111111`
+       - Expiry date: Any future date
+       - CVV: Any 3 digits
+
+  3. **Simulating Webhook Events**
+     - In the PayPal Developer Dashboard, go to "Webhooks" > "Simulator"
+     - Select your webhook endpoint
+     - Choose an event type (e.g., `PAYMENT.SALE.COMPLETED` or `BILLING.SUBSCRIPTION.ACTIVATED`)
+     - Click "Send test webhook" to trigger the event
+
+  4. **Verifying Sandbox Transactions**
+     - Log in to the sandbox business account at [sandbox.paypal.com](https://sandbox.paypal.com)
+     - View transactions, subscriptions, and payment details
+     - Download transaction reports for reconciliation testing
+
+  You can test the entire subscription flow by creating a subscription with
+  `create_subscription_url/1`, approving it with a sandbox personal account, and then
+  verifying the webhook events are processed correctly.
 
   ## Design Principles
 
@@ -100,10 +181,34 @@ defmodule Partners.Services.Paypal do
 
   # Subscription constants
   # Replace with actual plan ID after creation
-  @subscription_plan_id_aud "PLAN_ID_HERE"
+  @subscription_plan_id_aud "P-51365141YL316354PNALPNAQ"
   # Monthly subscription price in AUD
   @subscription_price_aud "19.00"
   @trial_period_days 7
+
+  @web_hook_id "41M179627T913745X"
+
+  # Test function to verify authentication
+  @doc """
+  Simple test function to verify PayPal API authentication.
+
+  This function attempts to generate an access token and returns
+  information about the success or failure of the authentication attempt.
+
+  ## Returns
+
+  - `{:ok, token}` - Authentication successful, returns the token
+  - `{:error, reason}` - Authentication failed with the given reason
+  """
+  def test_authentication do
+    case generate_access_token() do
+      {:ok, token} ->
+        {:ok, %{authenticated: true, token_preview: String.slice(token, 0..10) <> "..."}}
+
+      error ->
+        error
+    end
+  end
 
   # Configuration
   @doc """
@@ -118,12 +223,18 @@ defmodule Partners.Services.Paypal do
   """
   def config do
     %{
-      client_id: System.get_env("CLIENT_ID"),
-      secret: System.get_env("SECRET"),
+      client_id: get_client_id(),
+      secret: get_secret(),
       # Set to true in dev/test, false in production
       sandbox_mode: Application.get_env(:partners, :paypal_sandbox, true)
     }
   end
+
+  defp get_client_id,
+    do: "AddTZFxvvki0CWp13PVHqI-YmkUfJ7x6Xxsx36e9dtWRCIziVKfpiEmHf8X41rLq8LnprJNWLbrlhjdi"
+
+  defp get_secret,
+    do: "ENGs2-xwyR9PYcjn9MYNhZ7l_j44dX8xwN40MibvphPgshzDSg8WAo15YkeCesmtIfcFuc4An-WAv_n4"
 
   # Base URL based on environment
   @doc """
@@ -160,7 +271,7 @@ defmodule Partners.Services.Paypal do
     # This is a special case that doesn't use api_request because it needs basic auth
     # and different content-type
     response =
-      Req.new(url: url, auth: {:basic, config().client_id, config().secret})
+      Req.new(url: url, auth: {:basic, "#{config().client_id}:#{config().secret}"})
       |> Req.Request.put_header("accept", "application/json")
       |> Req.Request.put_header("content-type", "application/x-www-form-urlencoded")
       |> Req.post(form: [grant_type: "client_credentials"])
@@ -192,13 +303,13 @@ defmodule Partners.Services.Paypal do
   - `{:ok, plan_id}` - Successfully created a new plan, returns the plan ID
   - `{:error, reason}` - Failed to create or verify the plan
   """
-  def maybe_create_subscription_plan do
+  def maybe_create_subscription_plan(product_id \\ nil) do
     case get_subscription_plan(@subscription_plan_id_aud) do
       {:ok, _plan} ->
         {:ok, :plan_exists}
 
       {:error, :not_found} ->
-        create_subscription_plan()
+        create_subscription_plan(product_id)
 
       error ->
         error
@@ -244,8 +355,12 @@ defmodule Partners.Services.Paypal do
   monthly billing at $19 AUD. The trial period length is defined by `@trial_period_days`
   and the regular price by `@subscription_price_aud`.
 
-  This function first creates a product in PayPal (if needed) and then creates
-  a billing plan attached to that product.
+  If a product_id is provided, it will use that product. Otherwise, it will create
+  a new product in PayPal and then create a billing plan attached to that product.
+
+  ## Parameters
+
+  - `product_id` - Optional String identifier of an existing PayPal product to use
 
   ## Returns
 
@@ -254,8 +369,10 @@ defmodule Partners.Services.Paypal do
   - `{:error, :request_failed}` - HTTP request to PayPal failed
   - `{:error, :product_creation_failed}` - Failed to create the required product
   """
-  def create_subscription_plan do
-    with {:ok, product_id} <- create_product(),
+  def create_subscription_plan(product_id \\ nil) do
+    product_result = if product_id, do: {:ok, product_id}, else: create_product()
+
+    with {:ok, product_id} <- product_result,
          {:ok, plan_payload} <- build_plan_payload(product_id),
          headers = [{"prefer", "return=representation"}],
          {:ok, body} <-
@@ -265,6 +382,7 @@ defmodule Partners.Services.Paypal do
       {:ok, body["id"]}
     else
       {:error, :product_creation_failed} = error -> error
+      {:error, :api_error} -> {:error, :plan_creation_failed}
       {:error, {:api_error, _status, _body}} -> {:error, :plan_creation_failed}
       error -> error
     end
@@ -352,25 +470,36 @@ defmodule Partners.Services.Paypal do
   - `{:error, :request_failed}` - HTTP request to PayPal failed
   """
   def create_product do
-    product_payload = %{
-      name: "Loving Partners Premium",
-      description: "Premium access to Loving Partners dating service",
-      type: "SERVICE",
-      category: "DATING",
-      home_url: "https://lovingpartners.com.au"
-    }
+    with {:ok, token} <- generate_access_token() do
+      product_payload = %{
+        name: "Loving Partners Premium",
+        description: "Premium access to Loving Partners dating service",
+        type: "SERVICE"
+        # Removed additional fields to keep it minimal
+      }
 
-    headers = [{"prefer", "return=representation"}]
+      headers = [
+        {"prefer", "return=representation"},
+        {"authorization", "Bearer #{token}"},
+        {"content-type", "application/json"}
+      ]
 
-    case api_request(:post, "/v1/catalogs/products", json: product_payload, headers: headers) do
-      {:ok, body} ->
-        {:ok, body["id"]}
+      url = "#{base_url()}/v1/catalogs/products"
 
-      {:error, {:api_error, _status, _body}} ->
-        {:error, :product_creation_failed}
+      response = Req.post(url, json: product_payload, headers: headers)
 
-      error ->
-        error
+      case response do
+        {:ok, %{status: status, body: body}} when status in 200..204 ->
+          {:ok, body["id"]}
+
+        {:ok, %{status: status, body: body}} ->
+          Logger.error("Failed to create PayPal product: #{status} - #{inspect(body)}")
+          {:error, :product_creation_failed}
+
+        {:error, exception} ->
+          Logger.error("PayPal request error: #{inspect(exception)}")
+          {:error, :request_failed}
+      end
     end
   end
 
@@ -379,14 +508,15 @@ defmodule Partners.Services.Paypal do
   to set up a subscription with a 7-day free trial.
 
   This generates a PayPal-hosted checkout page URL where the user can approve
-  the subscription. After approval, PayPal redirects the user back to the provided
-  return_url.
+  the subscription. After approval, PayPal redirects the user back to the appropriate
+  URL in your application.
 
   ## Parameters
 
   - `profile_id` - String identifier of the user's profile, stored as custom_id in PayPal
-  - `return_url` - URL where PayPal should redirect after successful approval
-  - `cancel_url` - URL where PayPal should redirect if user cancels
+  - `base_url` - Optional base URL for the return and cancel URLs. If not provided,
+    it will use "http://localhost:4000" in development and the configured production
+    URL in production.
 
   ## Returns
 
@@ -395,12 +525,15 @@ defmodule Partners.Services.Paypal do
   - `{:error, :subscription_creation_failed}` - PayPal returned an error response
   - `{:error, :request_failed}` - HTTP request to PayPal failed
   """
-  def create_subscription_url(profile_id, return_url, cancel_url) do
+  def create_subscription_url(profile_id, base_url \\ nil) do
+    base_url = base_url || default_base_url()
+    return_url = "#{base_url}/subscriptions/paypal/success"
+    cancel_url = "#{base_url}/subscriptions/paypal/cancel"
+
     with {:ok, payload} <- build_subscription_payload(profile_id, return_url, cancel_url),
          headers = [{"prefer", "return=representation"}],
          {:ok, body} <-
            api_request(:post, "/v1/billing/subscriptions", json: payload, headers: headers) do
-      # Return the URL that the user needs to visit to approve the subscription
       {:ok,
        %{
          subscription_id: body["id"],
@@ -412,6 +545,15 @@ defmodule Partners.Services.Paypal do
 
       error ->
         error
+    end
+  end
+
+  # Get default base URL based on environment
+  defp default_base_url do
+    if config().sandbox_mode do
+      "http://localhost:4000"
+    else
+      "https://lovingpartners.com.au"
     end
   end
 
@@ -454,11 +596,12 @@ defmodule Partners.Services.Paypal do
   #
   # ## Returns
   # - String URL where the user should be redirected to approve the subscription
-  defp find_approve_url(%{"links" => links}) do
-    links
-    |> Enum.find(fn link -> link["rel"] == "approve" end)
-    |> Map.get("href")
+  defp find_approve_url(%{"links" => links}) when is_list(links) do
+    approve_link = Enum.find(links, fn link -> link["rel"] == "approve" end)
+    if approve_link, do: approve_link["href"], else: nil
   end
+
+  defp find_approve_url(_), do: nil
 
   @doc """
   Get subscription details by subscription ID
@@ -737,14 +880,8 @@ defmodule Partners.Services.Paypal do
   # - {:ok, webhook_id} - Successfully retrieved webhook ID
   # - {:error, :webhook_id_not_configured} - Webhook ID not set in environment
   defp get_webhook_id do
-    case System.get_env("PAYPAL_WEBHOOK_ID") do
-      nil ->
-        Logger.error("PAYPAL_WEBHOOK_ID environment variable not set")
-        {:error, :webhook_id_not_configured}
-
-      webhook_id ->
-        {:ok, webhook_id}
-    end
+    # Using the module attribute instead of environment variable
+    {:ok, @web_hook_id}
   end
 
   # Build the payload for webhook signature verification
@@ -1222,7 +1359,7 @@ defmodule Partners.Services.Paypal do
               "PayPal API error: #{method} #{path} returned #{status} - #{inspect(body)}"
             )
 
-            {:error, :api_error}
+            {:error, {:api_error, status, body}}
 
           {:error, exception} ->
             Logger.error("PayPal request error: #{method} #{path} - #{inspect(exception)}")

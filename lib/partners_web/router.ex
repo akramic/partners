@@ -46,6 +46,20 @@ defmodule PartnersWeb.Router do
   #   pipe_through :api
   # end
 
+  # PayPal webhook endpoint
+  scope "/webhooks", PartnersWeb do
+    pipe_through :api
+
+    post "/subscriptions/paypal", Api.Webhooks.WebhookController, :paypal
+  end
+
+  # PayPal subscription return URLs
+  scope "/subscriptions", PartnersWeb do
+    pipe_through :browser
+
+    get "/paypal/:outcome", Api.Webhooks.WebhookController, :subscription_return
+  end
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:partners, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
