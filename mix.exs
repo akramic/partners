@@ -53,7 +53,6 @@ defmodule Partners.MixProject do
        compile: false,
        depth: 1},
       {:swoosh, "~> 1.16"},
-      {:req, "~> 0.5"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.26"},
@@ -62,7 +61,8 @@ defmodule Partners.MixProject do
       {:bandit, "~> 1.5"},
       # Added dependencies
       {:geo_postgis, "~> 3.7"},
-      {:csv, "~> 3.2"}
+      {:csv, "~> 3.2"},
+      {:req, "~> 0.5.0"}
     ]
   end
 
