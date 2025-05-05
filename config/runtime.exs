@@ -116,6 +116,150 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  # PayPal API Configuration
+  # Determine the environment
+  app_env =
+    System.get_env("APP_ENV") ||
+      if config_env() == :prod do
+        raise """
+        environment variable APP_ENV is missing.
+        Must be explicitly set to "production", "staging", or "development"
+        """
+      else
+        # Only default to development in non-prod environments
+        "development"
+      end
+
+  # Common PayPal settings with validation
+  paypal_client_id =
+    System.get_env("PAYPAL_CLIENT_ID") ||
+      raise """
+      environment variable PAYPAL_CLIENT_ID is missing.
+      This is required for PayPal integration in all environments.
+      """
+
+  paypal_secret =
+    System.get_env("PAYPAL_SECRET") ||
+      raise """
+      environment variable PAYPAL_SECRET is missing.
+      This is required for PayPal integration in all environments.
+      """
+
+  # Base configuration for PayPal
+  config :partners, Partners.Services.Paypal,
+    client_id: paypal_client_id,
+    secret: paypal_secret
+
+  # Configure environment-specific settings
+  case app_env do
+    "production" ->
+      # Validate production-specific settings
+      paypal_production_webhook_id =
+        System.get_env("PAYPAL_PRODUCTION_WEBHOOK_ID") ||
+          raise """
+          environment variable PAYPAL_PRODUCTION_WEBHOOK_ID is missing.
+          This is required for PayPal webhooks in production environment.
+          """
+
+      paypal_production_plan_id_aud =
+        System.get_env("PAYPAL_PRODUCTION_PLAN_ID_AUD") ||
+          raise """
+          environment variable PAYPAL_PRODUCTION_PLAN_ID_AUD is missing.
+          This is required for subscription plans in production environment.
+          """
+
+      paypal_production_product_id =
+        System.get_env("PAYPAL_PRODUCTION_PRODUCT_ID") ||
+          raise """
+          environment variable PAYPAL_PRODUCTION_PRODUCT_ID is missing.
+          This is required for PayPal product identification in production environment.
+          """
+
+      host =
+        System.get_env("PHX_HOST") ||
+          raise """
+          environment variable PHX_HOST is missing.
+          This is required to generate webhook and return URLs in production.
+          """
+
+      config :partners, Partners.Services.Paypal,
+        webhook_id: paypal_production_webhook_id,
+        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
+        return_url_base: "https://#{host}/subscriptions/paypal",
+        subscription_plan_id_aud: paypal_production_plan_id_aud,
+        product_id: paypal_production_product_id
+
+    "staging" ->
+      # Validate staging-specific settings
+      paypal_sandbox_webhook_id =
+        System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID") ||
+          raise """
+          environment variable PAYPAL_SANDBOX_WEBHOOK_ID is missing.
+          This is required for PayPal webhooks in staging environment.
+          """
+
+      paypal_sandbox_plan_id_aud =
+        System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD") ||
+          raise """
+          environment variable PAYPAL_SANDBOX_PLAN_ID_AUD is missing.
+          This is required for subscription plans in staging environment.
+          """
+
+      paypal_sandbox_product_id =
+        System.get_env("PAYPAL_SANDBOX_PRODUCT_ID") ||
+          raise """
+          environment variable PAYPAL_SANDBOX_PRODUCT_ID is missing.
+          This is required for PayPal product identification in staging environment.
+          """
+
+      host =
+        System.get_env("PHX_HOST") ||
+          raise """
+          environment variable PHX_HOST is missing.
+          This is required to generate webhook and return URLs in staging.
+          """
+
+      config :partners, Partners.Services.Paypal,
+        # Override the mode to ensure sandbox is used in staging
+        mode: :sandbox,
+        webhook_id: paypal_sandbox_webhook_id,
+        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
+        return_url_base: "https://#{host}/subscriptions/paypal",
+        subscription_plan_id_aud: paypal_sandbox_plan_id_aud,
+        product_id: paypal_sandbox_product_id
+
+    "development" ->
+      # In development, allow configuration via environment variables
+      # with reasonable defaults for local development
+      dev_base_url = System.get_env("PAYPAL_DEV_BASE_URL", "http://localhost:4000")
+      # If ngrok URL is provided, use it for both webhook and return URLs
+      ngrok_url = System.get_env("NGROK_URL")
+      # Otherwise use the configured dev base URL
+      base_url_for_callbacks = ngrok_url || dev_base_url
+
+      config :partners, Partners.Services.Paypal,
+        webhook_id: System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID"),
+        webhook_url: "#{base_url_for_callbacks}/webhooks/subscriptions/paypal",
+        return_url_base: "#{base_url_for_callbacks}/subscriptions/paypal",
+        subscription_plan_id_aud:
+          System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD", "P-1A446093FD195141FNALUJUY"),
+        product_id: System.get_env("PAYPAL_SANDBOX_PRODUCT_ID", "PROD-7DC4439U7095870S")
+
+      # Log a warning if credentials are missing in development
+      if !paypal_client_id || !paypal_secret do
+        Logger.warning("""
+        PayPal credentials not set in development environment.
+        Set PAYPAL_CLIENT_ID and PAYPAL_SECRET environment variables for full functionality.
+        """)
+      end
+
+    other ->
+      raise """
+      Invalid APP_ENV value: #{other}
+      Must be one of: "production", "staging", or "development"
+      """
+  end
 end
 
 # Used for IP checking

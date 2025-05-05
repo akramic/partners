@@ -17,8 +17,19 @@ defmodule PartnersWeb.Api.Webhooks.WebhookController do
   def paypal(conn, params) do
     Logger.info("Received PayPal webhook: #{inspect(params)}")
 
-    # Return a 200 OK response to acknowledge receipt of the webhook
-    send_resp(conn, 200, "OK")
+    # Use the PayPal service to properly verify and process the webhook
+    case Partners.Services.Paypal.handle_webhook(conn) do
+      {:ok, event} ->
+        # Successfully processed webhook
+        Logger.info("Successfully processed PayPal webhook: #{event["event_type"]}")
+        send_resp(conn, 200, "OK")
+
+      {:error, reason} ->
+        # Failed to process webhook
+        Logger.error("Failed to process PayPal webhook: #{inspect(reason)}")
+        # Still return 200 to PayPal
+        send_resp(conn, 200, "OK")
+    end
   end
 
   @doc """
@@ -42,22 +53,37 @@ defmodule PartnersWeb.Api.Webhooks.WebhookController do
 
     case outcome do
       "success" ->
-        # In a real implementation, you would verify the subscription and update the user's account
-        conn
-        |> put_flash(:info, "Your subscription was successfully set up!")
-        |> redirect(to: "/")
+        # Extract the subscription ID and token from the query params
+        subscription_id = params["subscription_id"]
+        ba_token = params["ba_token"]
+
+        if subscription_id do
+          # Process the successful return
+          # Partners.Services.Paypal.process_subscription_return(subscription_id, ba_token)
+
+          conn
+          |> put_flash(
+            :info,
+            "Your subscription was successfully set up! You now have a 7-day free trial."
+          )
+          |> redirect(to: "/subscriptions/test")
+        else
+          conn
+          |> put_flash(:error, "Missing subscription information.")
+          |> redirect(to: "/subscriptions/test")
+        end
 
       "cancel" ->
-        # Handle cancellation
+        # No processing needed for cancellation, just redirect back
         conn
         |> put_flash(:info, "Subscription setup was cancelled.")
-        |> redirect(to: "/")
+        |> redirect(to: "/subscriptions/test")
 
       _ ->
         # Handle unexpected outcome param
         conn
         |> put_flash(:error, "Invalid subscription response.")
-        |> redirect(to: "/")
+        |> redirect(to: "/subscriptions/test")
     end
   end
 end

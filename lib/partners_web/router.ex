@@ -102,6 +102,9 @@ defmodule PartnersWeb.Router do
       live "/users/log-in/:token", UserLive.Confirmation, :new
     end
 
+    # Add a route for subscription testing
+    live "/subscriptions/test", SubscriptionTestLive, :index
+
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end

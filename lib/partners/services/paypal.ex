@@ -175,42 +175,8 @@ defmodule Partners.Services.Paypal do
 
   require Logger
 
-  # Constants
-  @base_url_sandbox "https://api-m.sandbox.paypal.com"
-  @base_url_live "https://api-m.paypal.com"
+  # Remove hardcoded constants and replace with config accessors
 
-  # Subscription constants
-  # Replace with actual plan ID after creation
-  @subscription_plan_id_aud "P-51365141YL316354PNALPNAQ"
-  # Monthly subscription price in AUD
-  @subscription_price_aud "19.00"
-  @trial_period_days 7
-
-  @web_hook_id "41M179627T913745X"
-
-  # Test function to verify authentication
-  @doc """
-  Simple test function to verify PayPal API authentication.
-
-  This function attempts to generate an access token and returns
-  information about the success or failure of the authentication attempt.
-
-  ## Returns
-
-  - `{:ok, token}` - Authentication successful, returns the token
-  - `{:error, reason}` - Authentication failed with the given reason
-  """
-  def test_authentication do
-    case generate_access_token() do
-      {:ok, token} ->
-        {:ok, %{authenticated: true, token_preview: String.slice(token, 0..10) <> "..."}}
-
-      error ->
-        error
-    end
-  end
-
-  # Configuration
   @doc """
   Get PayPal API configuration from environment
 
@@ -222,19 +188,65 @@ defmodule Partners.Services.Paypal do
   - `sandbox_mode`: Boolean indicating whether to use sandbox (test) mode
   """
   def config do
+    client_id = get_client_id()
+    secret = get_secret()
+
+    # Debug output to check the credentials
+    Logger.debug(
+      "PayPal config - client_id present: #{!is_nil(client_id)}, secret present: #{!is_nil(secret)}"
+    )
+
+    # Check environment variables directly as a fallback
+    client_id =
+      if is_nil(client_id) do
+        env_client_id = System.get_env("PAYPAL_CLIENT_ID")
+        Logger.debug("Falling back to env PAYPAL_CLIENT_ID: #{!is_nil(env_client_id)}")
+        env_client_id
+      else
+        client_id
+      end
+
+    secret =
+      if is_nil(secret) do
+        env_secret = System.get_env("PAYPAL_SECRET")
+        Logger.debug("Falling back to env PAYPAL_SECRET: #{!is_nil(env_secret)}")
+        env_secret
+      else
+        secret
+      end
+
     %{
-      client_id: get_client_id(),
-      secret: get_secret(),
-      # Set to true in dev/test, false in production
-      sandbox_mode: Application.get_env(:partners, :paypal_sandbox, true)
+      client_id: client_id,
+      secret: secret,
+      # Determine sandbox vs live mode from config
+      sandbox_mode: mode() == :sandbox,
+      subscription_plan_id_aud: subscription_plan_id_aud()
     }
   end
 
-  defp get_client_id,
-    do: "AddTZFxvvki0CWp13PVHqI-YmkUfJ7x6Xxsx36e9dtWRCIziVKfpiEmHf8X41rLq8LnprJNWLbrlhjdi"
+  # Config accessor functions to simplify getting configuration values with fallbacks
+  defp get_client_id, do: Application.get_env(:partners, __MODULE__)[:client_id]
+  defp get_secret, do: Application.get_env(:partners, __MODULE__)[:secret]
 
-  defp get_secret,
-    do: "ENGs2-xwyR9PYcjn9MYNhZ7l_j44dX8xwN40MibvphPgshzDSg8WAo15YkeCesmtIfcFuc4An-WAv_n4"
+  defp mode, do: Application.get_env(:partners, __MODULE__)[:mode] || :sandbox
+
+  defp webhook_id do
+    Application.get_env(:partners, __MODULE__)[:webhook_id]
+  end
+
+  def subscription_plan_id_aud do
+    Application.get_env(:partners, __MODULE__)[:subscription_plan_id_aud]
+  end
+
+  # Get product ID from configuration
+  defp product_id do
+    Application.get_env(:partners, __MODULE__)[:product_id]
+  end
+
+  # Trial period in days (configurable with default of 7 days)
+  defp trial_period_days do
+    Application.get_env(:partners, __MODULE__)[:trial_period_days] || 7
+  end
 
   # Base URL based on environment
   @doc """
@@ -250,7 +262,126 @@ defmodule Partners.Services.Paypal do
   - Production: https://api-m.paypal.com
   """
   def base_url do
-    if config().sandbox_mode, do: @base_url_sandbox, else: @base_url_live
+    case mode() do
+      :live ->
+        Application.get_env(:partners, __MODULE__)[:base_url] || "https://api-m.paypal.com"
+
+      _ ->
+        Application.get_env(:partners, __MODULE__)[:base_url] ||
+          "https://api-m.sandbox.paypal.com"
+    end
+  end
+
+  @doc """
+  Tests authentication with PayPal API and returns detailed debugging information.
+
+  This is a diagnostic function that attempts to authenticate with PayPal
+  and returns detailed information about the process, including credentials
+  used and the raw response.
+
+  ## Returns
+
+  - `{:ok, debug_info}` - Authentication successful with debug details
+  - `{:error, reason, debug_info}` - Authentication failed with reason and debug details
+  """
+  def test_authentication do
+    client_id = config().client_id
+    secret = config().secret
+
+    debug_info = %{
+      client_id_provided: !is_nil(client_id),
+      client_id_length: if(is_nil(client_id), do: 0, else: String.length(client_id)),
+      secret_provided: !is_nil(secret),
+      secret_length: if(is_nil(secret), do: 0, else: String.length(secret)),
+      base_url: base_url(),
+      manual_auth_header:
+        if(is_nil(client_id) || is_nil(secret),
+          do: nil,
+          else: "Basic #{Base.encode64("#{client_id}:#{secret}")}"
+        )
+    }
+
+    if is_nil(client_id) || is_nil(secret) do
+      Logger.error(
+        "PayPal test_authentication: client_id or secret is nil. Check your configuration."
+      )
+
+      {:error, :missing_credentials, debug_info}
+    else
+      url = "#{base_url()}/v1/oauth2/token"
+      auth_string = Base.encode64("#{client_id}:#{secret}")
+
+      Logger.debug("PayPal test_authentication: Making request to #{url}")
+
+      Logger.debug(
+        "PayPal test_authentication: Using auth header: Basic #{String.slice(auth_string, 0, 10)}..."
+      )
+
+      start_time = System.monotonic_time(:millisecond)
+
+      response =
+        Req.new(url: url)
+        |> Req.Request.put_header("authorization", "Basic #{auth_string}")
+        |> Req.Request.put_header("accept", "application/json")
+        |> Req.Request.put_header("content-type", "application/x-www-form-urlencoded")
+        |> Req.post(form: [grant_type: "client_credentials"])
+
+      end_time = System.monotonic_time(:millisecond)
+
+      response_debug =
+        case response do
+          {:ok, resp} ->
+            %{
+              status: resp.status,
+              headers: resp.headers,
+              body: resp.body,
+              response_time_ms: end_time - start_time
+            }
+
+          {:error, error} ->
+            %{error: inspect(error), response_time_ms: end_time - start_time}
+        end
+
+      debug_info = Map.put(debug_info, :response, response_debug)
+
+      case response do
+        {:ok, %{status: 200, body: body}} ->
+          {:ok, Map.put(debug_info, :token, body["access_token"])}
+
+        {:ok, %{status: status, body: body}} ->
+          Logger.error("PayPal test_authentication failed: #{status} - #{inspect(body)}")
+          {:error, :token_generation_failed, debug_info}
+
+        {:error, exception} ->
+          Logger.error("PayPal test_authentication request error: #{inspect(exception)}")
+          {:error, :request_failed, debug_info}
+      end
+    end
+  end
+
+  # test_verify_plan_exists checks if our subscription plan exists and is valid
+  @doc """
+  Tests if the configured subscription plan exists and returns plan details.
+
+  This is a diagnostic function that verifies the subscription plan configuration
+  by attempting to retrieve the plan details from PayPal.
+
+  ## Returns
+
+  - `{:ok, plan_details}` - Plan exists and details are returned
+  - `{:error, reason}` - Error occurred during plan verification
+  """
+  def test_verify_plan_exists do
+    plan_id = subscription_plan_id_aud()
+
+    if is_nil(plan_id) do
+      {:error, :missing_plan_id}
+    else
+      case get_subscription_plan(plan_id) do
+        {:ok, plan} -> {:ok, plan}
+        error -> error
+      end
+    end
   end
 
   @doc """
@@ -266,27 +397,40 @@ defmodule Partners.Services.Paypal do
   - `{:error, :request_failed}` - Request to PayPal failed
   """
   def generate_access_token do
-    url = "#{base_url()}/v1/oauth2/token"
+    client_id = config().client_id
+    secret = config().secret
 
-    # This is a special case that doesn't use api_request because it needs basic auth
-    # and different content-type
-    response =
-      Req.new(url: url, auth: {:basic, "#{config().client_id}:#{config().secret}"})
-      |> Req.Request.put_header("accept", "application/json")
-      |> Req.Request.put_header("content-type", "application/x-www-form-urlencoded")
-      |> Req.post(form: [grant_type: "client_credentials"])
+    # Check for nil credentials
+    if is_nil(client_id) || is_nil(secret) do
+      Logger.error("PayPal client_id or secret is nil. Check your configuration.")
+      {:error, :missing_credentials}
+    else
+      url = "#{base_url()}/v1/oauth2/token"
 
-    case response do
-      {:ok, %{status: 200, body: body}} ->
-        {:ok, body["access_token"]}
+      # Create Base64 encoded auth header manually (client_id:secret)
+      auth_string = Base.encode64("#{client_id}:#{secret}")
 
-      {:ok, %{status: status, body: body}} ->
-        Logger.error("Failed to generate PayPal access token: #{status} - #{inspect(body)}")
-        {:error, :token_generation_failed}
+      # This is a special case that doesn't use api_request because it needs basic auth
+      # and different content-type
+      response =
+        Req.new(url: url)
+        |> Req.Request.put_header("authorization", "Basic #{auth_string}")
+        |> Req.Request.put_header("accept", "application/json")
+        |> Req.Request.put_header("content-type", "application/x-www-form-urlencoded")
+        |> Req.post(form: [grant_type: "client_credentials"])
 
-      {:error, exception} ->
-        Logger.error("PayPal token request error: #{inspect(exception)}")
-        {:error, :request_failed}
+      case response do
+        {:ok, %{status: 200, body: body}} ->
+          {:ok, body["access_token"]}
+
+        {:ok, %{status: status, body: body}} ->
+          Logger.error("Failed to generate PayPal access token: #{status} - #{inspect(body)}")
+          {:error, :token_generation_failed}
+
+        {:error, exception} ->
+          Logger.error("PayPal token request error: #{inspect(exception)}")
+          {:error, :request_failed}
+      end
     end
   end
 
@@ -304,7 +448,7 @@ defmodule Partners.Services.Paypal do
   - `{:error, reason}` - Failed to create or verify the plan
   """
   def maybe_create_subscription_plan(product_id \\ nil) do
-    case get_subscription_plan(@subscription_plan_id_aud) do
+    case get_subscription_plan(subscription_plan_id_aud()) do
       {:ok, _plan} ->
         {:ok, :plan_exists}
 
@@ -370,7 +514,15 @@ defmodule Partners.Services.Paypal do
   - `{:error, :product_creation_failed}` - Failed to create the required product
   """
   def create_subscription_plan(product_id \\ nil) do
-    product_result = if product_id, do: {:ok, product_id}, else: create_product()
+    # Use the provided product_id, or the configured one, or create a new one
+    configured_product_id = product_id()
+
+    product_result =
+      cond do
+        product_id != nil -> {:ok, product_id}
+        configured_product_id != nil -> {:ok, configured_product_id}
+        true -> create_product()
+      end
 
     with {:ok, product_id} <- product_result,
          {:ok, plan_payload} <- build_plan_payload(product_id),
@@ -450,7 +602,7 @@ defmodule Partners.Services.Paypal do
       total_cycles: 0,
       pricing_scheme: %{
         fixed_price: %{
-          value: @subscription_price_aud,
+          value: "19.00",
           currency_code: "AUD"
         }
       }
@@ -526,35 +678,44 @@ defmodule Partners.Services.Paypal do
   - `{:error, :request_failed}` - HTTP request to PayPal failed
   """
   def create_subscription_url(profile_id, base_url \\ nil) do
-    base_url = base_url || default_base_url()
-    return_url = "#{base_url}/subscriptions/paypal/success"
-    cancel_url = "#{base_url}/subscriptions/paypal/cancel"
+    # First check if we have valid credentials
+    case generate_access_token() do
+      {:error, :missing_credentials} ->
+        {:error, "PayPal client_id or secret is nil. Check your configuration."}
 
-    with {:ok, payload} <- build_subscription_payload(profile_id, return_url, cancel_url),
-         headers = [{"prefer", "return=representation"}],
-         {:ok, body} <-
-           api_request(:post, "/v1/billing/subscriptions", json: payload, headers: headers) do
-      {:ok,
-       %{
-         subscription_id: body["id"],
-         approve_url: find_approve_url(body)
-       }}
-    else
-      {:error, {:api_error, _status, _body}} ->
-        {:error, :subscription_creation_failed}
+      _ ->
+        base_url = base_url || default_base_url()
+        return_url = "#{base_url}/subscriptions/paypal/success"
+        cancel_url = "#{base_url}/subscriptions/paypal/cancel"
 
-      error ->
-        error
+        with {:ok, payload} <- build_subscription_payload(profile_id, return_url, cancel_url),
+             headers = [{"prefer", "return=representation"}],
+             {:ok, body} <-
+               api_request(:post, "/v1/billing/subscriptions", json: payload, headers: headers) do
+          {:ok,
+           %{
+             subscription_id: body["id"],
+             approve_url: find_approve_url(body)
+           }}
+        else
+          {:error, {:api_error, _status, _body}} ->
+            {:error, :subscription_creation_failed}
+
+          error ->
+            error
+        end
     end
   end
 
   # Get default base URL based on environment
   defp default_base_url do
-    if config().sandbox_mode do
-      "http://localhost:4000"
-    else
-      "https://lovingpartners.com.au"
-    end
+    # Use the return_url_base from configuration
+    Application.get_env(:partners, __MODULE__)[:return_url_base] ||
+      if config().sandbox_mode do
+        "http://localhost:4000"
+      else
+        "https://lovingpartners.com.au"
+      end
   end
 
   # Build the payload for creating a subscription
@@ -562,11 +723,11 @@ defmodule Partners.Services.Paypal do
     # Calculate start time after trial period
     start_time =
       DateTime.utc_now()
-      |> DateTime.add(@trial_period_days, :day)
+      |> DateTime.add(trial_period_days(), :day)
       |> DateTime.to_iso8601()
 
     payload = %{
-      plan_id: @subscription_plan_id_aud,
+      plan_id: subscription_plan_id_aud(),
       start_time: start_time,
       custom_id: profile_id,
       application_context: %{
@@ -880,8 +1041,8 @@ defmodule Partners.Services.Paypal do
   # - {:ok, webhook_id} - Successfully retrieved webhook ID
   # - {:error, :webhook_id_not_configured} - Webhook ID not set in environment
   defp get_webhook_id do
-    # Using the module attribute instead of environment variable
-    {:ok, @web_hook_id}
+    webhook_id = webhook_id()
+    if webhook_id, do: {:ok, webhook_id}, else: {:error, :webhook_id_not_configured}
   end
 
   # Build the payload for webhook signature verification
@@ -1174,94 +1335,25 @@ defmodule Partners.Services.Paypal do
       # For example: Partners.Accounts.update_user_subscription(profile_id, %{
       #   subscription_status: status,
       #   subscription_id: subscription_id,
-      #   last_payment_date: last_payment,
-      #   next_billing_date: next_billing
+      #   subscription_last_updated: DateTime.utc_now()
       # })
 
-      Logger.info("Updated subscription status for profile #{profile_id}: #{status}")
+      # Return {:ok, status}
       {:ok, status}
     end
   end
 
   @doc """
-  Process a user returning from PayPal after subscription approval
+  Handle webhook events from PayPal.
 
-  This function handles the user's return from PayPal after they have approved a
-  subscription. It validates the tokens, retrieves the subscription details, and
-  connects the subscription to the user's profile.
-
-  ## Parameters
-
-  - `subscription_id` - String identifier of the PayPal subscription that was approved
-  - `ba_token` - PayPal facilitator token from the return URL query parameters
+  Validates and processes incoming webhook events from PayPal. This function
+  extracts the request body and headers, verifies the signature, and processes
+  the webhook event.
 
   ## Returns
 
-  - `{:ok, %{subscription: subscription, profile_id: profile_id}}` - Successfully processed
-     the return, includes the subscription details and the profile ID
-  - `{:error, :invalid_token}` - Missing or invalid facilitator token
-  - `{:error, :missing_profile_id}` - Subscription found but missing profile_id
-  - Error tuples from `get_subscription/1`
-  """
-  def process_subscription_return(subscription_id, ba_token) do
-    # Validate the facilitator token is present
-    if is_nil(ba_token) or ba_token == "" do
-      {:error, :invalid_token}
-    else
-      # Get the subscription details from PayPal
-      case get_subscription(subscription_id) do
-        {:ok, subscription} ->
-          # Extract the profile_id from the custom_id field
-          profile_id = subscription["custom_id"]
-
-          if is_nil(profile_id) do
-            Logger.error("Subscription missing profile_id: #{subscription_id}")
-            {:error, :missing_profile_id}
-          else
-            # Update the local subscription record for this user
-            # update_user_subscription_status(profile_id, subscription_id)
-
-            # Return the subscription with the profile_id
-            {:ok, %{subscription: subscription, profile_id: profile_id}}
-          end
-
-        error ->
-          error
-      end
-    end
-  end
-
-  @doc """
-  Acknowledge a webhook from PayPal
-
-  Extracts the request body and headers from a Phoenix connection, verifies the
-  webhook signature, and processes the event.
-
-  This should be called directly from your webhook controller endpoint.
-
-  ## Parameters
-
-  - `conn` - Phoenix Plug.Conn struct containing the webhook request
-
-  ## Returns
-
-  - `{:ok, event}` - Successfully processed the webhook event
-  - `{:error, reason}` - Failed to process the webhook for the specified reason
-
-  ## Usage
-
-  ```elixir
-  def webhook_controller(conn, _params) do
-    case Partners.Services.Paypal.handle_webhook(conn) do
-      {:ok, event} ->
-        # Return 200 success
-        send_resp(conn, 200, "Webhook received")
-      {:error, _reason} ->
-        # Return 400 bad request
-        send_resp(conn, 400, "Invalid webhook")
-    end
-  end
-  ```
+  - `{:ok, event}` - Successfully processed webhook event
+  - `{:error, reason}` - Failed to process webhook for various reasons
   """
   def handle_webhook(conn) do
     # Extract the raw body and headers needed for verification
@@ -1328,13 +1420,22 @@ defmodule Partners.Services.Paypal do
     # Build the request with appropriate authentication
     request_with_auth =
       if use_basic_auth do
-        Req.new(url: url, auth: {:basic, config().client_id, config().secret})
+        client_id = config().client_id
+        secret = config().secret
+
+        if is_nil(client_id) || is_nil(secret) do
+          {:error, :missing_credentials}
+        else
+          # Create Base64 encoded auth header manually (client_id:secret)
+          auth_string = Base.encode64("#{client_id}:#{secret}")
+
+          Req.new(url: url)
+          |> Req.Request.put_header("authorization", "Basic #{auth_string}")
+        end
       else
         with {:ok, token} <- generate_access_token() do
           Req.new(url: url)
           |> Req.Request.put_header("authorization", "Bearer #{token}")
-        else
-          error -> error
         end
       end
 

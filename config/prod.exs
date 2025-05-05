@@ -16,5 +16,14 @@ config :swoosh, local: false
 # Do not print debug messages in production
 config :logger, level: :info
 
+# PayPal configuration for production
+config :partners, Partners.Services.Paypal,
+  mode: :live,
+  base_url: "https://api-m.paypal.com",
+  # More restrictive timeout in production
+  request_timeout: 15_000
+
+# Credentials and webhook IDs will be set in runtime.exs
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
