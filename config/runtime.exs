@@ -1,26 +1,98 @@
 import Config
 
-# config/runtime.exs is executed for all environments, including
-# during releases. It is executed after compilation and before the
-# system starts, so it is typically used to load production configuration
-# and secrets from environment variables or elsewhere. Do not define
-# any compile-time configuration in here, as it won't be applied.
-# The block below contains prod specific runtime configuration.
-
-# ## Using releases
+# Runtime Configuration Structure
+# =============================
 #
-# If you use `mix release`, you need to explicitly enable the server
-# by passing the PHX_SERVER=true when you start it:
+# This configuration file is structured to handle different runtime environments
+# and is executed for all environments during releases. It is executed after
+# compilation and before the system starts, making it ideal for runtime configuration
+# and secrets management.
 #
-#     PHX_SERVER=true bin/partners start
+# Environment Types
+# ---------------
+# - Development (:dev) - Local development environment
+# - Test (:test) - Testing environment
+# - Production (:prod) - Live environments with staging/production variants
 #
-# Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
-# script that automatically sets the env var above.
+# File Organization
+# ---------------
+# 1. Global settings (applicable to all environments)
+# 2. Production-specific settings (with staging/prod variants)
+# 3. Development/test specific settings
+# 4. Service-specific configurations
+#
+# Adding New Services
+# -----------------
+# When integrating new services (APIs, databases, etc), follow this pattern:
+#
+# 1. For production environments:
+#    ```elixir
+#    if config_env() == :prod do
+#      case release_env do
+#        "staging" ->
+#          config :partners, Partners.Services.NewService,
+#            mode: :sandbox,
+#            api_key: System.fetch_env!("NEW_SERVICE_STAGING_API_KEY")
+#        "prod" ->
+#          config :partners, Partners.Services.NewService,
+#            mode: :live,
+#            api_key: System.fetch_env!("NEW_SERVICE_PRODUCTION_API_KEY")
+#      end
+#    end
+#    ```
+#
+# 2. For development/test:
+#    ```elixir
+#    if config_env() in [:dev, :test] do
+#      config :partners, Partners.Services.NewService,
+#        mode: :sandbox,
+#        api_key: System.get_env("NEW_SERVICE_API_KEY", "default_dev_key")
+#    end
+#    ```
+#
+# Release Configuration
+# ===================
+#
+# Using releases with Phoenix requires specific configuration:
+#
+# 1. Server Configuration
+#    Enable the server by setting PHX_SERVER=true:
+#    ```bash
+#    PHX_SERVER=true bin/partners start
+#    ```
+#    Or use `mix phx.gen.release` to generate a `bin/server` script
+#
+# 2. SSL Support (Production)
+#    To enable SSL:
+#    ```elixir
+#    config :partners, PartnersWeb.Endpoint,
+#      https: [
+#        port: 443,
+#        cipher_suite: :strong,
+#        keyfile: System.get_env("SSL_KEY_PATH"),
+#        certfile: System.get_env("SSL_CERT_PATH")
+#      ]
+#    ```
+#
+# 3. Mailer Configuration (Production)
+#    Configure the mailer adapter:
+#    ```elixir
+#    config :partners, Partners.Mailer,
+#      adapter: Swoosh.Adapters.Mailgun,
+#      api_key: System.get_env("MAILGUN_API_KEY"),
+#      domain: System.get_env("MAILGUN_DOMAIN")
+#    ```
+#
+# Note: This file should not contain compile-time configuration as it won't be applied.
 if System.get_env("PHX_SERVER") do
   config :partners, PartnersWeb.Endpoint, server: true
 end
 
 if config_env() == :prod do
+  # Production Environment Configuration
+  # --------------------------------
+  #
+  # Database configuration - Required for all production environments
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
@@ -34,15 +106,9 @@ if config_env() == :prod do
     # ssl: true,
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
     socket_options: maybe_ipv6
 
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
+  # Web endpoint configuration
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -50,219 +116,78 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = System.fetch_env!("PHX_HOST")
   port = String.to_integer(System.get_env("PORT") || "4000")
+  release_env = System.fetch_env!("RELEASE_ENV")
 
   config :partners, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :partners, PartnersWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
       port: port
     ],
     secret_key_base: secret_key_base
 
-  # ## SSL Support
-  #
-  # To get SSL working, you will need to add the `https` key
-  # to your endpoint configuration:
-  #
-  #     config :partners, PartnersWeb.Endpoint,
-  #       https: [
-  #         ...,
-  #         port: 443,
-  #         cipher_suite: :strong,
-  #         keyfile: System.get_env("SOME_APP_SSL_KEY_PATH"),
-  #         certfile: System.get_env("SOME_APP_SSL_CERT_PATH")
-  #       ]
-  #
-  # The `cipher_suite` is set to `:strong` to support only the
-  # latest and more secure SSL ciphers. This means old browsers
-  # and clients may not be supported. You can set it to
-  # `:compatible` for wider support.
-  #
-  # `:keyfile` and `:certfile` expect an absolute path to the key
-  # and cert in disk or a relative path inside priv, for example
-  # "priv/ssl/server.key". For all supported SSL configuration
-  # options, see https://hexdocs.pm/plug/Plug.SSL.html#configure/1
-  #
-  # We also recommend setting `force_ssl` in your config/prod.exs,
-  # ensuring no data is ever sent via http, always redirecting to https:
-  #
-  #     config :partners, PartnersWeb.Endpoint,
-  #       force_ssl: [hsts: true]
-  #
-  # Check `Plug.SSL` for all available options in `force_ssl`.
-
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Also, you may need to configure the Swoosh API client of your choice if you
-  # are not using SMTP. Here is an example of the configuration:
-  #
-  #     config :partners, Partners.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # For this example you need include a HTTP client required by Swoosh API client.
-  # Swoosh supports Hackney, Req and Finch out of the box:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
-  #
-  # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
-
-  # PayPal API Configuration
-  # Determine the environment
-  app_env =
-    System.get_env("APP_ENV") ||
-      if config_env() == :prod do
-        raise """
-        environment variable APP_ENV is missing.
-        Must be explicitly set to "production", "staging", or "development"
-        """
-      else
-        # Only default to development in non-prod environments
-        "development"
-      end
-
-  # Common PayPal settings with validation
-  paypal_client_id =
-    System.get_env("PAYPAL_CLIENT_ID") ||
-      raise """
-      environment variable PAYPAL_CLIENT_ID is missing.
-      This is required for PayPal integration in all environments.
-      """
-
-  paypal_secret =
-    System.get_env("PAYPAL_SECRET") ||
-      raise """
-      environment variable PAYPAL_SECRET is missing.
-      This is required for PayPal integration in all environments.
-      """
-
-  # Base configuration for PayPal
-  config :partners, Partners.Services.Paypal,
-    client_id: paypal_client_id,
-    secret: paypal_secret
-
-  # Configure environment-specific settings
-  case app_env do
-    "production" ->
-      # Validate production-specific settings
-      paypal_production_webhook_id =
-        System.get_env("PAYPAL_PRODUCTION_WEBHOOK_ID") ||
-          raise """
-          environment variable PAYPAL_PRODUCTION_WEBHOOK_ID is missing.
-          This is required for PayPal webhooks in production environment.
-          """
-
-      paypal_production_plan_id_aud =
-        System.get_env("PAYPAL_PRODUCTION_PLAN_ID_AUD") ||
-          raise """
-          environment variable PAYPAL_PRODUCTION_PLAN_ID_AUD is missing.
-          This is required for subscription plans in production environment.
-          """
-
-      paypal_production_product_id =
-        System.get_env("PAYPAL_PRODUCTION_PRODUCT_ID") ||
-          raise """
-          environment variable PAYPAL_PRODUCTION_PRODUCT_ID is missing.
-          This is required for PayPal product identification in production environment.
-          """
-
-      host =
-        System.get_env("PHX_HOST") ||
-          raise """
-          environment variable PHX_HOST is missing.
-          This is required to generate webhook and return URLs in production.
-          """
-
-      config :partners, Partners.Services.Paypal,
-        webhook_id: paypal_production_webhook_id,
-        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
-        return_url_base: "https://#{host}/subscriptions/paypal",
-        subscription_plan_id_aud: paypal_production_plan_id_aud,
-        product_id: paypal_production_product_id
-
+  # Service-specific Production Configurations
+  # -------------------------------------
+  # Using release_env to differentiate between staging and production settings.
+  # This pattern can be replicated for other services that need different
+  # configurations between environments.
+  case release_env do
     "staging" ->
-      # Validate staging-specific settings
-      paypal_sandbox_webhook_id =
-        System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID") ||
-          raise """
-          environment variable PAYPAL_SANDBOX_WEBHOOK_ID is missing.
-          This is required for PayPal webhooks in staging environment.
-          """
-
-      paypal_sandbox_plan_id_aud =
-        System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD") ||
-          raise """
-          environment variable PAYPAL_SANDBOX_PLAN_ID_AUD is missing.
-          This is required for subscription plans in staging environment.
-          """
-
-      paypal_sandbox_product_id =
-        System.get_env("PAYPAL_SANDBOX_PRODUCT_ID") ||
-          raise """
-          environment variable PAYPAL_SANDBOX_PRODUCT_ID is missing.
-          This is required for PayPal product identification in staging environment.
-          """
-
-      host =
-        System.get_env("PHX_HOST") ||
-          raise """
-          environment variable PHX_HOST is missing.
-          This is required to generate webhook and return URLs in staging.
-          """
-
       config :partners, Partners.Services.Paypal,
-        # Override the mode to ensure sandbox is used in staging
         mode: :sandbox,
-        webhook_id: paypal_sandbox_webhook_id,
+        base_url: "https://api-m.sandbox.paypal.com",
+        webhook_id: System.fetch_env!("PAYPAL_SANDBOX_WEBHOOK_ID"),
+        plan_id: System.fetch_env!("PAYPAL_SANDBOX_PLAN_ID_AUD"),
+        product_id: System.fetch_env!("PAYPAL_SANDBOX_PRODUCT_ID"),
         webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
-        return_url_base: "https://#{host}/subscriptions/paypal",
-        subscription_plan_id_aud: paypal_sandbox_plan_id_aud,
-        product_id: paypal_sandbox_product_id
+        return_url: "https://#{host}/subscriptions/paypal/return",
+        cancel_url: "https://#{host}/subscriptions/paypal/cancel"
 
-    "development" ->
-      # In development, allow configuration via environment variables
-      # with reasonable defaults for local development
-      dev_base_url = System.get_env("PAYPAL_DEV_BASE_URL", "http://localhost:4000")
-      # If ngrok URL is provided, use it for both webhook and return URLs
-      ngrok_url = System.get_env("NGROK_URL")
-      # Otherwise use the configured dev base URL
-      base_url_for_callbacks = ngrok_url || dev_base_url
-
+    "prod" ->
       config :partners, Partners.Services.Paypal,
-        webhook_id: System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID"),
-        webhook_url: "#{base_url_for_callbacks}/webhooks/subscriptions/paypal",
-        return_url_base: "#{base_url_for_callbacks}/subscriptions/paypal",
-        subscription_plan_id_aud:
-          System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD", "P-1A446093FD195141FNALUJUY"),
-        product_id: System.get_env("PAYPAL_SANDBOX_PRODUCT_ID", "PROD-7DC4439U7095870S")
-
-      # Log a warning if credentials are missing in development
-      if !paypal_client_id || !paypal_secret do
-        Logger.warning("""
-        PayPal credentials not set in development environment.
-        Set PAYPAL_CLIENT_ID and PAYPAL_SECRET environment variables for full functionality.
-        """)
-      end
+        mode: :live,
+        base_url: "https://api-m.paypal.com",
+        webhook_id: System.fetch_env!("PAYPAL_PRODUCTION_WEBHOOK_ID"),
+        plan_id: System.fetch_env!("PAYPAL_PRODUCTION_PLAN_ID_AUD"),
+        product_id: System.fetch_env!("PAYPAL_PRODUCTION_PRODUCT_ID"),
+        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
+        return_url: "https://#{host}/subscriptions/paypal/return",
+        cancel_url: "https://#{host}/subscriptions/paypal/cancel"
 
     other ->
-      raise """
-      Invalid APP_ENV value: #{other}
-      Must be one of: "production", "staging", or "development"
-      """
+      raise "Unknown RELEASE_ENV value: #{other}. Expected 'staging' or 'prod'"
   end
 end
 
-# Used for IP checking
+# Development and Test Environment Configurations
+# -----------------------------------------
+# Service configurations for local development and testing.
+# Add new service configurations here for :dev and :test environments.
+if config_env() in [:dev, :test] do
+  host = System.get_env("PHX_HOST", "localhost:4000")
+
+  config :partners, Partners.Services.Paypal,
+    mode: :sandbox,
+    base_url: "https://api-m.sandbox.paypal.com",
+    webhook_id: System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID"),
+    plan_id: System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD"),
+    product_id: System.get_env("PAYPAL_SANDBOX_PRODUCT_ID"),
+    webhook_url: "http://#{host}/webhooks/subscriptions/paypal",
+    return_url: "http://#{host}/subscriptions/paypal/return",
+    cancel_url: "http://#{host}/subscriptions/paypal/cancel"
+end
+
+# Global Service Configurations
+# ---------------------------
+# Settings that apply across all environments but may have
+# environment-specific values. These are typically external
+# service credentials that are required regardless of environment.
+
+# IP Registry Service Configuration
 ip_registry_api_key =
   System.get_env("IP_REGISTRY_API_KEY") ||
     raise """

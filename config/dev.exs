@@ -87,11 +87,13 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-# PayPal configuration for development
+# PayPal sandbox configuration
 config :partners, Partners.Services.Paypal,
   mode: :sandbox,
   base_url: "https://api-m.sandbox.paypal.com",
-  # For sandbox testing, you can insert your test plan ID here
-  subscription_plan_id_aud: "P-1A446093FD195141FNALUJUY"
-
-# Return URLs will be set by environment variables or defaults from runtime.exs
+  webhook_id: "test_webhook_id",
+  plan_id: "test_plan_id",
+  product_id: "test_product_id",
+  webhook_url: "http://localhost:4000/webhooks/subscriptions/paypal",
+  return_url: "http://localhost:4000/subscriptions/paypal/return",
+  cancel_url: "http://localhost:4000/subscriptions/paypal/cancel"

@@ -73,14 +73,10 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# PayPal configuration (common settings)
+# Common PayPal configuration (used across all environments)
 config :partners, Partners.Services.Paypal,
-  # Configuration defaults - environment-specific settings override these
-  subscription_currency: "AUD",
-  subscription_price_aud: "19.00",
-  trial_period_days: 7,
-  # Default request timeouts
-  request_timeout: 30_000
+  client_id: System.get_env("PAYPAL_CLIENT_ID"),
+  secret: System.get_env("PAYPAL_SECRET")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

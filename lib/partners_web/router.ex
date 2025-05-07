@@ -48,16 +48,10 @@ defmodule PartnersWeb.Router do
 
   # PayPal webhook endpoint
   scope "/webhooks", PartnersWeb do
+    # Use the standard API pipeline for webhook endpoints
     pipe_through :api
 
     post "/subscriptions/paypal", Api.Webhooks.WebhookController, :paypal
-  end
-
-  # PayPal subscription return URLs
-  scope "/subscriptions", PartnersWeb do
-    pipe_through :browser
-
-    get "/paypal/:outcome", Api.Webhooks.WebhookController, :subscription_return
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -101,9 +95,6 @@ defmodule PartnersWeb.Router do
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
     end
-
-    # Add a route for subscription testing
-    live "/subscriptions/test", SubscriptionTestLive, :index
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
