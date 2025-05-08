@@ -38,13 +38,16 @@ defmodule PartnersWeb.Router do
   scope "/", PartnersWeb do
     pipe_through :browser
 
-    # get "/", PageController, :home
+    # PayPal subscription return URLs
+    get "/subscriptions/paypal/return", Api.Webhooks.WebhookController, :subscription_return,
+      action: "success"
+
+    get "/subscriptions/paypal/cancel", Api.Webhooks.WebhookController, :subscription_return,
+      action: "cancel"
+
+    # Add other public browser routes here
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", PartnersWeb do
-  #   pipe_through :api
-  # end
 
   # PayPal webhook endpoint
   scope "/webhooks", PartnersWeb do
@@ -94,6 +97,12 @@ defmodule PartnersWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+
+      # Subscription routes
+      live "/subscriptions", SubscriptionLive, :index
+      live "/subscriptions/new", SubscriptionLive, :new
+      live "/subscriptions/success", SubscriptionLive, :success
+      live "/subscriptions/cancel", SubscriptionLive, :cancel
     end
 
     post "/users/log-in", UserSessionController, :create
