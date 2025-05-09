@@ -158,10 +158,16 @@ defmodule PartnersWeb.SubscriptionLive do
   def handle_params(_params, _url, socket) do
     action = socket.assigns.live_action || :index
 
-    {:noreply,
-     socket
-     |> assign(:live_action, action)
-     |> assign(:page_title, page_title(action))}
+    new_assigns = %{live_action: action, page_title: page_title(action)}
+
+    updated_assigns =
+      if action == :success and is_nil(socket.assigns.subscription_status) do
+        Map.put(new_assigns, :subscription_status, :pending)
+      else
+        new_assigns
+      end
+
+    {:noreply, assign(socket, updated_assigns)}
   end
 
   @impl true
@@ -234,7 +240,7 @@ defmodule PartnersWeb.SubscriptionLive do
       <%= if @subscription_status == :pending and @approval_url do %>
         <div class="mb-4">
           <p>To complete your subscription, please proceed to PayPal for payment.</p>
-          <a href={@approval_url} target="_blank" class="btn btn-primary mt-2">
+          <a href={@approval_url} class="btn btn-primary mt-2">
             Proceed to PayPal
           </a>
         </div>
