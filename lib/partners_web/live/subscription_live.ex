@@ -144,7 +144,9 @@ defmodule PartnersWeb.SubscriptionLive do
      |> assign(:subscription_status, nil)
      |> assign(:error_message, nil)
      |> assign(:approval_url, nil)
-     |> assign(:subscription_id, nil)}
+     |> assign(:subscription_id, nil)
+     # Added
+     |> assign(:transferring_to_paypal, false)}
   end
 
   @doc """
@@ -156,25 +158,34 @@ defmodule PartnersWeb.SubscriptionLive do
   """
   @impl true
   def handle_params(_params, _url, socket) do
-    action = socket.assigns.live_action || :index
+    # This is the new action from the URL
+    action = socket.assigns.live_action
 
-    new_assigns = %{live_action: action, page_title: page_title(action)}
-
-    socket =
-      if action == :start_trial and socket.assigns.subscription_status == nil do
-        # Get the plan_id from the Paypal service
-        trial_plan_id = Partners.Services.Paypal.plan_id()
-        send(self(), {:initiate_trial_subscription, trial_plan_id})
-        socket
-      else
-        socket
-      end
+    current_assigns = %{
+      live_action: action,
+      page_title: page_title(action)
+    }
 
     updated_assigns =
-      if action == :success and is_nil(socket.assigns.subscription_status) do
-        Map.put(new_assigns, :subscription_status, :pending)
-      else
-        new_assigns
+      case action do
+        :start_trial ->
+          Map.merge(current_assigns, %{
+            transferring_to_paypal: false,
+            approval_url: nil,
+            error_message: nil,
+            # Reset state for start_trial page
+            subscription_status: nil
+          })
+
+        :success ->
+          if is_nil(socket.assigns.subscription_status) do
+            Map.put(current_assigns, :subscription_status, :pending)
+          else
+            current_assigns
+          end
+
+        _ ->
+          current_assigns
       end
 
     {:noreply, assign(socket, updated_assigns)}
@@ -257,20 +268,24 @@ defmodule PartnersWeb.SubscriptionLive do
           Try Again
         </button>
       <% else %>
-        <%= if @approval_url do %>
-          <div class="alert alert-info mb-4">
-            <p>Your free trial is ready! Click below to confirm with PayPal.</p>
-          </div>
-          <a href={@approval_url} class="btn btn-primary mt-2">
-            Proceed to PayPal to Start Trial
-          </a>
-        <% else %>
+        <%= if @transferring_to_paypal do %>
           <div class="alert alert-info">
             <p>
               <span class="loading loading-spinner loading-sm"></span>
-              We're preparing your free trial. This should only take a moment...
+              Transferring you to PayPal. This should only take a moment...
             </p>
           </div>
+        <% else %>
+          <div class="alert alert-info mb-4">
+            <p>Your free trial is one click away! Click below to confirm with PayPal.</p>
+          </div>
+          <button
+            phx-click="request_paypal_approval_url"
+            class="mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
+          >
+            <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
+            <span>Start Trial</span>
+          </button>
         <% end %>
       <% end %>
     </div>
@@ -312,47 +327,7 @@ defmodule PartnersWeb.SubscriptionLive do
          |> assign(:error_message, error_message)
          |> assign(:live_action, :success)}
 
-      {:initiate_trial_subscription, plan_id} ->
-        Logger.info("Initiating trial subscription with plan_id: #{plan_id}")
-        user = socket.assigns.current_scope.user
-
-        case Partners.Services.Paypal.create_subscription(user.id, plan_id) do
-          {:ok, subscription_data} ->
-            subscription_id = subscription_data["id"]
-            approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
-
-            if approval_url do
-              {:noreply,
-               socket
-               |> assign(
-                 subscription_status: :pending,
-                 subscription_id: subscription_id,
-                 approval_url: approval_url,
-                 error_message: nil
-               )}
-            else
-              {:noreply,
-               socket
-               |> assign(
-                 subscription_status: :failed,
-                 error_message: "Failed to create trial: No approval URL from PayPal.",
-                 approval_url: nil,
-                 subscription_id: nil
-               )}
-            end
-
-          {:error, reason} ->
-            error_message = extract_error_message(reason)
-
-            {:noreply,
-             socket
-             |> assign(
-               subscription_status: :failed,
-               error_message: "Failed to create trial: #{error_message}",
-               approval_url: nil,
-               subscription_id: nil
-             )}
-        end
+      # Removed: {:initiate_trial_subscription, plan_id} logic is now in handle_event
 
       _ ->
         Logger.warning("Received unknown message format: #{inspect(message)}")
@@ -361,16 +336,57 @@ defmodule PartnersWeb.SubscriptionLive do
   end
 
   @impl true
-  def handle_event("retry_trial_creation", _params, socket) do
-    trial_plan_id = Partners.Services.Paypal.plan_id()
-    send(self(), {:initiate_trial_subscription, trial_plan_id})
+  def handle_event("request_paypal_approval_url", _params, socket) do
+    socket_with_spinner =
+      assign(socket,
+        transferring_to_paypal: true,
+        error_message: nil,
+        approval_url: nil,
+        subscription_status: nil
+      )
 
+    user = socket_with_spinner.assigns.current_scope.user
+    trial_plan_id = Partners.Services.Paypal.plan_id()
+
+    case Partners.Services.Paypal.create_subscription(user.id, trial_plan_id) do
+      {:ok, subscription_data} ->
+        subscription_id = subscription_data["id"]
+        approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
+
+        if approval_url do
+          final_socket = assign(socket_with_spinner, subscription_id: subscription_id)
+          # Use push_event for client-side redirection
+          {:noreply, push_event(final_socket, "phx:redirect-external", %{url: approval_url})}
+        else
+          {:noreply,
+           assign(socket_with_spinner,
+             subscription_status: :failed,
+             error_message: "Failed to prepare PayPal: No approval URL received from PayPal.",
+             transferring_to_paypal: false
+           )}
+        end
+
+      {:error, reason} ->
+        error_message = extract_error_message(reason)
+
+        {:noreply,
+         assign(socket_with_spinner,
+           subscription_status: :failed,
+           error_message: "Failed to prepare PayPal: #{error_message}",
+           transferring_to_paypal: false
+         )}
+    end
+  end
+
+  @impl true
+  def handle_event("retry_trial_creation", _params, socket) do
     {:noreply,
      socket
      |> assign(
        error_message: nil,
        approval_url: nil,
        subscription_status: nil,
+       transferring_to_paypal: false,
        page_title: page_title(:start_trial)
      )}
   end
