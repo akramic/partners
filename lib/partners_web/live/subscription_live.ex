@@ -123,14 +123,14 @@ defmodule PartnersWeb.SubscriptionLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # Generate temporary user ID for testing
-    # Future: This will be replaced with actual user ID from scope
-    temp_user_id = "temp_#{:crypto.strong_rand_bytes(8) |> Base.encode16()}"
+    # Use the real user from the current scope
+    user = socket.assigns.current_scope.user
+    user_id = user.id
 
-    Logger.info("Subscription LiveView mounted with temp_user_id: #{temp_user_id}")
+    Logger.info("Subscription LiveView mounted with user_id: #{user_id}")
 
     if connected?(socket) do
-      subscription_topic = "paypal_subscription:#{temp_user_id}"
+      subscription_topic = "paypal_subscription:#{user_id}"
       Logger.info("Subscribing to PayPal subscription topic: #{subscription_topic}")
       :ok = Phoenix.PubSub.subscribe(Partners.PubSub, subscription_topic)
       Logger.info("Successfully subscribed to PayPal subscription topic")
@@ -138,23 +138,13 @@ defmodule PartnersWeb.SubscriptionLive do
       Logger.info("Socket not connected yet, skipping PubSub subscription")
     end
 
-    # Create a temporary user struct for testing
-    temp_user = %{
-      id: temp_user_id,
-      email: "test@example.com",
-      confirmed_at: DateTime.utc_now()
-    }
-
-    # Set up scope with proper user struct
     {:ok,
      socket
      |> assign(:page_title, "Subscription")
-     |> assign(:current_scope, %{
-       user: temp_user,
-       temp_id: temp_user_id
-     })
      |> assign(:subscription_status, nil)
-     |> assign(:error_message, nil)}
+     |> assign(:error_message, nil)
+     |> assign(:approval_url, nil)
+     |> assign(:subscription_id, nil)}
   end
 
   @doc """
@@ -241,6 +231,15 @@ defmodule PartnersWeb.SubscriptionLive do
         </p>
       </div>
 
+      <%= if @subscription_status == :pending and @approval_url do %>
+        <div class="mb-4">
+          <p>To complete your subscription, please proceed to PayPal for payment.</p>
+          <a href={@approval_url} target="_blank" class="btn btn-primary mt-2">
+            Proceed to PayPal
+          </a>
+        </div>
+      <% end %>
+
       <div class="flex gap-2">
         <.link patch={~p"/subscriptions"} class="btn btn-sm">
           Return to Plans
@@ -282,7 +281,7 @@ defmodule PartnersWeb.SubscriptionLive do
   """
   @impl true
   def handle_info(message, socket) do
-    user_id = socket.assigns.current_scope.temp_id
+    user_id = socket.assigns.current_scope.user.id
     Logger.info("🔔 LiveView received message for user #{user_id}: #{inspect(message)}")
 
     case message do
@@ -314,24 +313,61 @@ defmodule PartnersWeb.SubscriptionLive do
   @doc """
   Handles the initial subscription creation event.
 
-  Uses push_patch for navigation to maintain the LiveView socket connection while
-  changing to the success view. This ensures that:
-  1. The PubSub subscription remains active
-  2. All socket assigns are preserved
-  3. The user sees immediate feedback (pending state)
-  4. The socket is ready to receive PayPal webhook updates
+  Creates a PayPal subscription via the PayPal service and updates the LiveView state.
+  The user is presented with a link to complete payment on PayPal while the LiveView
+  maintains its state and PubSub subscription to receive webhook updates.
   """
   @impl true
   def handle_event("create_subscription", _params, socket) do
-    # Simulate a subscription creation
-    # In real implementation, this would create a PayPal subscription and redirect to PayPal
+    user = socket.assigns.current_scope.user
+    user_id = user.id
 
-    # Set the status to pending and redirect to success page
-    {:noreply,
-     socket
-     |> assign(:subscription_status, :pending)
-     |> push_patch(to: ~p"/subscriptions/success")}
+    case Partners.Services.Paypal.create_subscription(user_id) do
+      {:ok, subscription_data} ->
+        subscription_id = subscription_data["id"]
+        approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
+
+        if approval_url do
+          {:noreply,
+           socket
+           |> assign(:subscription_status, :pending)
+           |> assign(:subscription_id, subscription_id)
+           |> assign(:approval_url, approval_url)
+           |> push_patch(to: ~p"/subscriptions/success")}
+        else
+          # No approval URL found, show error
+          {:noreply,
+           socket
+           |> assign(:subscription_status, :failed)
+           |> assign(:error_message, "Failed to create subscription: No approval URL")
+           |> push_patch(to: ~p"/subscriptions/success")}
+        end
+
+      {:error, reason} ->
+        error_message = extract_error_message(reason)
+
+        {:noreply,
+         socket
+         |> assign(:subscription_status, :failed)
+         |> assign(:error_message, "Failed to create subscription: #{error_message}")
+         |> push_patch(to: ~p"/subscriptions/success")}
+    end
   end
+
+  # Helper to extract a friendly error message from PayPal API error responses
+  defp extract_error_message(error) when is_map(error) do
+    cond do
+      # Try to get detailed error message from PayPal response
+      get_in(error, ["name"]) ->
+        "#{get_in(error, ["name"])}: #{get_in(error, ["message"])}"
+
+      # Fallback for other error structures
+      true ->
+        inspect(error)
+    end
+  end
+
+  defp extract_error_message(error), do: inspect(error)
 
   # Helper functions
   defp subscription_card(assigns) do

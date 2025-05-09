@@ -37,24 +37,14 @@ defmodule PartnersWeb.Router do
 
   scope "/", PartnersWeb do
     pipe_through :browser
-
-    # PayPal subscription return URLs
-    get "/subscriptions/paypal/return", Api.Webhooks.WebhookController, :subscription_return,
-      action: "success"
-
-    get "/subscriptions/paypal/cancel", Api.Webhooks.WebhookController, :subscription_return,
-      action: "cancel"
-
-    # Add other public browser routes here
+    # Public browser routes here
   end
 
-
   # PayPal webhook endpoint
-  scope "/webhooks", PartnersWeb do
+  scope "/api", PartnersWeb do
     # Use the standard API pipeline for webhook endpoints
     pipe_through :api
-
-    post "/subscriptions/paypal", Api.Webhooks.WebhookController, :paypal
+    post "/webhooks/paypal", Api.Webhooks.PaypalWebhookController, :paypal
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -103,9 +93,17 @@ defmodule PartnersWeb.Router do
       live "/subscriptions/new", SubscriptionLive, :new
       live "/subscriptions/success", SubscriptionLive, :success
       live "/subscriptions/cancel", SubscriptionLive, :cancel
+
+      # PayPal return URLs
+      get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
+      get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
+
+    # Direct PayPal return routes for backwards compatibility
+    get "/paypal/return", Api.Webhooks.PaypalReturnController, :return
+    get "/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
   end
 end

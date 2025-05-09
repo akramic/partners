@@ -32,155 +32,85 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
 
   Always returns 200 OK (PayPal best practice) but logs any processing errors.
   """
-  def paypal(conn, _params) do
+  def paypal(conn, params) do
     # Log initial webhook receipt
     Logger.info("""
     🔔 WEBHOOK: Received PayPal webhook
     Headers: #{inspect(conn.req_headers, pretty: true)}
+    Params: #{inspect(params, pretty: true)}
     """)
 
-    # Read and decode the raw body
-    {:ok, body, _conn} = Plug.Conn.read_body(conn)
+    # Extract event type and resource from params
+    event_type = params["event_type"]
+    resource = params["resource"]
 
-    case Jason.decode(body) do
-      {:ok, webhook_data} ->
-        # Extract subscription and profile information
-        subscription_id = webhook_data["resource"]["id"]
-        # Assuming we set this during subscription creation
-        profile_id = webhook_data["resource"]["custom_id"]
-        event_type = webhook_data["event_type"]
+    # Extract user_id from custom_id in the resource data
+    user_id = extract_user_id_from_resource(resource)
 
-        # Create event data
-        event_data = %{
-          event_type: event_type,
-          subscription_id: subscription_id,
-          status: webhook_data["resource"]["status"],
-          timestamp: webhook_data["create_time"],
-          raw_data: webhook_data
-        }
+    if user_id && event_type do
+      # Process the webhook event
+      case Partners.Services.Paypal.process_webhook_event(event_type, resource, user_id) do
+        {:ok, subscription_state} ->
+          # Broadcast to the user's subscription topic
+          broadcast_subscription_update(user_id, subscription_state)
 
-        # Broadcast to profile-specific topic
-        if profile_id do
-          Logger.info("Broadcasting to profile topic: subscription:#{profile_id}")
+        {:error, reason} ->
+          # Log the error and optionally broadcast error event
+          Logger.error("Error processing PayPal webhook: #{inspect(reason)}")
+          broadcast_subscription_error(user_id, "Error processing webhook: #{inspect(reason)}")
+      end
+    else
+      Logger.warn("Missing user_id or event_type in PayPal webhook")
+    end
 
-          Phoenix.PubSub.broadcast(
-            Partners.PubSub,
-            "subscription:#{profile_id}",
-            {:subscription_updated, event_data}
-          )
-        end
+    # Always respond with 200 OK to PayPal (best practice)
+    send_resp(conn, 200, "OK")
+  end
 
-        # Broadcast to global subscriptions topic
-        Logger.info("Broadcasting to global subscriptions topic")
+  # Extract user_id from resource data (adapt based on your PayPal payload structure)
+  defp extract_user_id_from_resource(resource) when is_map(resource) do
+    # Try different paths where user_id might be stored
+    cond do
+      # Check custom_id in the subscription object (common for subscription events)
+      resource["custom_id"] ->
+        resource["custom_id"]
 
-        Phoenix.PubSub.broadcast(
-          Partners.PubSub,
-          "subscriptions",
-          {:subscription_event, event_data}
-        )
+      # Check for subscription object
+      resource["subscription"] && resource["subscription"]["custom_id"] ->
+        resource["subscription"]["custom_id"]
 
-        send_resp(conn, 200, "OK")
+      # Additional checks as needed for different event types
 
-      {:error, error} ->
-        Logger.error("Failed to decode webhook payload: #{inspect(error)}")
-        # Still return 200 to PayPal
-        send_resp(conn, 200, "OK")
+      true ->
+        nil
     end
   end
 
-  @doc """
-  Handle PayPal subscription return URLs.
+  defp extract_user_id_from_resource(_), do: nil
 
-  This endpoint receives redirect requests from PayPal after a user approves or cancels
-  a subscription. The :action parameter will be either "success" or "cancel".
+  # Broadcast a subscription update event
+  defp broadcast_subscription_update(user_id, subscription_state) do
+    topic = "paypal_subscription:#{user_id}"
 
-  For successful subscriptions:
-  1. Retrieves subscription details from query parameters
-  2. Broadcasts success event via PubSub
-  3. Redirects to appropriate success page
+    message = %{
+      event: "subscription_updated",
+      subscription_state: subscription_state
+    }
 
-  For cancelled subscriptions:
-  1. Broadcasts cancellation event via PubSub
-  2. Redirects to cancellation page
-  """
-  def subscription_return(conn, %{"action" => action} = params) do
-    Logger.info("Received PayPal subscription #{action} return: #{inspect(params)}")
+    Logger.info("Broadcasting subscription update to #{topic}: #{inspect(message)}")
+    Phoenix.PubSub.broadcast(Partners.PubSub, topic, message)
+  end
 
-    case action do
-      "success" ->
-        subscription_id = params["subscription_id"]
-        # Added during subscription creation
-        profile_id = params["profile_id"]
+  # Broadcast a subscription error event
+  defp broadcast_subscription_error(user_id, error_message) do
+    topic = "paypal_subscription:#{user_id}"
 
-        if subscription_id do
-          # Broadcast successful subscription event
-          event_data = %{
-            event_type: "SUBSCRIPTION.APPROVED",
-            subscription_id: subscription_id,
-            status: "APPROVAL_PENDING",
-            timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
-          }
+    message = %{
+      event: "subscription_error",
+      error: error_message
+    }
 
-          # Broadcast to both topics
-          if profile_id do
-            Phoenix.PubSub.broadcast(
-              Partners.PubSub,
-              "subscription:#{profile_id}",
-              {:subscription_updated, event_data}
-            )
-          end
-
-          Phoenix.PubSub.broadcast(
-            Partners.PubSub,
-            "subscriptions",
-            {:subscription_event, event_data}
-          )
-
-          conn
-          |> put_flash(
-            :info,
-            "Subscription successfully set up! You now have a 7-day free trial."
-          )
-          |> redirect(to: ~p"/subscriptions/success")
-        else
-          conn
-          |> put_flash(:error, "Missing subscription information.")
-          |> redirect(to: ~p"/subscriptions")
-        end
-
-      "cancel" ->
-        profile_id = params["profile_id"]
-
-        # Broadcast cancellation event
-        event_data = %{
-          event_type: "SUBSCRIPTION.CANCELLED_BY_USER",
-          status: "CANCELLED",
-          timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
-        }
-
-        # Broadcast to both topics
-        if profile_id do
-          Phoenix.PubSub.broadcast(
-            Partners.PubSub,
-            "subscription:#{profile_id}",
-            {:subscription_updated, event_data}
-          )
-        end
-
-        Phoenix.PubSub.broadcast(
-          Partners.PubSub,
-          "subscriptions",
-          {:subscription_event, event_data}
-        )
-
-        conn
-        |> put_flash(:info, "Subscription setup was cancelled.")
-        |> redirect(to: ~p"/subscriptions/cancel")
-
-      _ ->
-        conn
-        |> put_flash(:error, "Invalid subscription response.")
-        |> redirect(to: ~p"/subscriptions")
-    end
+    Logger.error("Broadcasting subscription error to #{topic}: #{inspect(message)}")
+    Phoenix.PubSub.broadcast(Partners.PubSub, topic, message)
   end
 end
