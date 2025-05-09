@@ -160,6 +160,16 @@ defmodule PartnersWeb.SubscriptionLive do
 
     new_assigns = %{live_action: action, page_title: page_title(action)}
 
+    socket =
+      if action == :start_trial and socket.assigns.subscription_status == nil do
+        # Get the plan_id from the Paypal service
+        trial_plan_id = Partners.Services.Paypal.plan_id()
+        send(self(), {:initiate_trial_subscription, trial_plan_id})
+        socket
+      else
+        socket
+      end
+
     updated_assigns =
       if action == :success and is_nil(socket.assigns.subscription_status) do
         Map.put(new_assigns, :subscription_status, :pending)
@@ -182,34 +192,6 @@ defmodule PartnersWeb.SubscriptionLive do
   end
 
   # Individual templates for each subscription state
-  defp render_content(%{live_action: :index} = assigns) do
-    ~H"""
-    <div class="space-y-8">
-      <h1 class="text-2xl font-bold">Subscription Plans</h1>
-      <div class="grid gap-6">
-        <!-- Show current subscription status -->
-        <div :if={@subscription_status} class="alert alert-info">
-          <p>Current Status: {@subscription_status}</p>
-        </div>
-
-        <.subscription_card />
-      </div>
-    </div>
-    """
-  end
-
-  defp render_content(%{live_action: :new} = assigns) do
-    ~H"""
-    <div>
-      <h1 class="text-2xl font-bold mb-4">Start New Subscription</h1>
-      <!-- Future: Will show selected plan details -->
-      <button phx-click="create_subscription" class="btn btn-primary">
-        Subscribe Now
-      </button>
-    </div>
-    """
-  end
-
   defp render_content(%{live_action: :success} = assigns) do
     ~H"""
     <div>
@@ -228,7 +210,7 @@ defmodule PartnersWeb.SubscriptionLive do
             <% :pending -> %>
               <span class="loading loading-spinner loading-sm"></span> Processing your subscription...
             <% :failed -> %>
-              Subscription activation failed. Please try again.
+              Subscription activation failed.
             <% :cancelled -> %>
               Your subscription has been cancelled.
             <% _ -> %>
@@ -247,15 +229,7 @@ defmodule PartnersWeb.SubscriptionLive do
       <% end %>
 
       <div class="flex gap-2">
-        <.link patch={~p"/subscriptions"} class="btn btn-sm">
-          Return to Plans
-        </.link>
-
-        <%= if @subscription_status == :failed do %>
-          <.link patch={~p"/subscriptions/new"} class="btn btn-sm btn-primary">
-            Try Again
-          </.link>
-        <% end %>
+        
       </div>
     </div>
     """
@@ -267,9 +241,20 @@ defmodule PartnersWeb.SubscriptionLive do
       <h1 class="text-2xl font-bold mb-4">Subscription Cancelled</h1>
       <div class="alert alert-warning">
         <p>Your subscription process was cancelled.</p>
-        <.link patch={~p"/subscriptions"} class="btn btn-sm mt-4">
-          Return to Plans
-        </.link>
+      </div>
+    </div>
+    """
+  end
+
+  defp render_content(%{live_action: :start_trial} = assigns) do
+    ~H"""
+    <div>
+      <h1 class="text-2xl font-bold mb-4">Starting Your Free Trial...</h1>
+      <div class="alert alert-info">
+        <p>
+          <span class="loading loading-spinner loading-sm"></span>
+          We're preparing your free trial. You'll be redirected to PayPal shortly.
+        </p>
       </div>
     </div>
     """
@@ -310,53 +295,46 @@ defmodule PartnersWeb.SubscriptionLive do
          |> assign(:error_message, error_message)
          |> assign(:live_action, :success)}
 
+      {:initiate_trial_subscription, plan_id} ->
+        Logger.info("Initiating trial subscription with plan_id: #{plan_id}")
+        # Call create_subscription with the specific plan_id
+        # Assuming Partners.Services.Paypal.create_subscription/2 exists and takes user_id and plan_id
+        user = socket.assigns.current_scope.user
+
+        case Partners.Services.Paypal.create_subscription(user.id, plan_id) do
+          {:ok, subscription_data} ->
+            subscription_id = subscription_data["id"]
+            approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
+
+            if approval_url do
+              {:noreply,
+               socket
+               |> assign(:subscription_status, :pending)
+               |> assign(:subscription_id, subscription_id)
+               |> assign(:approval_url, approval_url)
+               # Redirect to success to show PayPal link or status
+               |> push_patch(to: ~p"/subscriptions/success")}
+            else
+              {:noreply,
+               socket
+               |> assign(:subscription_status, :failed)
+               |> assign(:error_message, "Failed to create trial: No approval URL")
+               |> push_patch(to: ~p"/subscriptions/success")}
+            end
+
+          {:error, reason} ->
+            error_message = extract_error_message(reason)
+
+            {:noreply,
+             socket
+             |> assign(:subscription_status, :failed)
+             |> assign(:error_message, "Failed to create trial: #{error_message}")
+             |> push_patch(to: ~p"/subscriptions/success")}
+        end
+
       _ ->
         Logger.warning("Received unknown message format: #{inspect(message)}")
         {:noreply, socket}
-    end
-  end
-
-  @doc """
-  Handles the initial subscription creation event.
-
-  Creates a PayPal subscription via the PayPal service and updates the LiveView state.
-  The user is presented with a link to complete payment on PayPal while the LiveView
-  maintains its state and PubSub subscription to receive webhook updates.
-  """
-  @impl true
-  def handle_event("create_subscription", _params, socket) do
-    user = socket.assigns.current_scope.user
-    user_id = user.id
-
-    case Partners.Services.Paypal.create_subscription(user_id) do
-      {:ok, subscription_data} ->
-        subscription_id = subscription_data["id"]
-        approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
-
-        if approval_url do
-          {:noreply,
-           socket
-           |> assign(:subscription_status, :pending)
-           |> assign(:subscription_id, subscription_id)
-           |> assign(:approval_url, approval_url)
-           |> push_patch(to: ~p"/subscriptions/success")}
-        else
-          # No approval URL found, show error
-          {:noreply,
-           socket
-           |> assign(:subscription_status, :failed)
-           |> assign(:error_message, "Failed to create subscription: No approval URL")
-           |> push_patch(to: ~p"/subscriptions/success")}
-        end
-
-      {:error, reason} ->
-        error_message = extract_error_message(reason)
-
-        {:noreply,
-         socket
-         |> assign(:subscription_status, :failed)
-         |> assign(:error_message, "Failed to create subscription: #{error_message}")
-         |> push_patch(to: ~p"/subscriptions/success")}
     end
   end
 
@@ -376,25 +354,8 @@ defmodule PartnersWeb.SubscriptionLive do
   defp extract_error_message(error), do: inspect(error)
 
   # Helper functions
-  defp subscription_card(assigns) do
-    ~H"""
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">Premium Subscription</h2>
-        <p>$19.99/month</p>
-        <div class="card-actions justify-end">
-          <.link patch={~p"/subscriptions/new"} class="btn btn-primary">
-            Select Plan
-          </.link>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  defp page_title(:index), do: "Subscription Plans"
-  defp page_title(:new), do: "New Subscription"
   defp page_title(:success), do: "Subscription Status"
   defp page_title(:cancel), do: "Subscription Cancelled"
+  defp page_title(:start_trial), do: "Starting Free Trial"
   defp page_title(_), do: "Subscription"
 end

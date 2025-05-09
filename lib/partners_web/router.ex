@@ -89,10 +89,10 @@ defmodule PartnersWeb.Router do
       live "/users/log-in/:token", UserLive.Confirmation, :new
 
       # Subscription routes
-      live "/subscriptions", SubscriptionLive, :index
-      live "/subscriptions/new", SubscriptionLive, :new
       live "/subscriptions/success", SubscriptionLive, :success
       live "/subscriptions/cancel", SubscriptionLive, :cancel
+      # New route for starting a trial
+      live "/subscriptions/start_trial", SubscriptionLive, :start_trial
 
       # PayPal return URLs
       get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return

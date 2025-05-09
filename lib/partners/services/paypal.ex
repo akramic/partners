@@ -106,9 +106,9 @@ defmodule Partners.Services.Paypal do
   @doc """
   Builds the subscription payload for creating a new subscription.
   """
-  def build_subscription_payload(user_id) do
+  def build_subscription_payload(user_id, plan_id_to_use) do
     %{
-      plan_id: plan_id(),
+      plan_id: plan_id_to_use,
       application_context: %{
         brand_name: "Loving Partners",
         locale: "en-US",
@@ -164,14 +164,15 @@ defmodule Partners.Services.Paypal do
 
   Args:
     * `user_id` - The ID of the user creating the subscription
+    * `plan_id_to_use` - The specific PayPal plan ID to subscribe the user to
 
   Returns:
     * `{:ok, subscription_data}` - The subscription was successfully created
     * `{:error, reason}` - An error occurred while creating the subscription
   """
-  def create_subscription(user_id) do
+  def create_subscription(user_id, plan_id_to_use) do
     with {:ok, token} <- get_access_token(),
-         payload <- build_subscription_payload(user_id),
+         payload <- build_subscription_payload(user_id, plan_id_to_use),
          response <- request_create_subscription(token, payload) do
       process_subscription_response(response)
     end
