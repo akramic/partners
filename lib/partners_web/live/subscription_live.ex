@@ -228,9 +228,7 @@ defmodule PartnersWeb.SubscriptionLive do
         </div>
       <% end %>
 
-      <div class="flex gap-2">
-        
-      </div>
+      <div class="flex gap-2"></div>
     </div>
     """
   end
@@ -249,13 +247,32 @@ defmodule PartnersWeb.SubscriptionLive do
   defp render_content(%{live_action: :start_trial} = assigns) do
     ~H"""
     <div>
-      <h1 class="text-2xl font-bold mb-4">Starting Your Free Trial...</h1>
-      <div class="alert alert-info">
-        <p>
-          <span class="loading loading-spinner loading-sm"></span>
-          We're preparing your free trial. You'll be redirected to PayPal shortly.
-        </p>
-      </div>
+      <h1 class="text-2xl font-bold mb-4">Start Your Free Trial</h1>
+
+      <%= if @subscription_status == :failed and @error_message do %>
+        <div class="alert alert-error mb-4">
+          <p>Oops! Something went wrong: {@error_message}</p>
+        </div>
+        <button phx-click="retry_trial_creation" class="btn btn-sm btn-primary">
+          Try Again
+        </button>
+      <% else %>
+        <%= if @approval_url do %>
+          <div class="alert alert-info mb-4">
+            <p>Your free trial is ready! Click below to confirm with PayPal.</p>
+          </div>
+          <a href={@approval_url} class="btn btn-primary mt-2">
+            Proceed to PayPal to Start Trial
+          </a>
+        <% else %>
+          <div class="alert alert-info">
+            <p>
+              <span class="loading loading-spinner loading-sm"></span>
+              We're preparing your free trial. This should only take a moment...
+            </p>
+          </div>
+        <% end %>
+      <% end %>
     </div>
     """
   end
@@ -297,8 +314,6 @@ defmodule PartnersWeb.SubscriptionLive do
 
       {:initiate_trial_subscription, plan_id} ->
         Logger.info("Initiating trial subscription with plan_id: #{plan_id}")
-        # Call create_subscription with the specific plan_id
-        # Assuming Partners.Services.Paypal.create_subscription/2 exists and takes user_id and plan_id
         user = socket.assigns.current_scope.user
 
         case Partners.Services.Paypal.create_subscription(user.id, plan_id) do
@@ -309,17 +324,21 @@ defmodule PartnersWeb.SubscriptionLive do
             if approval_url do
               {:noreply,
                socket
-               |> assign(:subscription_status, :pending)
-               |> assign(:subscription_id, subscription_id)
-               |> assign(:approval_url, approval_url)
-               # Redirect to success to show PayPal link or status
-               |> push_patch(to: ~p"/subscriptions/success")}
+               |> assign(
+                 subscription_status: :pending,
+                 subscription_id: subscription_id,
+                 approval_url: approval_url,
+                 error_message: nil
+               )}
             else
               {:noreply,
                socket
-               |> assign(:subscription_status, :failed)
-               |> assign(:error_message, "Failed to create trial: No approval URL")
-               |> push_patch(to: ~p"/subscriptions/success")}
+               |> assign(
+                 subscription_status: :failed,
+                 error_message: "Failed to create trial: No approval URL from PayPal.",
+                 approval_url: nil,
+                 subscription_id: nil
+               )}
             end
 
           {:error, reason} ->
@@ -327,15 +346,33 @@ defmodule PartnersWeb.SubscriptionLive do
 
             {:noreply,
              socket
-             |> assign(:subscription_status, :failed)
-             |> assign(:error_message, "Failed to create trial: #{error_message}")
-             |> push_patch(to: ~p"/subscriptions/success")}
+             |> assign(
+               subscription_status: :failed,
+               error_message: "Failed to create trial: #{error_message}",
+               approval_url: nil,
+               subscription_id: nil
+             )}
         end
 
       _ ->
         Logger.warning("Received unknown message format: #{inspect(message)}")
         {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_event("retry_trial_creation", _params, socket) do
+    trial_plan_id = Partners.Services.Paypal.plan_id()
+    send(self(), {:initiate_trial_subscription, trial_plan_id})
+
+    {:noreply,
+     socket
+     |> assign(
+       error_message: nil,
+       approval_url: nil,
+       subscription_status: nil,
+       page_title: page_title(:start_trial)
+     )}
   end
 
   # Helper to extract a friendly error message from PayPal API error responses
@@ -356,6 +393,7 @@ defmodule PartnersWeb.SubscriptionLive do
   # Helper functions
   defp page_title(:success), do: "Subscription Status"
   defp page_title(:cancel), do: "Subscription Cancelled"
-  defp page_title(:start_trial), do: "Starting Free Trial"
+  # Updated page title
+  defp page_title(:start_trial), do: "Start Your Free Trial"
   defp page_title(_), do: "Subscription"
 end
