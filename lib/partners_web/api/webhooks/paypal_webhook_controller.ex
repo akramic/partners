@@ -23,6 +23,8 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   require Logger
 
   alias Partners.Services.Paypal
+  alias Partners.Services.PaypalCertificateManager
+  alias X509.Certificate
 
   @doc """
   Handle PayPal subscription webhook callbacks.
@@ -30,24 +32,21 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   Processes incoming webhook notifications from PayPal by:
   1. Accessing the raw request body (cached by CacheRawBodyPlug)
   2. Retrieving necessary headers and PayPal Webhook ID
-  3. Verifying the webhook signature (TODO)
-  4. Processing through Partners.Services.Paypal.process_webhook
+  3. Verifying the webhook signature
+  4. If signature is valid, processing through Partners.Services.Paypal.process_webhook_event
   5. Broadcasting to appropriate PubSub channels
 
-  Always returns 200 OK (PayPal best practice) but logs any processing errors.
+  Always returns 200 OK to PayPal. If signature verification fails, the event is not processed.
   """
   def paypal(conn, params) do
-    # Raw body is now expected to be in conn.assigns.raw_body thanks to CacheRawBodyPlug
     raw_body = conn.assigns[:raw_body]
 
-    # Fetch the configured PayPal Webhook ID
     paypal_webhook_id =
       try do
         Paypal.webhook_id()
       rescue
         e ->
           Logger.error("Failed to fetch PayPal Webhook ID: #{inspect(e)}")
-          # Provide a default or handle error appropriately if critical for logging/verification
           "ERROR_FETCHING_WEBHOOK_ID"
       end
 
@@ -76,59 +75,231 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     PAYPAL-TRANSMISSION-TIME: #{inspect(paypal_transmission_time)}
     """)
 
-    # --- SIGNATURE VERIFICATION LOGIC WILL GO HERE ---
-    # TODO: Construct the signature base string:
-    # transmission_id | transmission_time | webhook_id | CRC32 of raw_body
-    # TODO: Fetch certificate using paypal_cert_url (PaypalCertificateManager)
-    # TODO: Verify signature using :public_key.verify/4 or similar
+    case verify_webhook_signature(
+           paypal_auth_algo,
+           paypal_cert_url,
+           paypal_transmission_id,
+           paypal_transmission_sig,
+           paypal_transmission_time,
+           raw_body,
+           paypal_webhook_id
+         ) do
+      {:ok, :verified} ->
+        Logger.info("✅ PayPal webhook signature VERIFIED.")
+        # --- Proceed with event processing ---
+        event_type = params["event_type"]
+        resource = params["resource"]
+        user_id = extract_user_id_from_resource(resource)
 
-    # --- TEMPORARY TEST CODE for Certificate Manager (can be removed/adapted later) ---
-    case paypal_cert_url do
-      cert_url when is_binary(cert_url) ->
-        Logger.info("ℹ️ Attempting to get certificate using PAYPAL-CERT-URL: #{cert_url}")
+        if user_id && event_type do
+          case Paypal.process_webhook_event(event_type, resource, user_id) do
+            {:ok, subscription_state} ->
+              broadcast_subscription_update(user_id, subscription_state)
 
-        case Partners.Services.PaypalCertificateManager.get_certificate(cert_url) do
-          {:ok, _pem_string} ->
-            Logger.info(
-              "📄✅ Successfully fetched/retrieved certificate using PaypalCertificateManager for URL: #{cert_url}"
-            )
+            {:error, reason} ->
+              Logger.error("Error processing PayPal webhook event: #{inspect(reason)}")
 
-          {:error, reason} ->
-            Logger.error(
-              "📄❌ Error from PaypalCertificateManager for URL #{cert_url}: #{inspect(reason)}"
-            )
+              broadcast_subscription_error(
+                user_id,
+                "Error processing webhook event: #{inspect(reason)}"
+              )
+          end
+        else
+          Logger.warning(
+            "Missing user_id or event_type in PayPal webhook. Params: #{inspect(params)}"
+          )
         end
 
-      nil ->
-        Logger.warning("⚠️ PAYPAL-CERT-URL header not found in webhook request.")
+        send_resp(conn, 200, "OK (Verified - Processed)")
+
+      {:error, reason} ->
+        Logger.error("❌ PayPal webhook signature verification FAILED: #{inspect(reason)}")
+        Logger.info("Event NOT processed due to signature verification failure.")
+        send_resp(conn, 200, "OK (Signature Invalid - Event Not Processed)")
     end
+  end
 
-    # --- END OF TEMPORARY TEST CODE ---
+  defp verify_webhook_signature(
+         paypal_auth_algo,
+         paypal_cert_url,
+         paypal_transmission_id,
+         paypal_transmission_sig,
+         paypal_transmission_time,
+         raw_body,
+         paypal_webhook_id
+       ) do
+    with {:ok, paypal_auth_algo} <- validate_present(paypal_auth_algo, :paypal_auth_algo),
+         {:ok, paypal_cert_url} <- validate_present(paypal_cert_url, :paypal_cert_url),
+         {:ok, paypal_transmission_id} <-
+           validate_present(paypal_transmission_id, :paypal_transmission_id),
+         {:ok, paypal_transmission_sig} <-
+           validate_present(paypal_transmission_sig, :paypal_transmission_sig),
+         {:ok, paypal_transmission_time} <-
+           validate_present(paypal_transmission_time, :paypal_transmission_time),
+         {:ok, raw_body} <- validate_raw_body(raw_body),
+         {:ok, paypal_webhook_id} <- validate_paypal_webhook_id(paypal_webhook_id),
+         # ---
+         {:ok, digest_type} <- get_digest_type(paypal_auth_algo),
+         {:ok, signature_base_string} <-
+           build_signature_base_string(
+             paypal_transmission_id,
+             paypal_transmission_time,
+             paypal_webhook_id,
+             raw_body
+           ),
+         {:ok, public_key} <- get_public_key_from_paypal_cert(paypal_cert_url),
+         {:ok, decoded_signature} <- decode_transmission_sig(paypal_transmission_sig),
+         true <-
+           :public_key.verify(signature_base_string, digest_type, decoded_signature, public_key) do
+      {:ok, :verified}
+    else
+      false ->
+        Logger.error(
+          "Signature verification returned false (:public_key.verify failed). Signature invalid."
+        )
 
-    event_type = params["event_type"]
-    resource = params["resource"]
-    user_id = extract_user_id_from_resource(resource)
+        {:error, :signature_mismatch}
 
-    if user_id && event_type do
-      case Paypal.process_webhook_event(event_type, resource, user_id) do
-        {:ok, subscription_state} ->
-          broadcast_subscription_update(user_id, subscription_state)
+      {:error, reason_atom} ->
+        Logger.error("Error during signature verification step: #{inspect(reason_atom)}")
+        {:error, reason_atom}
 
-        {:error, reason} ->
-          Logger.error("Error processing PayPal webhook event: #{inspect(reason)}")
+      other_error ->
+        Logger.error(
+          "Unexpected error or invalid input during signature verification: #{inspect(other_error)}"
+        )
 
-          broadcast_subscription_error(
-            user_id,
-            "Error processing webhook event: #{inspect(reason)}"
+        {:error, :unexpected_verification_error}
+    end
+  end
+
+  defp validate_present(value, field_name) do
+    if is_nil(value) or (is_binary(value) and String.trim(value) == "") do
+      Logger.warning("Missing or empty required value for signature verification: #{field_name}")
+      {:error, {:missing_verification_data, field_name}}
+    else
+      {:ok, value}
+    end
+  end
+
+  defp validate_raw_body(raw_body) do
+    if is_binary(raw_body) and byte_size(raw_body) > 0 do
+      {:ok, raw_body}
+    else
+      Logger.warning("Raw body is nil, not a binary, or empty.")
+      {:error, :invalid_raw_body}
+    end
+  end
+
+  defp validate_paypal_webhook_id(id) do
+    cond do
+      is_nil(id) or (is_binary(id) and String.trim(id) == "") ->
+        Logger.error("PayPal Webhook ID is missing or empty.")
+        {:error, :missing_webhook_id}
+
+      id == "ERROR_FETCHING_WEBHOOK_ID" ->
+        Logger.error("PayPal Webhook ID was not configured or failed to load.")
+        {:error, :invalid_webhook_id_configuration}
+
+      true ->
+        {:ok, id}
+    end
+  end
+
+  defp get_digest_type(paypal_auth_algo) do
+    case paypal_auth_algo do
+      "SHA256withRSA" ->
+        {:ok, :sha256}
+
+      # TODO: Add other algorithms if PayPal starts using them, e.g., "SHA512withRSA" -> {:ok, :sha512}
+      _ ->
+        Logger.error("Unsupported PayPal auth algorithm: #{paypal_auth_algo}")
+        {:error, :unsupported_auth_algorithm}
+    end
+  end
+
+  defp build_signature_base_string(transmission_id, transmission_time, webhook_id, raw_body) do
+    crc32_of_body = :erlang.crc32(raw_body) |> Integer.to_string()
+
+    base_string =
+      [
+        transmission_id,
+        transmission_time,
+        webhook_id,
+        crc32_of_body
+      ]
+      |> Enum.join("|")
+
+    {:ok, base_string}
+  end
+
+  defp get_public_key_from_paypal_cert(paypal_cert_url) do
+    with {:ok, pem_string} <- PaypalCertificateManager.get_certificate(paypal_cert_url),
+         # Ensure pem_string is binary
+         true <- is_binary(pem_string),
+         # Parse PEM to cert record
+         {:ok, cert_record} <- Certificate.from_pem(pem_string) do
+      # If all above are successful, cert_record is available.
+      # Now, extract the public key. Certificate.public_key/1 returns SubjectPublicKeyInfo.t() directly or raises.
+      try do
+        public_key_erlang_record = Certificate.public_key(cert_record)
+        # Success: return {:ok, key_record} which is expected by the caller's 'with' chain
+        {:ok, public_key_erlang_record}
+      rescue
+        e ->
+          # Log the exception and return an error tuple
+          Logger.error(
+            "Exception from Certificate.public_key/1 for URL #{paypal_cert_url}: #{inspect(e)}"
           )
+
+          {:error, {:public_key_extraction_failed, :exception_in_public_key_call}}
       end
     else
-      Logger.warning(
-        "Missing user_id or event_type in PayPal webhook. Params: #{inspect(params)}"
-      )
-    end
+      # This 'else' block handles failures from the 'with' conditions:
+      # PaypalCertificateManager.get_certificate, is_binary, Certificate.from_pem
 
-    send_resp(conn, 200, "OK")
+      # From PaypalCertificateManager
+      {:error, cert_manager_reason} when is_atom(cert_manager_reason) ->
+        Logger.error(
+          "Failed to get certificate via PaypalCertificateManager for URL #{paypal_cert_url}: #{inspect(cert_manager_reason)}"
+        )
+
+        {:error, {:certificate_fetch_failed, cert_manager_reason}}
+
+      # From `true <- is_binary(pem_string)`
+      false ->
+        Logger.error(
+          "PEM string from PaypalCertificateManager was not a binary for URL #{paypal_cert_url}."
+        )
+
+        {:error, :pem_not_binary}
+
+      # From `Certificate.from_pem(pem_string)`
+      {:error, from_pem_reason} ->
+        Logger.error(
+          "Failed to parse PEM with Certificate.from_pem/1 for URL #{paypal_cert_url}: #{inspect(from_pem_reason)}"
+        )
+
+        {:error, {:public_key_extraction_failed, from_pem_reason}}
+
+      # This catch-all should ideally not be hit if the patterns above are exhaustive for known 'with' failures.
+      unexpected_with_failure ->
+        Logger.error(
+          "Unexpected failure in 'with' chain setup of get_public_key_from_paypal_cert for URL #{paypal_cert_url}: #{inspect(unexpected_with_failure)}"
+        )
+
+        {:error, :unexpected_error_in_get_public_key_setup}
+    end
+  end
+
+  defp decode_transmission_sig(paypal_transmission_sig) do
+    try do
+      {:ok, Base.decode64!(paypal_transmission_sig, padding: true)}
+    rescue
+      e in ArgumentError ->
+        Logger.error("Failed to Base64 decode PayPal transmission signature: #{inspect(e)}")
+        {:error, :signature_decode_failed}
+    end
   end
 
   # Helper to extract a specific header value

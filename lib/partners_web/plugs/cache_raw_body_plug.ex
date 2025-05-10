@@ -2,7 +2,7 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
   import Plug.Conn
   require Logger
 
-  @doc """
+  @moduledoc """
   This module provides a custom body reader for Plug.Parsers.
   It reads the request body, caches it in conn.assigns.raw_body,
   and then returns the body to Plug.Parsers for further processing.
@@ -10,8 +10,27 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
 
   @doc """
   The function to be used as a :body_reader with Plug.Parsers.
-  Reads the request body, stores it in `conn.assigns.raw_body`,
-  and returns it in the format expected by Plug.Parsers.
+
+  It reads the entire body, caches it in the connection's assigns under
+  `:raw_body`, and returns the body. This is useful for cases where you
+  want to access the raw request body later in the connection lifecycle,
+  or when you have custom parsing needs that require the raw body.
+
+  ## Options
+
+    * `:length` - maximum length of the body to read (default: `:infinity`)
+    * `:read_timeout` - timeout for reading the body, in milliseconds
+      (default: `15000`)
+    * `:read_length` - an alternative to `:length`, this specifies the
+      exact length of the body to read. It can be useful in cases where
+      the length is known a priori.
+
+  ## Examples
+
+      plug Plug.Parsers,
+        parsers: [:urlencoded, :multipart, :json],
+        body_reader: {PartnersWeb.Plugs.CacheRawBodyPlug, :read_body_and_cache, []}
+
   """
   @spec read_body_and_cache(Plug.Conn.t(), Plug.Parsers.opts()) ::
           {:ok, binary(), Plug.Conn.t()}
@@ -56,12 +75,12 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
         error
 
       # This case should ideally not be hit if this is the *first* reader.
-      {:error, :already_read} = error ->
-        Logger.warn(
-          "Request body already read when CacheRawBodyPlug.read_body_and_cache was called. This is unexpected if it's the primary body reader."
+      {:error, :already_read} = _error ->
+        Logger.warning(
+          "Request body already read when CacheRawBodyPlug.read_body_and_cache was called. This is unexpected if it\\'s the primary body reader."
         )
 
-        # If it's already read, we can't cache it. Return empty or error.
+        # If it\\'s already read, we can\\'t cache it. Return empty or error.
         # Plug.Parsers might still work if conn.body_params is populated by a previous parser.
         # For safety, let's return an empty body, which might lead to parsing errors downstream if unexpected.
         # Or propagate `error`
