@@ -32,6 +32,8 @@ defmodule PartnersWeb.Router do
   end
 
   pipeline :api do
+    # Add our custom plug here
+  
     plug :accepts, ["json"]
   end
 

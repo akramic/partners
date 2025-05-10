@@ -22,33 +22,70 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   use PartnersWeb, :controller
   require Logger
 
+  alias Partners.Services.Paypal
+
   @doc """
   Handle PayPal subscription webhook callbacks.
 
   Processes incoming webhook notifications from PayPal by:
-  1. Reading the raw request body
-  2. Processing through Partners.Services.Paypal.process_webhook
-  3. Broadcasting to appropriate PubSub channels
+  1. Accessing the raw request body (cached by CacheRawBodyPlug)
+  2. Retrieving necessary headers and PayPal Webhook ID
+  3. Verifying the webhook signature (TODO)
+  4. Processing through Partners.Services.Paypal.process_webhook
+  5. Broadcasting to appropriate PubSub channels
 
   Always returns 200 OK (PayPal best practice) but logs any processing errors.
   """
   def paypal(conn, params) do
+    # Raw body is now expected to be in conn.assigns.raw_body thanks to CacheRawBodyPlug
+    raw_body = conn.assigns[:raw_body]
+
+    # Fetch the configured PayPal Webhook ID
+    paypal_webhook_id =
+      try do
+        Paypal.webhook_id()
+      rescue
+        e ->
+          Logger.error("Failed to fetch PayPal Webhook ID: #{inspect(e)}")
+          # Provide a default or handle error appropriately if critical for logging/verification
+          "ERROR_FETCHING_WEBHOOK_ID"
+      end
+
     # Log initial webhook receipt
     Logger.info("""
     🔔 WEBHOOK: Received PayPal webhook
+    Raw Body (from assigns): #{inspect(raw_body)}
+    PayPal Webhook ID (from config): #{inspect(paypal_webhook_id)}
     Headers: #{inspect(conn.req_headers, pretty: true)}
-    Params: #{inspect(params, pretty: true)}
+    Params (parsed body): #{inspect(params, pretty: true)}
     """)
 
-    # --- TEMPORARY TEST CODE for Certificate Manager ---
-    paypal_cert_url_header =
-      Enum.find(conn.req_headers, fn {name, _value} ->
-        String.downcase(name) == "paypal-cert-url"
-      end)
+    # Extract PayPal-specific headers for verification
+    paypal_auth_algo = get_header_value(conn.req_headers, "paypal-auth-algo")
+    paypal_cert_url = get_header_value(conn.req_headers, "paypal-cert-url")
+    paypal_transmission_id = get_header_value(conn.req_headers, "paypal-transmission-id")
+    paypal_transmission_sig = get_header_value(conn.req_headers, "paypal-transmission-sig")
+    paypal_transmission_time = get_header_value(conn.req_headers, "paypal-transmission-time")
 
-    case paypal_cert_url_header do
-      {_name, cert_url} ->
-        Logger.info("ℹ️ Found PAYPAL-CERT-URL header: #{cert_url}")
+    Logger.info("""
+    🔎 PayPal Verification Headers:
+    PAYPAL-AUTH-ALGO: #{inspect(paypal_auth_algo)}
+    PAYPAL-CERT-URL: #{inspect(paypal_cert_url)}
+    PAYPAL-TRANSMISSION-ID: #{inspect(paypal_transmission_id)}
+    PAYPAL-TRANSMISSION-SIG: #{inspect(paypal_transmission_sig)}
+    PAYPAL-TRANSMISSION-TIME: #{inspect(paypal_transmission_time)}
+    """)
+
+    # --- SIGNATURE VERIFICATION LOGIC WILL GO HERE ---
+    # TODO: Construct the signature base string:
+    # transmission_id | transmission_time | webhook_id | CRC32 of raw_body
+    # TODO: Fetch certificate using paypal_cert_url (PaypalCertificateManager)
+    # TODO: Verify signature using :public_key.verify/4 or similar
+
+    # --- TEMPORARY TEST CODE for Certificate Manager (can be removed/adapted later) ---
+    case paypal_cert_url do
+      cert_url when is_binary(cert_url) ->
+        Logger.info("ℹ️ Attempting to get certificate using PAYPAL-CERT-URL: #{cert_url}")
 
         case Partners.Services.PaypalCertificateManager.get_certificate(cert_url) do
           {:ok, _pem_string} ->
@@ -68,31 +105,37 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
 
     # --- END OF TEMPORARY TEST CODE ---
 
-    # Extract event type and resource from params
     event_type = params["event_type"]
     resource = params["resource"]
-
-    # Extract user_id from custom_id in the resource data
     user_id = extract_user_id_from_resource(resource)
 
     if user_id && event_type do
-      # Process the webhook event
-      case Partners.Services.Paypal.process_webhook_event(event_type, resource, user_id) do
+      case Paypal.process_webhook_event(event_type, resource, user_id) do
         {:ok, subscription_state} ->
-          # Broadcast to the user's subscription topic
           broadcast_subscription_update(user_id, subscription_state)
 
         {:error, reason} ->
-          # Log the error and optionally broadcast error event
-          Logger.error("Error processing PayPal webhook: #{inspect(reason)}")
-          broadcast_subscription_error(user_id, "Error processing webhook: #{inspect(reason)}")
+          Logger.error("Error processing PayPal webhook event: #{inspect(reason)}")
+
+          broadcast_subscription_error(
+            user_id,
+            "Error processing webhook event: #{inspect(reason)}"
+          )
       end
     else
-      Logger.warning("Missing user_id or event_type in PayPal webhook")
+      Logger.warning(
+        "Missing user_id or event_type in PayPal webhook. Params: #{inspect(params)}"
+      )
     end
 
-    # Always respond with 200 OK to PayPal (best practice)
     send_resp(conn, 200, "OK")
+  end
+
+  # Helper to extract a specific header value
+  defp get_header_value(headers, header_name) do
+    Enum.find_value(headers, fn {name, value} ->
+      if String.downcase(name) == String.downcase(header_name), do: value, else: nil
+    end)
   end
 
   # Extract user_id from resource data (adapt based on your PayPal payload structure)
