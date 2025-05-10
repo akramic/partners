@@ -3,21 +3,61 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   Controller for handling PayPal webhook callbacks and subscription events.
 
   This controller is responsible for:
-  - Receiving and validating PayPal webhook events
-  - Processing subscription status changes
-  - Broadcasting events via PubSub to relevant subscribers
-  - Handling subscription return URLs (success/cancel)
+  - Receiving and validating PayPal webhook events using cryptographic signature verification.
+  - Processing subscription status changes based on verified webhook data.
+  - Broadcasting events via PubSub to relevant subscribers (e.g., `SubscriptionLive`)
+    for real-time UI updates.
+  - Implementing a fallback mechanism: If webhook signature verification fails,
+    it attempts to fetch the subscription details directly from the PayPal API
+    using the `paypal_subscription_id` and `user_id` extracted from the webhook's
+    resource data.
+    - If the fallback API call confirms an "ACTIVE" subscription, the event is
+      processed as if the signature was valid, but a warning is logged.
+    - If the fallback API call fails or returns a non-ACTIVE status, a specific
+      flash message is broadcast to the user, and the event is not processed further.
+    - If `user_id` or `paypal_subscription_id` cannot be extracted for the fallback,
+      an error is logged, and if `user_id` is present, a generic failure
+      notification is broadcast.
 
   ## Event Broadcasting
 
-  The controller broadcasts two types of events:
-  1. Profile-specific events on topic "subscription:[profile_id]"
-     Message: {:subscription_updated, event_data}
-  2. Global events on topic "subscriptions"
-     Message: {:subscription_event, event_data}
+  The controller broadcasts several types of events to the `paypal_subscription:{user_id}` topic:
+  - `%{event: "subscription_updated", subscription_state: state}`: When a subscription
+    is successfully updated (either via verified webhook or successful API fallback).
+  - `%{event: "subscription_error", error: error_message}`: When an error occurs
+    during the processing of a verified webhook event.
+  - `%{event: "subscription_verification_failed", details: %{reason: inspect(verification_reason), message: flash_text}}`:
+    When webhook signature verification fails and the fallback mechanism also does not
+    confirm an "ACTIVE" subscription. The `flash_text` provides a user-friendly
+    message: "We're having trouble confirming the setup of your Paypal trial
+    subscription. Please try again and if you're still having problems, contact
+    our friendly support team."
 
-  LiveViews can subscribe to these events using:
-      Phoenix.PubSub.subscribe(Partners.PubSub, "subscription:" <> profile_id)
+  LiveViews, such as `PartnersWeb.SubscriptionLive`, subscribe to these events to
+  update the UI and inform the user about their subscription status or any issues.
+
+  ## Webhook Signature Verification
+
+  The `verify_webhook_signature/7` private function implements the steps outlined
+  by PayPal for verifying webhook authenticity. This involves:
+  1. Validating the presence of required HTTP headers (`paypal-auth-algo`,
+     `paypal-cert-url`, `paypal-transmission-id`, `paypal-transmission-sig`,
+     `paypal-transmission-time`).
+  2. Validating the raw request body and the configured `paypal_webhook_id`.
+  3. Fetching PayPal's public certificate from `paypal-cert-url` (with caching via
+     `PaypalCertificateManager`).
+  4. Constructing the signature base string using `transmission_id`, `transmission_time`,
+     `webhook_id`, and a CRC32 checksum of the raw request body.
+  5. Decoding the Base64 `paypal-transmission-sig`.
+  6. Using `:public_key.verify/4` with the appropriate digest type (e.g., `:sha256`)
+     to verify the signature against the public key.
+
+  ## Configuration
+
+  This controller relies on application configuration for:
+  - PayPal Webhook ID (via `Paypal.webhook_id/0` which reads from `config/paypal.exs`).
+  - PayPal API credentials and base URL (indirectly via `Partners.Services.Paypal`
+    for fallback API calls).
   """
   use PartnersWeb, :controller
   require Logger
@@ -78,8 +118,9 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     case verify_webhook_signature(
            paypal_auth_algo,
            paypal_cert_url,
-          #  paypal_transmission_id,
-           transmission_d = "not genuine" <> paypal_transmission_id,
+           # Corrected: ensure actual paypal_transmission_id is used
+           paypal_transmission_id,
+           # Reverted: Use actual signature from header
            paypal_transmission_sig,
            paypal_transmission_time,
            raw_body,
@@ -113,24 +154,156 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
 
         send_resp(conn, 200, "OK (Verified - Processed)")
 
-      {:error, reason} ->
-        Logger.error("❌ PayPal webhook signature verification FAILED: #{inspect(reason)}")
-        Logger.info("Event NOT processed due to signature verification failure.")
+      {:error, original_signature_failure_reason} ->
+        Logger.error(
+          "❌ PayPal webhook signature verification FAILED: #{inspect(original_signature_failure_reason)}"
+        )
 
-        # Attempt to get user_id for notification
-        # params are available in this scope. resource might be in params["resource"]
-        resource_for_error_path = params["resource"]
-        user_id_for_error_path = extract_user_id_from_resource(resource_for_error_path)
+        Logger.info(
+          "Attempting fallback: Fetching subscription details directly from PayPal API."
+        )
 
-        if user_id_for_error_path do
-          broadcast_verification_failure(user_id_for_error_path, reason)
+        resource_data = params["resource"]
+        user_id = extract_user_id_from_resource(resource_data)
+        paypal_subscription_id = extract_paypal_subscription_id_from_resource(resource_data)
+
+        if user_id && paypal_subscription_id do
+          Logger.info(
+            "Fallback: Attempting to get details for PayPal Subscription ID: #{paypal_subscription_id} for User ID: #{user_id}"
+          )
+
+          case Paypal.get_subscription_details(paypal_subscription_id) do
+            {:ok, %{"status" => "ACTIVE"} = subscription_details} ->
+              process_event_after_fallback(
+                conn,
+                params,
+                user_id,
+                original_signature_failure_reason,
+                subscription_details
+              )
+
+            {:ok, %{"status" => other_status} = subscription_details} ->
+              Logger.error("""
+              ❌ Fallback API call for subscription '#{paypal_subscription_id}' for user '#{user_id}' returned status '#{other_status}', not ACTIVE.
+              Original signature failure reason: #{inspect(original_signature_failure_reason)}.
+              Subscription details from API: #{inspect(subscription_details)}
+              Proceeding with verification failure notification.
+              """)
+
+              broadcast_verification_failure(
+                user_id,
+                {:fallback_api_status_not_active, other_status, original_signature_failure_reason}
+              )
+
+              send_resp(
+                conn,
+                200,
+                "OK (Signature Invalid, Fallback API Status Not Active - Event Not Processed)"
+              )
+
+            {:error, api_error_reason} ->
+              Logger.error("""
+              ❌ Fallback API call failed for subscription '#{paypal_subscription_id}' for user '#{user_id}'.
+              API Error: #{inspect(api_error_reason)}.
+              Original signature failure reason: #{inspect(original_signature_failure_reason)}.
+              Proceeding with verification failure notification.
+              """)
+
+              broadcast_verification_failure(
+                user_id,
+                {:fallback_api_call_failed, api_error_reason, original_signature_failure_reason}
+              )
+
+              send_resp(
+                conn,
+                200,
+                "OK (Signature Invalid, Fallback API Error - Event Not Processed)"
+              )
+          end
         else
-          Logger.warning(
-            "Could not extract user_id from webhook params for verification failure notification. Params: #{inspect(params)}"
+          Logger.error("""
+          ❌ Fallback API call cannot be attempted. Missing PayPal Subscription ID or User ID from webhook resource.
+          Extracted PayPal Subscription ID: #{inspect(paypal_subscription_id)}, Extracted User ID: #{inspect(user_id)}.
+          Original signature failure reason: #{inspect(original_signature_failure_reason)}.
+          Webhook Params Resource: #{inspect(resource_data)}
+          Proceeding with verification failure notification.
+          """)
+
+          # If user_id is available, notify them. Otherwise, just log.
+          if user_id do
+            broadcast_verification_failure(
+              user_id,
+              # Corrected variable name
+              {:fallback_missing_ids_for_api_call, original_signature_failure_reason}
+            )
+          else
+            Logger.error(
+              "Cannot notify user of verification failure: User ID unknown after signature failure and prior to fallback. Original reason: #{inspect(original_signature_failure_reason)}"
+            )
+          end
+
+          send_resp(
+            conn,
+            200,
+            "OK (Signature Invalid, Fallback Pre-check Failed - Event Not Processed)"
           )
         end
+    end
+  end
 
-        send_resp(conn, 200, "OK (Signature Invalid - Event Not Processed)")
+  defp process_event_after_fallback(
+         conn,
+         params,
+         user_id,
+         original_signature_failure_reason,
+         subscription_details_from_api
+       ) do
+    Logger.warning("""
+    ⚠️ Webhook signature verification failed (Reason: #{inspect(original_signature_failure_reason)}),
+    BUT PayPal API confirmed subscription for user '#{user_id}' is ACTIVE.
+    Proceeding with event processing based on API confirmation.
+    Subscription details from API: #{inspect(subscription_details_from_api)}
+    """)
+
+    event_type = params["event_type"]
+    # Use original resource from webhook
+    resource = params["resource"]
+
+    # Ensure user_id and event_type are still valid (user_id was checked before calling this helper)
+    if event_type do
+      case Paypal.process_webhook_event(event_type, resource, user_id) do
+        {:ok, subscription_state} ->
+          broadcast_subscription_update(user_id, subscription_state)
+
+        {:error, processing_error} ->
+          Logger.error(
+            "Error processing PayPal webhook event after API fallback success: #{inspect(processing_error)}"
+          )
+
+          broadcast_subscription_error(
+            user_id,
+            "Error processing webhook event after API fallback success: #{inspect(processing_error)}"
+          )
+      end
+
+      send_resp(conn, 200, "OK (Verified via API Fallback - Processed)")
+    else
+      Logger.error("""
+      Fallback Success Path: Missing event_type in PayPal webhook after successful API confirmation.
+      User ID: #{user_id}. Params: #{inspect(params)}.
+      Original signature failure reason: #{inspect(original_signature_failure_reason)}.
+      """)
+
+      broadcast_verification_failure(
+        user_id,
+        {:fallback_missing_event_type_post_api_success, original_signature_failure_reason}
+      )
+
+      send_resp(
+        conn,
+        200,
+        "OK (Signature Invalid, Fallback Data Missing Post API Success - Event Not Processed)"
+      )
     end
   end
 
@@ -332,11 +505,19 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
       resource["custom_id"] ->
         resource["custom_id"]
 
-      # Check for subscription object
+      # Check for subscriber information within the resource (common for BILLING.SUBSCRIPTION.* events)
+      # Example: resource["subscriber"]["custom_id"] - this depends on your specific setup with PayPal
+      # For now, we assume custom_id is at the top level of the resource or within a "subscription" sub-map.
+
+      # Check for subscription object if custom_id is not at the top level of resource
       resource["subscription"] && resource["subscription"]["custom_id"] ->
         resource["subscription"]["custom_id"]
 
-      # Additional checks as needed for different event types
+      # Check payer information for user_id if available (might be email or payer_id)
+      # This is highly dependent on how you associate PayPal transactions/subscriptions with your users.
+      # Example: resource["payer"]["payer_id"] or resource["payer"]["email_address"]
+      # Ensure this aligns with what you store as `user_id`.
+      # For this example, let's assume custom_id is the primary mechanism.
 
       true ->
         nil
@@ -344,6 +525,26 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   end
 
   defp extract_user_id_from_resource(_), do: nil
+
+  # Helper to extract PayPal Subscription ID from resource data
+  defp extract_paypal_subscription_id_from_resource(resource) when is_map(resource) do
+    cond do
+      # Common for BILLING.SUBSCRIPTION.* events (this is the PayPal Subscription ID)
+      resource["id"] ->
+        resource["id"]
+
+      # Older field, or for PAYMENT.SALE.* linked to subscriptions
+      resource["billing_agreement_id"] ->
+        resource["billing_agreement_id"]
+
+      # If the subscription ID is nested further, adjust accordingly.
+      # e.g., resource["subscription"]["id"] if that's where it is.
+      true ->
+        nil
+    end
+  end
+
+  defp extract_paypal_subscription_id_from_resource(_), do: nil
 
   # Broadcast a subscription update event
   defp broadcast_subscription_update(user_id, subscription_state) do
@@ -374,12 +575,17 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   defp broadcast_verification_failure(user_id, verification_reason) do
     topic = "paypal_subscription:#{user_id}"
 
+    # Updated flash text
+    flash_text =
+      "We're having trouble confirming the setup of your Paypal trial subscription. Please try again and if you're still having problems, contact our friendly support team."
+
     message = %{
       event: "subscription_verification_failed",
       details: %{
+        # Retain detailed reason for logging/debugging
         reason: inspect(verification_reason),
-        message:
-          "There was a problem verifying the payment notification from PayPal. Your transaction may not have been processed correctly. Please contact support if the issue persists or you don't see your subscription updated shortly."
+        # Simplified message for the user
+        message: flash_text
       }
     }
 

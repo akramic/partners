@@ -10,43 +10,73 @@ defmodule PartnersWeb.SubscriptionLive do
   ### Live Actions
 
   * `:start_trial` - Page where users initiate the PayPal approval for a free trial.
-  * `:success` - Displays the status of the subscription (e.g., pending, active) after returning from PayPal or via webhook updates.
+  * `:success` - Displays the status of the subscription (e.g., pending, active, failed)
+    after returning from PayPal or via real-time webhook updates.
   * `:cancel` - Displays a message if the user cancels the PayPal approval process.
 
   The LiveView maintains state by:
   1. Using `handle_params` to set up the view for the current action.
   2. Using `redirect/2` for external navigation to PayPal.
-  3. Using `push_patch` (implicitly via `live_patch` in templates or `redirect/2` for internal navigation if needed, though current flow minimizes this) to change views for success/cancel pages while preserving the socket.
-  4. Keeping subscription-related state in socket assigns.
-  5. Maintaining a persistent PubSub subscription for real-time updates from webhooks.
+  3. Using `push_patch` (implicitly via `live_patch` in templates or explicitly in
+     `handle_info` for certain PubSub events) to change views (e.g., to `:start_trial`
+     on verification failure) or update the current view while preserving the socket.
+  4. Keeping subscription-related state in socket assigns (e.g., `subscription_status`,
+     `error_message`, `transferring_to_paypal`).
+  5. Maintaining a persistent PubSub subscription for real-time updates from webhooks
+     processed by `PaypalWebhookController`.
 
   ## Trial Subscription Flow
 
-  1. New user registers and is redirected to the `/subscriptions/start_trial` page.
-  2. User is presented with a "Start Trial with PayPal" button.
-  3. User clicks the button; a "Transferring to PayPal..." message is displayed.
-  4. The LiveView backend calls the PayPal API to create a trial subscription.
-  5. Upon receiving an approval URL from PayPal, the user's browser is redirected to PayPal.
-  6. User approves (or cancels) the subscription on PayPal.
-  7. PayPal redirects the user back to the application's return URLs (`/paypal/return` or `/paypal/cancel`).
-  8. The `PaypalReturnController` handles these returns, typically redirecting the user to the `/subscriptions/success` (or `/subscriptions/cancel`) LiveView action.
-  9. The `SubscriptionLive` view (e.g., on `:success` action) displays the current subscription status.
-  10. Asynchronous PayPal webhook events (e.g., `CHECKOUT.ORDER.APPROVED`, `BILLING.SUBSCRIPTION.ACTIVATED`) are received by `PaypalWebhookController`.
+  1.  New user registers and is redirected to the `/subscriptions/start_trial` page.
+  2.  User is presented with a "Start Trial with PayPal" button.
+  3.  User clicks the button; a "Transferring to PayPal..." message is displayed.
+      The `handle_event("request_paypal_approval_url", ...)` function sets
+      `transferring_to_paypal` to `true` and sends an internal
+      `:_process_paypal_trial_creation` message.
+  4.  The `handle_info(:_process_paypal_trial_creation, socket)` function calls the
+      PayPal API (`Partners.Services.Paypal.create_subscription/2`) to create a trial
+      subscription.
+  5.  Upon receiving an approval URL from PayPal, the user's browser is redirected to
+      PayPal via `redirect(socket, external: approval_url)`.
+  6.  User approves (or cancels) the subscription on PayPal.
+  7.  PayPal redirects the user back to the application's return URLs
+      (`/paypal/return` or `/paypal/cancel`).
+  8.  The `PaypalReturnController` handles these returns, typically redirecting the user
+      to the `/subscriptions/success` (or `/subscriptions/cancel`) LiveView action.
+  9.  The `SubscriptionLive` view (e.g., on `:success` action) displays the current
+      subscription status, initially often `:pending`.
+  10. Asynchronous PayPal webhook events (e.g., `BILLING.SUBSCRIPTION.ACTIVATED`,
+      `BILLING.SUBSCRIPTION.CANCELLED`, or events leading to verification failure)
+      are received by `PaypalWebhookController`.
   11. The webhook controller broadcasts PubSub messages.
-  12. `SubscriptionLive` handles these PubSub messages to update the subscription status in real-time (e.g., from `:pending` to `:active` on the `:success` page).
+  12. `SubscriptionLive`'s `handle_info/2` function processes these PubSub messages to
+      update the subscription status in real-time (e.g., from `:pending` to `:active`
+      on the `:success` page) or to display flash messages and redirect the user
+      (e.g., to `:start_trial` with an error flash on verification failure).
 
   ## Subscription States (primarily for the `:success` view)
 
   * `:pending` - Initial state after user approval on PayPal, awaiting final activation.
   * `:active` - Subscription is successfully activated.
-  * `:failed` - Subscription activation failed.
+  * `:failed` - Subscription activation failed (either due to API errors during creation
+    or error events from webhooks).
   * `:cancelled` - User cancelled on PayPal, or subscription was cancelled later.
 
   ## PubSub Messages
 
   Subscribes to `paypal_subscription:{user_id}` and handles:
-  * `%{event: "subscription_updated", subscription_state: state}`
-  * `%{event: "subscription_error", error: error_message}`
+  * `%{event: "subscription_updated", subscription_state: state}`: Updates the
+    `subscription_status` and ensures the view is appropriate (typically `:success`).
+  * `%{event: "subscription_error", error: error_message}`: Sets `subscription_status`
+    to `:failed`, stores the `error_message`, and navigates to the `:success` action
+    to display the error state.
+  * `%{event: "subscription_verification_failed", details: %{message: flash_message}}`:
+    This is a critical update. When a webhook verification fails and the fallback also
+    doesn't confirm an active subscription, this event is received. The LiveView
+    displays the `flash_message` (e.g., "We're having trouble confirming the setup
+    of your Paypal trial subscription. Please try again...") and uses `push_patch`
+    to redirect the user back to the `/subscriptions/start_trial` page, allowing them
+    to retry or contact support.
 
   ## Usage (Router Examples)
 
@@ -307,6 +337,12 @@ defmodule PartnersWeb.SubscriptionLive do
     for subscription errors, updating `subscription_status` to `:failed`,
     setting `error_message`, and navigating to the `:success` action to display
     the error state.
+
+  - `%{event: "subscription_verification_failed", details: %{message: flash_message}}`:
+    This event is handled to manage cases where the webhook verification fails.
+    It logs the error, displays the `flash_message` to the user, and uses
+    `push_patch` to navigate the user back to the `:start_trial` action, allowing
+    them to retry the subscription process.
   """
   @impl true
   def handle_info(message, socket) do

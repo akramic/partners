@@ -1,6 +1,45 @@
 defmodule Partners.Services.Paypal do
   @moduledoc """
-  Service module for PayPal API interactions.
+  Service module for all PayPal API interactions.
+
+  This module encapsulates the logic for communicating with the PayPal API for various
+  operations, including but not limited to:
+
+  - **OAuth Token Management**:
+    - `get_access_token/0`: Retrieves an OAuth2 access token from PayPal, which is
+      required for authenticating subsequent API calls. It handles the request and
+      response processing.
+
+  - **Subscription Creation**:
+    - `create_subscription/2`: Creates a new PayPal subscription for a given user and
+      plan ID. It builds the necessary payload, including return and cancel URLs,
+      and `custom_id` for associating the subscription with the local user.
+    - `extract_approval_url/1`: Extracts the `approve` link from the subscription
+      creation response, which is used to redirect the user to PayPal for approval.
+
+  - **Subscription Details Retrieval**:
+    - `get_subscription_details/1`: Fetches the details of an existing PayPal
+      subscription by its ID. This function is notably used by the
+      `PaypalWebhookController` as a fallback mechanism when webhook signature
+      verification fails. If the controller cannot verify a webhook, it calls this
+      function to directly query PayPal about the subscription's status.
+
+  - **Webhook Event Processing**:
+    - `process_webhook_event/3`: Takes a PayPal event type (e.g.,
+      "BILLING.SUBSCRIPTION.ACTIVATED") and the webhook resource data to determine
+      the corresponding internal subscription state (e.g., `:active`, `:cancelled`).
+      This mapped state is then used by the `PaypalWebhookController` to broadcast
+      updates.
+
+  - **Configuration Management**:
+    - Provides helper functions (`api_url/0`, `client_id/0`, `client_secret/0`,
+      `return_url/0`, `cancel_url/0`, `webhook_id/0`, `plan_id/0`) to access
+      PayPal-related application configuration (e.g., API base URL, credentials,
+      webhook ID, default plan ID) stored in `config/paypal.exs` or environment
+      variables. These functions raise an error if essential configuration is missing.
+
+  All API interactions are performed using the `Req` HTTP client library. Logging is
+  implemented to trace requests, responses, and errors during PayPal API communication.
   """
 
   require Logger
@@ -176,6 +215,58 @@ defmodule Partners.Services.Paypal do
          response <- request_create_subscription(token, payload) do
       process_subscription_response(response)
     end
+  end
+
+  @doc """
+  Gets details for a specific PayPal subscription.
+
+  Args:
+    * `paypal_subscription_id` - The ID of the PayPal subscription to retrieve.
+
+  Returns:
+    * `{:ok, subscription_data}` - The subscription details were successfully retrieved.
+    * `{:error, reason}` - An error occurred while retrieving the subscription details.
+  """
+  def get_subscription_details(paypal_subscription_id) do
+    # --- ORIGINAL CODE (Reverted after testing Scenario 3) ---
+    with {:ok, token} <- get_access_token(),
+         response <- request_get_subscription_details(token, paypal_subscription_id) do
+      process_get_subscription_details_response(response)
+    end
+  end
+
+  defp request_get_subscription_details(token, paypal_subscription_id) do
+    url = "#{api_url()}/v1/billing/subscriptions/#{paypal_subscription_id}"
+
+    Logger.info(
+      "Requesting PayPal subscription details for ID: #{paypal_subscription_id} from URL: #{url}"
+    )
+
+    Req.get(url,
+      headers: [
+        {"Authorization", "Bearer #{token}"},
+        {"Content-Type", "application/json"}
+      ]
+    )
+  end
+
+  defp process_get_subscription_details_response({:ok, %{status: status, body: body}})
+       when status in 200..299 do
+    Logger.info("Successfully retrieved PayPal subscription details: #{inspect(body)}")
+    {:ok, body}
+  end
+
+  defp process_get_subscription_details_response({:ok, %{status: status, body: body}}) do
+    Logger.error(
+      "Failed to retrieve PayPal subscription details. Status: #{status}, Body: #{inspect(body)}"
+    )
+
+    {:error, body}
+  end
+
+  defp process_get_subscription_details_response({:error, error}) do
+    Logger.error("Error retrieving PayPal subscription details: #{inspect(error)}")
+    {:error, error}
   end
 
   @doc """
