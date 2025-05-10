@@ -78,7 +78,8 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     case verify_webhook_signature(
            paypal_auth_algo,
            paypal_cert_url,
-           paypal_transmission_id,
+          #  paypal_transmission_id,
+           transmission_d = "not genuine" <> paypal_transmission_id,
            paypal_transmission_sig,
            paypal_transmission_time,
            raw_body,
@@ -115,6 +116,20 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
       {:error, reason} ->
         Logger.error("❌ PayPal webhook signature verification FAILED: #{inspect(reason)}")
         Logger.info("Event NOT processed due to signature verification failure.")
+
+        # Attempt to get user_id for notification
+        # params are available in this scope. resource might be in params["resource"]
+        resource_for_error_path = params["resource"]
+        user_id_for_error_path = extract_user_id_from_resource(resource_for_error_path)
+
+        if user_id_for_error_path do
+          broadcast_verification_failure(user_id_for_error_path, reason)
+        else
+          Logger.warning(
+            "Could not extract user_id from webhook params for verification failure notification. Params: #{inspect(params)}"
+          )
+        end
+
         send_resp(conn, 200, "OK (Signature Invalid - Event Not Processed)")
     end
   end
@@ -353,6 +368,22 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     }
 
     Logger.error("Broadcasting subscription error to #{topic}: #{inspect(message)}")
+    Phoenix.PubSub.broadcast(Partners.PubSub, topic, message)
+  end
+
+  defp broadcast_verification_failure(user_id, verification_reason) do
+    topic = "paypal_subscription:#{user_id}"
+
+    message = %{
+      event: "subscription_verification_failed",
+      details: %{
+        reason: inspect(verification_reason),
+        message:
+          "There was a problem verifying the payment notification from PayPal. Your transaction may not have been processed correctly. Please contact support if the issue persists or you don't see your subscription updated shortly."
+      }
+    }
+
+    Logger.info("Broadcasting subscription verification failure to #{topic}: #{inspect(message)}")
     Phoenix.PubSub.broadcast(Partners.PubSub, topic, message)
   end
 end

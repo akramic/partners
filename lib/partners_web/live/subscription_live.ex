@@ -393,6 +393,19 @@ defmodule PartnersWeb.SubscriptionLive do
            live_action: :success
          )}
 
+      %{
+        event: "subscription_verification_failed",
+        details: %{reason: reason_from_details, message: flash_message}
+      } ->
+        Logger.error(
+          "🔔 LiveView: PubSub subscription_verification_failed for user #{user_id}. Reason: #{reason_from_details}"
+        )
+
+        {:noreply,
+         socket
+         |> put_flash(:error, flash_message)
+         |> push_patch(to: ~p"/subscriptions/start_trial")}
+
       _ ->
         Logger.warning(
           "🔔 LiveView: Received unknown message for user #{user_id}: #{inspect(message)}"
