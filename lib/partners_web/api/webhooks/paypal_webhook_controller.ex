@@ -60,7 +60,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
           broadcast_subscription_error(user_id, "Error processing webhook: #{inspect(reason)}")
       end
     else
-      Logger.warn("Missing user_id or event_type in PayPal webhook")
+      Logger.warning("Missing user_id or event_type in PayPal webhook")
     end
 
     # Always respond with 200 OK to PayPal (best practice)

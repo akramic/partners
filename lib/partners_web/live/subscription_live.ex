@@ -1,126 +1,114 @@
 defmodule PartnersWeb.SubscriptionLive do
   @moduledoc """
-  LiveView for managing PayPal subscription flows and state.
+  LiveView for managing PayPal subscription trial flows and state.
 
   ## Architecture
 
   This LiveView uses Phoenix.LiveView actions to manage different views of the subscription
-  process while maintaining state in a single live socket connection. Instead of loading
-  new pages for each state, we use `live_action` to switch views while preserving all
-  socket assigns and the PubSub subscription.
+  process, primarily focusing on a streamlined free trial initiation.
 
   ### Live Actions
 
-  * `:index` - Display available subscription plans
-  * `:new` - Show subscription confirmation page
-  * `:success` - Show current subscription status
-  * `:cancel` - Display cancellation confirmation
+  * `:start_trial` - Page where users initiate the PayPal approval for a free trial.
+  * `:success` - Displays the status of the subscription (e.g., pending, active) after returning from PayPal or via webhook updates.
+  * `:cancel` - Displays a message if the user cancels the PayPal approval process.
 
-  The LiveView maintains state through actions by:
-  1. Using `handle_params` to update the current action without a full reload
-  2. Using `push_patch` for navigation to preserve the socket connection
-  3. Keeping subscription state in socket assigns across view changes
-  4. Maintaining a persistent PubSub subscription for real-time updates
+  The LiveView maintains state by:
+  1. Using `handle_params` to set up the view for the current action.
+  2. Using `redirect/2` for external navigation to PayPal.
+  3. Using `push_patch` (implicitly via `live_patch` in templates or `redirect/2` for internal navigation if needed, though current flow minimizes this) to change views for success/cancel pages while preserving the socket.
+  4. Keeping subscription-related state in socket assigns.
+  5. Maintaining a persistent PubSub subscription for real-time updates from webhooks.
 
-  For example, when a subscription state changes:
-  ```elixir
-  # Updates state and changes view without disconnecting
-  socket
-  |> assign(:subscription_status, :active)
-  |> push_patch(to: ~p"/subscriptions/success")
-  ```
+  ## Trial Subscription Flow
 
-  ## Subscription Flow
+  1. New user registers and is redirected to the `/subscriptions/start_trial` page.
+  2. User is presented with a "Start Trial with PayPal" button.
+  3. User clicks the button; a "Transferring to PayPal..." message is displayed.
+  4. The LiveView backend calls the PayPal API to create a trial subscription.
+  5. Upon receiving an approval URL from PayPal, the user's browser is redirected to PayPal.
+  6. User approves (or cancels) the subscription on PayPal.
+  7. PayPal redirects the user back to the application's return URLs (`/paypal/return` or `/paypal/cancel`).
+  8. The `PaypalReturnController` handles these returns, typically redirecting the user to the `/subscriptions/success` (or `/subscriptions/cancel`) LiveView action.
+  9. The `SubscriptionLive` view (e.g., on `:success` action) displays the current subscription status.
+  10. Asynchronous PayPal webhook events (e.g., `CHECKOUT.ORDER.APPROVED`, `BILLING.SUBSCRIPTION.ACTIVATED`) are received by `PaypalWebhookController`.
+  11. The webhook controller broadcasts PubSub messages.
+  12. `SubscriptionLive` handles these PubSub messages to update the subscription status in real-time (e.g., from `:pending` to `:active` on the `:success` page).
 
-  1. User views subscription plans on the index page
-  2. User clicks "Select Plan" to start subscription process (`push_patch` to :new)
-  3. User confirms subscription on the new subscription page
-  4. System sets state to `:pending` and redirects to success page (`push_patch` to :success)
-  5. PayPal webhook updates trigger state changes via PubSub messages
-  6. UI updates automatically to reflect current subscription state (maintaining socket)
+  ## Subscription States (primarily for the `:success` view)
 
-  ## Subscription States
-
-  * `:pending` - Initial state when subscription is being processed by PayPal
-  * `:active` - Subscription is successfully activated and user has full access
-  * `:cancelled` - Subscription was cancelled by user or due to payment issues
-  * `:failed` - Subscription activation failed (e.g., payment declined)
+  * `:pending` - Initial state after user approval on PayPal, awaiting final activation.
+  * `:active` - Subscription is successfully activated.
+  * `:failed` - Subscription activation failed.
+  * `:cancelled` - User cancelled on PayPal, or subscription was cancelled later.
 
   ## PubSub Messages
 
-  This LiveView subscribes to `paypal_subscription:{user_id}` and handles:
+  Subscribes to `paypal_subscription:{user_id}` and handles:
+  * `%{event: "subscription_updated", subscription_state: state}`
+  * `%{event: "subscription_error", error: error_message}`
 
-  1. Subscription Updates:
-  ```elixir
-  Phoenix.PubSub.broadcast(Partners.PubSub, "paypal_subscription:user123", %{
-    event: "subscription_updated",
-    subscription_state: :active  # or :pending, :cancelled, :failed
-  })
-  ```
-
-  2. Subscription Errors:
-  ```elixir
-  Phoenix.PubSub.broadcast(Partners.PubSub, "paypal_subscription:user123", %{
-    event: "subscription_error",
-    error: "Payment validation failed"
-  })
-  ```
-
-  ## Usage
-
-  Add this LiveView to your router:
+  ## Usage (Router Examples)
 
   ```elixir
-  live "/subscriptions", SubscriptionLive, :index
-  live "/subscriptions/new", SubscriptionLive, :new
-  live "/subscriptions/success", SubscriptionLive, :success
-  live "/subscriptions/cancel", SubscriptionLive, :cancel
-  ```
+  # In your router.ex
+  scope "/", PartnersWeb do
+    pipe_through [:browser, :require_authenticated_user] # Ensure user is authenticated
 
-  The LiveView will automatically handle subscription state changes and update the UI
-  accordingly. Error messages are displayed to users when problems occur, and users
-  can retry failed subscriptions or return to the plans page at any time.
+    live "/subscriptions/start_trial", SubscriptionLive, :start_trial
+    live "/subscriptions/success", SubscriptionLive, :success
+    live "/subscriptions/cancel", SubscriptionLive, :cancel
+  end
+  ```
 
   ## TODO: Production Hardening
 
-  The following areas need to be addressed before production deployment:
+  The following areas should be reviewed or implemented for production:
 
   ### State Management & Persistence
-  * Add database-backed subscription storage
-  * Persist subscription attempts and their states
-  * Make PayPal subscription IDs queryable outside LiveView
-  * Handle browser close/reopen during subscription flow
+  * Ensure robust database-backed storage for subscription details (ID, status, PayPal `payer_id`, trial period dates).
+  * Persist subscription attempts and their states, especially if more complex flows are added later.
+  * Handle cases where a user might close the browser after PayPal approval but before returning to the app or before the webhook confirms activation. Ensure the system can reconcile state.
 
   ### Security & Authentication
-  * Replace temporary user ID with proper authentication
-  * Add webhook payload validation
-  * Validate subscription events against authenticated user
-  * Add rate limiting for subscription attempts
+  * Verify that user authentication and authorization are secure throughout the flow.
+  * Ensure robust PayPal webhook payload validation (signature verification).
+  * Implement trial abuse prevention (e.g., by checking the PayPal `payer_id` against previously used IDs for trials). This is a high-priority pending task.
+  * Consider rate limiting for trial creation attempts if abuse is detected.
 
   ### Error Handling
-  * Implement PayPal timeout handling
-  * Handle network failures during PayPal redirect
-  * Add retry mechanism for failed webhook deliveries
-  * Handle duplicate webhook events
-  * Add timeout handling for stuck pending states
+  * Comprehensive handling for PayPal API errors, network failures during redirects or API calls.
+  * Robust retry mechanisms or clear user guidance for transient failures.
+  * Ensure webhook delivery failures are handled (e.g., PayPal's retry mechanism, monitoring).
+  * Idempotency for webhook event processing.
+  * Timeout handling for states that might get stuck (e.g., a subscription remaining `:pending` indefinitely).
 
   ### Race Conditions
-  * Track multiple subscription attempts per user
-  * Match webhook events to specific subscription attempts
-  * Validate subscription_status matches current attempt
-  * Handle concurrent subscription updates
+  * Ensure that concurrent updates or webhook events for the same subscription/user are handled correctly to prevent inconsistent states.
+  * Validate that webhook events correspond to legitimate and current subscription attempts/records.
 
   ### User Experience Improvements
-  * Add loading states during PayPal redirect
-  * Implement subscription attempt recovery
-  * Add subscription history view
-  * Handle subscription upgrades/downgrades
-  * Add progress tracking for long-running operations
+  * Refine loading/spinner states for all asynchronous operations.
+  * Clear feedback for all outcomes (success, failure, cancellation).
+  * If applicable in the future: subscription management (view history, cancel active subscription, update payment).
+  * Progress tracking if any part of the flow becomes longer.
   """
 
   use PartnersWeb, :live_view
   require Logger
 
+  @doc """
+  Mounts the LiveView, subscribes to user-specific PayPal PubSub events,
+  and initializes default socket assigns.
+
+  Initial assigns include:
+  - `page_title`: Default page title.
+  - `subscription_status`: Initially `nil`.
+  - `error_message`: Initially `nil`.
+  - `approval_url`: Initially `nil` (used internally before redirect).
+  - `subscription_id`: Initially `nil` (PayPal subscription ID).
+  - `transferring_to_paypal`: Boolean flag for UI, initially `false`.
+  """
   @impl true
   def mount(_params, _session, socket) do
     # Use the real user from the current scope
@@ -150,11 +138,15 @@ defmodule PartnersWeb.SubscriptionLive do
   end
 
   @doc """
-  Handles live action changes without full page reloads.
+  Handles live action changes, typically when navigating to `:start_trial`,
+  `:success`, or `:cancel` actions.
 
-  This callback is crucial for maintaining state while changing views. It's triggered
-  by `push_patch` navigations and updates the current view without disconnecting
-  the socket or losing subscription state.
+  It updates the `page_title` based on the action. For the `:start_trial`
+  action, it resets UI-related assigns like `transferring_to_paypal`,
+  `error_message`, and `subscription_status` to ensure a clean state.
+  For the `:success` action, it may set a default `subscription_status`
+  of `:pending` if not already set (e.g., on initial load after redirect
+  from PayPal return URL before any webhooks).
   """
   @impl true
   def handle_params(_params, _url, socket) do
@@ -293,91 +285,158 @@ defmodule PartnersWeb.SubscriptionLive do
   end
 
   @doc """
-  Handles PubSub subscription messages and updates the LiveView state.
+  Handles internal messages and PubSub events.
 
-  This callback receives PayPal webhook events via PubSub and updates the subscription
-  state without requiring a page reload. It maintains the socket connection while
-  updating the view and state, ensuring a smooth user experience during state transitions.
+  Clause breakdown:
+  - `:_process_paypal_trial_creation`: An internal message sent after the user
+    requests to start a trial. This handler makes the asynchronous call to
+    `Partners.Services.Paypal.create_subscription/2`. On success, it extracts
+    the PayPal approval URL and uses `redirect(socket, external: approval_url)`
+    to send the user to PayPal. On failure, it updates the UI with an error
+    message and sets `transferring_to_paypal` to `false`.
 
-  The live_action is set to :success to show the updated state, but the socket
-  connection and all assigns are preserved.
+  - `%{event: "subscription_updated", subscription_state: state}`: Handles PubSub
+    messages broadcast by the `PaypalWebhookController` when a subscription's
+    state changes (e.g., to `:active`, `:cancelled`). It updates the
+    `subscription_status` assign. If the user is currently on the `:start_trial`
+    page and a redirect to PayPal is in progress (`transferring_to_paypal` is true),
+    it avoids changing `live_action` to prevent disrupting the redirect. Otherwise,
+    it typically ensures the `live_action` is `:success` to display the status.
+
+  - `%{event: "subscription_error", error: error_message}`: Handles PubSub messages
+    for subscription errors, updating `subscription_status` to `:failed`,
+    setting `error_message`, and navigating to the `:success` action to display
+    the error state.
   """
   @impl true
   def handle_info(message, socket) do
+    # For logging
     user_id = socket.assigns.current_scope.user.id
-    Logger.info("🔔 LiveView received message for user #{user_id}: #{inspect(message)}")
 
     case message do
-      # Handle PayPal subscription state updates
+      :_process_paypal_trial_creation ->
+        Logger.info("🔔 LiveView: Processing PayPal trial creation for user #{user_id}")
+        user = socket.assigns.current_scope.user
+        trial_plan_id = Partners.Services.Paypal.plan_id()
+
+        case Partners.Services.Paypal.create_subscription(user.id, trial_plan_id) do
+          {:ok, subscription_data} ->
+            subscription_id = subscription_data["id"]
+            approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
+
+            if approval_url do
+              Logger.info(
+                "🔔 LiveView: Redirecting user #{user_id} to PayPal approval URL (via redirect/2): #{approval_url}"
+              )
+
+              socket_with_assigns =
+                assign(socket, subscription_id: subscription_id, transferring_to_paypal: true)
+
+              # Correct way to redirect to an external URL
+              {:noreply, redirect(socket_with_assigns, external: approval_url)}
+            else
+              # Error: No approval URL from PayPal
+              Logger.error("🔔 LiveView: No approval URL from PayPal for user #{user_id}")
+
+              {:noreply,
+               assign(socket,
+                 subscription_status: :failed,
+                 error_message: "Failed to prepare PayPal: No approval URL received from PayPal.",
+                 # Hide spinner, show error
+                 transferring_to_paypal: false
+               )}
+            end
+
+          {:error, reason} ->
+            # Error: PayPal API call failed
+            error_message = extract_error_message(reason)
+            Logger.error("🔔 LiveView: PayPal API error for user #{user_id} - #{error_message}")
+
+            {:noreply,
+             assign(socket,
+               subscription_status: :failed,
+               error_message: "Failed to prepare PayPal: #{error_message}",
+               # Hide spinner, show error
+               transferring_to_paypal: false
+             )}
+        end
+
       %{event: "subscription_updated", subscription_state: state} ->
-        Logger.info("Updating subscription state to: #{state}")
+        Logger.info(
+          "🔔 LiveView: PubSub subscription_updated for user #{user_id} to state: #{state}"
+        )
 
-        {:noreply,
-         socket
-         |> assign(:subscription_status, state)
-         |> assign(:live_action, :success)}
+        # If we are in the process of redirecting from :start_trial,
+        # don't change the live_action prematurely. The redirect and subsequent
+        # page load/param handling will set the correct live_action.
+        # Only update subscription_status. The redirect should take precedence.
+        if socket.assigns.live_action == :start_trial && socket.assigns.transferring_to_paypal do
+          {:noreply, assign(socket, subscription_status: state)}
+        else
+          # Otherwise, it's a normal update, likely on the :success page already,
+          # or the redirect from :start_trial has completed/failed and transferring_to_paypal is false.
+          {:noreply,
+           socket
+           |> assign(subscription_status: state, live_action: :success)}
+        end
 
-      # Handle PayPal subscription errors
       %{event: "subscription_error", error: error_message} ->
-        Logger.error("Subscription error: #{error_message}")
+        Logger.error(
+          "🔔 LiveView: PubSub subscription_error for user #{user_id}: #{error_message}"
+        )
 
         {:noreply,
          socket
-         |> assign(:subscription_status, :failed)
-         |> assign(:error_message, error_message)
-         |> assign(:live_action, :success)}
-
-      # Removed: {:initiate_trial_subscription, plan_id} logic is now in handle_event
+         |> assign(
+           subscription_status: :failed,
+           error_message: error_message,
+           live_action: :success
+         )}
 
       _ ->
-        Logger.warning("Received unknown message format: #{inspect(message)}")
+        Logger.warning(
+          "🔔 LiveView: Received unknown message for user #{user_id}: #{inspect(message)}"
+        )
+
         {:noreply, socket}
     end
   end
 
+  @doc """
+  Handles `phx-click` events from the client.
+
+  Clause breakdown:
+  - `"request_paypal_approval_url"`: Triggered by the "Start Trial" button on the
+    `:start_trial` page. It sets `transferring_to_paypal` to `true` to display
+    a spinner/message, resets relevant assigns (error_message, approval_url,
+    subscription_status), and sends an internal `:_process_paypal_trial_creation`
+    message to `self()` to initiate the asynchronous PayPal API call.
+
+  - `"retry_trial_creation"`: Triggered by the "Try Again" button on the
+    `:start_trial` page, typically shown after a failed trial initiation.
+    It resets assigns like `error_message`, `approval_url`, `subscription_status`,
+    and `transferring_to_paypal` to `false`, and sets the `page_title`
+    appropriately, allowing the user to attempt the trial creation process
+    again from a clean state.
+  """
   @impl true
   def handle_event("request_paypal_approval_url", _params, socket) do
-    socket_with_spinner =
+    # Immediately show spinner and schedule PayPal call
+    socket_updated =
       assign(socket,
         transferring_to_paypal: true,
         error_message: nil,
         approval_url: nil,
+        # Reset status
         subscription_status: nil
       )
 
-    user = socket_with_spinner.assigns.current_scope.user
-    trial_plan_id = Partners.Services.Paypal.plan_id()
-
-    case Partners.Services.Paypal.create_subscription(user.id, trial_plan_id) do
-      {:ok, subscription_data} ->
-        subscription_id = subscription_data["id"]
-        approval_url = Partners.Services.Paypal.extract_approval_url(subscription_data)
-
-        if approval_url do
-          final_socket = assign(socket_with_spinner, subscription_id: subscription_id)
-          # Use push_event for client-side redirection
-          {:noreply, push_event(final_socket, "phx:redirect-external", %{url: approval_url})}
-        else
-          {:noreply,
-           assign(socket_with_spinner,
-             subscription_status: :failed,
-             error_message: "Failed to prepare PayPal: No approval URL received from PayPal.",
-             transferring_to_paypal: false
-           )}
-        end
-
-      {:error, reason} ->
-        error_message = extract_error_message(reason)
-
-        {:noreply,
-         assign(socket_with_spinner,
-           subscription_status: :failed,
-           error_message: "Failed to prepare PayPal: #{error_message}",
-           transferring_to_paypal: false
-         )}
-    end
+    # Underscore to indicate internal message
+    send(self(), :_process_paypal_trial_creation)
+    {:noreply, socket_updated}
   end
 
+  # No @doc here as it's consolidated above
   @impl true
   def handle_event("retry_trial_creation", _params, socket) do
     {:noreply,
