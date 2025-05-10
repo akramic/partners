@@ -62,7 +62,8 @@ defmodule Partners.MixProject do
       # Added dependencies
       {:geo_postgis, "~> 3.7"},
       {:csv, "~> 3.2"},
-      {:req, "~> 0.5.0"}
+      {:req, "~> 0.5.0"},
+      {:x509, "~> 0.8.10"}
     ]
   end
 

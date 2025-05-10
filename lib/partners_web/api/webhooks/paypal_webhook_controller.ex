@@ -40,6 +40,34 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     Params: #{inspect(params, pretty: true)}
     """)
 
+    # --- TEMPORARY TEST CODE for Certificate Manager ---
+    paypal_cert_url_header =
+      Enum.find(conn.req_headers, fn {name, _value} ->
+        String.downcase(name) == "paypal-cert-url"
+      end)
+
+    case paypal_cert_url_header do
+      {_name, cert_url} ->
+        Logger.info("ℹ️ Found PAYPAL-CERT-URL header: #{cert_url}")
+
+        case Partners.Services.PaypalCertificateManager.get_certificate(cert_url) do
+          {:ok, _pem_string} ->
+            Logger.info(
+              "📄✅ Successfully fetched/retrieved certificate using PaypalCertificateManager for URL: #{cert_url}"
+            )
+
+          {:error, reason} ->
+            Logger.error(
+              "📄❌ Error from PaypalCertificateManager for URL #{cert_url}: #{inspect(reason)}"
+            )
+        end
+
+      nil ->
+        Logger.warning("⚠️ PAYPAL-CERT-URL header not found in webhook request.")
+    end
+
+    # --- END OF TEMPORARY TEST CODE ---
+
     # Extract event type and resource from params
     event_type = params["event_type"]
     resource = params["resource"]

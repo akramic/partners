@@ -12,6 +12,13 @@ defmodule Partners.Application do
       Partners.Repo,
       {DNSCluster, query: Application.get_env(:partners, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Partners.PubSub},
+      # Start the PayPal Certificate Cache Agent
+      %{
+        id: Partners.Services.PaypalCertificateManager.PaypalCertCache,
+        start:
+          {Agent, :start_link,
+           [fn -> %{} end, [name: Partners.Services.PaypalCertificateManager.PaypalCertCache]]}
+      },
       # Start a worker by calling: Partners.Worker.start_link(arg)
       # {Partners.Worker, arg},
       # Start to serve requests, typically the last entry
