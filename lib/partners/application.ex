@@ -14,10 +14,10 @@ defmodule Partners.Application do
       {Phoenix.PubSub, name: Partners.PubSub},
       # Start the PayPal Certificate Cache Agent
       %{
-        id: Partners.Services.PaypalCertificateManager.PaypalCertCache,
+        id: Partners.Services.PaypalCertificateManager,
         start:
           {Agent, :start_link,
-           [fn -> %{} end, [name: Partners.Services.PaypalCertificateManager.PaypalCertCache]]}
+           [fn -> %{} end, [name: Partners.Services.PaypalCertificateManager]]}
       },
       # Start a worker by calling: Partners.Worker.start_link(arg)
       # {Partners.Worker, arg},

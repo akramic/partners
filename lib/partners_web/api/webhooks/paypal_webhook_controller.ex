@@ -233,7 +233,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
           if user_id do
             broadcast_verification_failure(
               user_id,
-              # Corrected variable name
+              # Variable name corrected to match the one in scope
               {:fallback_missing_ids_for_api_call, original_signature_failure_reason}
             )
           else
@@ -351,13 +351,6 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
       {:error, reason_atom} ->
         Logger.error("Error during signature verification step: #{inspect(reason_atom)}")
         {:error, reason_atom}
-
-      other_error ->
-        Logger.error(
-          "Unexpected error or invalid input during signature verification: #{inspect(other_error)}"
-        )
-
-        {:error, :unexpected_verification_error}
     end
   end
 
@@ -421,71 +414,50 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     {:ok, base_string}
   end
 
+  defp ensure_binary(value, error_tag) do
+    if is_binary(value) do
+      {:ok, value}
+    else
+      {:error, error_tag}
+    end
+  end
+
   defp get_public_key_from_paypal_cert(paypal_cert_url) do
     with {:ok, pem_string} <- PaypalCertificateManager.get_certificate(paypal_cert_url),
-         # Ensure pem_string is binary
-         true <- is_binary(pem_string),
-         # Parse PEM to cert record
-         {:ok, cert_record} <- Certificate.from_pem(pem_string) do
-      # If all above are successful, cert_record is available.
-      # Now, extract the public key. Certificate.public_key/1 returns SubjectPublicKeyInfo.t() directly or raises.
-      try do
-        public_key_erlang_record = Certificate.public_key(cert_record)
-        # Success: return {:ok, key_record} which is expected by the caller's 'with' chain
-        {:ok, public_key_erlang_record}
-      rescue
-        e ->
-          # Log the exception and return an error tuple
-          Logger.error(
-            "Exception from Certificate.public_key/1 for URL #{paypal_cert_url}: #{inspect(e)}"
-          )
-
-          {:error, {:public_key_extraction_failed, :exception_in_public_key_call}}
-      end
+         {:ok, pem_binary} <- ensure_binary(pem_string, :pem_not_binary),
+         {:ok, cert_record} <- Certificate.from_pem(pem_binary),
+         # CRITICAL ASSUMPTION: Certificate.public_key/1 returns {:ok, _} | {:error, _}
+         # and does not raise exceptions for errors intended to be handled in the control flow.
+         # If it can raise, removing the previous try/rescue makes this a potential crash point.
+         {:ok, public_key_erlang_record} <- Certificate.public_key(cert_record) do
+      {:ok, public_key_erlang_record}
     else
-      # This 'else' block handles failures from the 'with' conditions:
-      # PaypalCertificateManager.get_certificate, is_binary, Certificate.from_pem
-
-      # From PaypalCertificateManager
-      {:error, cert_manager_reason} when is_atom(cert_manager_reason) ->
-        Logger.error(
-          "Failed to get certificate via PaypalCertificateManager for URL #{paypal_cert_url}: #{inspect(cert_manager_reason)}"
-        )
-
-        {:error, {:certificate_fetch_failed, cert_manager_reason}}
-
-      # From `true <- is_binary(pem_string)`
-      false ->
+      {:error, :pem_not_binary} ->
         Logger.error(
           "PEM string from PaypalCertificateManager was not a binary for URL #{paypal_cert_url}."
         )
 
         {:error, :pem_not_binary}
 
-      # From `Certificate.from_pem(pem_string)`
-      {:error, from_pem_reason} ->
+      {:error, reason} ->
         Logger.error(
-          "Failed to parse PEM with Certificate.from_pem/1 for URL #{paypal_cert_url}: #{inspect(from_pem_reason)}"
+          "Failed during public key derivation for URL #{paypal_cert_url}. Reason: #{inspect(reason)}"
         )
 
-        {:error, {:public_key_extraction_failed, from_pem_reason}}
-
-      # This catch-all should ideally not be hit if the patterns above are exhaustive for known 'with' failures.
-      unexpected_with_failure ->
-        Logger.error(
-          "Unexpected failure in 'with' chain setup of get_public_key_from_paypal_cert for URL #{paypal_cert_url}: #{inspect(unexpected_with_failure)}"
-        )
-
-        {:error, :unexpected_error_in_get_public_key_setup}
+        {:error, reason}
     end
   end
 
   defp decode_transmission_sig(paypal_transmission_sig) do
-    try do
-      {:ok, Base.decode64!(paypal_transmission_sig, padding: true)}
-    rescue
-      e in ArgumentError ->
-        Logger.error("Failed to Base64 decode PayPal transmission signature: #{inspect(e)}")
+    case Base.decode64(paypal_transmission_sig, padding: true) do
+      {:ok, decoded_binary} ->
+        {:ok, decoded_binary}
+
+      :error ->
+        Logger.error(
+          "Failed to Base64 decode PayPal transmission signature. Input might be invalid or incorrectly padded."
+        )
+
         {:error, :signature_decode_failed}
     end
   end
@@ -575,21 +547,30 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   defp broadcast_verification_failure(user_id, verification_reason) do
     topic = "paypal_subscription:#{user_id}"
 
-    # Updated flash text
-    flash_text =
-      "We're having trouble confirming the setup of your Paypal trial subscription. Please try again and if you're still having problems, contact our friendly support team."
+    # Log the detailed verification reason for server-side debugging
+    Logger.warning("""
+    Broadcasting subscription verification failure for user '#{user_id}'.
+    Internal Verification Reason: #{inspect(verification_reason)}
+    """)
 
+    # User-friendly flash text
+    flash_text =
+      "Your PayPal subscription could not be confirmed at this time. Please try initiating the subscription again. If the problem continues, please contact support."
+
+    # Sanitized message for broadcasting
     message = %{
       event: "subscription_verification_failed",
       details: %{
-        # Retain detailed reason for logging/debugging
-        reason: inspect(verification_reason),
-        # Simplified message for the user
+        # Only include the user-friendly message
         message: flash_text
+        # DO NOT include: reason: inspect(verification_reason)
       }
     }
 
-    Logger.info("Broadcasting subscription verification failure to #{topic}: #{inspect(message)}")
+    Logger.info(
+      "Broadcasting sanitized subscription verification failure to #{topic}: #{inspect(message)}"
+    )
+
     Phoenix.PubSub.broadcast(Partners.PubSub, topic, message)
   end
 end

@@ -63,7 +63,10 @@ defmodule Partners.MixProject do
       {:geo_postgis, "~> 3.7"},
       {:csv, "~> 3.2"},
       {:req, "~> 0.5.0"},
-      {:x509, "~> 0.8.10"}
+      # Required for Paypal webhook verification
+      {:x509, "~> 0.8.10"},
+      {:timex, "~> 3.0"}
+
     ]
   end
 
