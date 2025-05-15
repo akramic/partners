@@ -13,6 +13,8 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     IO.inspect(conn, label: "CONN")
     IO.inspect(params, label: "PARAMS")
 
+    IO.inspect(conn.req_headers, label: "REQ HEADERS")
+
     case PaypalWebhookVerifier.validate_webhook_signature(conn) do
       {:ok, result} ->
         Logger.info("✅ PayPal webhook signature VERIFIED: #{inspect(result)}")
@@ -47,6 +49,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   defp process_validated_webhook() do
     # Function for processing validated webhook
     Logger.info("✅ Processing validated PayPal webhook.")
+
   end
 
   defp process_invalid_webhook(reason) do

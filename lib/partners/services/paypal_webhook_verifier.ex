@@ -103,7 +103,7 @@ defmodule Partners.Services.PaypalWebhookVerifier do
   def validate_webhook_signature(conn) do
     Logger.debug("Attempting to validate PayPal webhook signature.")
 
-    with {:ok, paypal_cert_url} <- get_header_value(conn.req_headers, "paypal-cert-url"),
+    with {:ok, paypal_cert_url} <- get_header_value(conn, "paypal-cert-url"),
          {:ok, otp_certificate} <- is_certificate_in_date?(paypal_cert_url),
          {:ok, public_key_record} <- get_public_key_from_certificate(otp_certificate),
          {:ok, map_signing_criteria} <- construct_signature_payload(conn) do
@@ -123,8 +123,8 @@ defmodule Partners.Services.PaypalWebhookVerifier do
         {:error, :invalid_signature}
       end
     else
-      _ ->
-        Logger.error("Failed to construct signature payload")
+      {:error, reason} ->
+        Logger.error("Failed to construct signature payload: #{inspect(reason)}")
         {:error, :failed_to_construct_signature_payload}
     end
   end
@@ -142,12 +142,12 @@ defmodule Partners.Services.PaypalWebhookVerifier do
 
   defp construct_signature_payload(conn) do
     with {:ok, paypal_transmission_sig} <-
-           get_header_value(conn.req_headers, "paypal-transmission-sig"),
-         {:ok, paypal_auth_algo} <- get_header_value(conn.req_headers, "paypal-auth-algo"),
+           get_header_value(conn, "paypal-transmission-sig"),
+         {:ok, paypal_auth_algo} <- get_header_value(conn, "paypal-auth-algo"),
          {:ok, paypal_transmission_id} <-
-           get_header_value(conn.req_headers, "paypal-transmission-id"),
+           get_header_value(conn, "paypal-transmission-id"),
          {:ok, paypal_transmission_time} <-
-           get_header_value(conn.req_headers, "paypal-transmission-time"),
+           get_header_value(conn, "paypal-transmission-time"),
          {:ok, raw_body} <- get_raw_body(conn),
          {:ok, crc32_string} <- get_crc32_string(raw_body),
          {:ok, webhook_id} <- get_web_hook_id(),
@@ -177,13 +177,13 @@ defmodule Partners.Services.PaypalWebhookVerifier do
   end
 
   # Helper to extract a specific header value
-  # Returns {:ok, value} or {:error, :header_not_found} if the header is not present (or Enum.find_value returns nil)
-  defp get_header_value(headers, header_name) do
-    Enum.find_value(headers, fn {name, value} ->
-      if String.downcase(name) == String.downcase(header_name),
-        do: {:ok, value},
-        else: {:error, :header_not_found}
-    end)
+  # Returns {:ok, value} or {:error, reason} if the header is not present (or Enum.find_value returns nil)
+  defp get_header_value(conn, header_name) do
+    case Plug.Conn.get_req_header(conn, header_name) do
+      # Takes the first value if multiple exist
+      [value | _rest] -> {:ok, value}
+      [] -> {:error, "Header: #{header_name} not found in request headers."}
+    end
   end
 
   defp get_raw_body(conn) do
@@ -253,7 +253,7 @@ defmodule Partners.Services.PaypalWebhookVerifier do
   defp get_web_hook_id() do
     webhook_id = Paypal.webhook_id()
 
-    if length(webhook_id) > 0 do
+    if String.length(webhook_id) > 0 do
       {:ok, webhook_id}
     else
       Logger.error("Failed to get PayPal webhook ID")
