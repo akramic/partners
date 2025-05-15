@@ -13,7 +13,6 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     IO.inspect(conn, label: "CONN")
     IO.inspect(params, label: "PARAMS")
 
-    IO.inspect(conn.req_headers, label: "REQ HEADERS")
 
     case PaypalWebhookVerifier.validate_webhook_signature(conn) do
       {:ok, result} ->
