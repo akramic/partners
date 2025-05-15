@@ -188,8 +188,15 @@ defmodule Partners.Services.PaypalWebhookVerifier do
 
   defp get_raw_body(conn) do
     # Retrieves the raw request body from conn.assigns.
-    # It's expected that a Plug (e.g., Plug.Parsers or a custom one)
-    # has already read the body and stored it in conn.assigns[:raw_body].
+    # For the PayPal webhook route (`POST /api/webhooks/paypal`), this is populated by
+    # `PartnersWeb.Plugs.CacheRawBodyPlug`, which is configured as the `:body_reader`
+    # in `Plug.Parsers` (see `endpoint.ex`). This custom plug ensures the raw body
+    # is read and cached in `conn.assigns.raw_body` *only* for specified routes,
+    # allowing this verifier to access it for signature calculation without impacting
+    # other routes with unnecessary body caching.
+    #
+    # For other scenarios or if this verifier were used for different routes,
+    # ensure a similar mechanism is in place to make the raw body available.
     raw_body = conn.assigns[:raw_body]
 
     case raw_body && raw_body != "" do

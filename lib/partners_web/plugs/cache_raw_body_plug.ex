@@ -8,6 +8,9 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
   and then returns the body to Plug.Parsers for further processing.
   """
 
+  # Define a list of paths for which the raw body should be cached.
+  @paths_to_cache_raw_body ["/api/webhooks/paypal"]
+
   @doc """
   The function to be used as a :body_reader with Plug.Parsers.
 
@@ -32,7 +35,7 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
         body_reader: {PartnersWeb.Plugs.CacheRawBodyPlug, :read_body_and_cache, []}
 
   """
-  @spec read_body_and_cache(Plug.Conn.t(), Plug.Parsers.opts()) ::
+  @spec read_body_and_cache(Plug.Conn.t(), keyword()) ::
           {:ok, binary(), Plug.Conn.t()}
           | {:error, :timeout}
           | {:error, :too_large}
@@ -56,10 +59,17 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
 
     case Plug.Conn.read_body(conn, effective_read_opts) do
       {:ok, body, conn_after_read} ->
-        # Store the raw body in assigns
-        conn_with_cached_body = assign(conn_after_read, :raw_body, body)
+        # Conditionally store the raw body in assigns
+        final_conn =
+          if conn_after_read.method == "POST" &&
+               conn_after_read.request_path in @paths_to_cache_raw_body do
+            assign(conn_after_read, :raw_body, body)
+          else
+            conn_after_read
+          end
+
         # Return the body and the (potentially modified) conn to Plug.Parsers
-        {:ok, body, conn_with_cached_body}
+        {:ok, body, final_conn}
 
       {:error, :timeout} = error ->
         Logger.error("Timeout reading request body in CacheRawBodyPlug.read_body_and_cache")
@@ -77,14 +87,26 @@ defmodule PartnersWeb.Plugs.CacheRawBodyPlug do
       # This case should ideally not be hit if this is the *first* reader.
       {:error, :already_read} = _error ->
         Logger.warning(
-          "Request body already read when CacheRawBodyPlug.read_body_and_cache was called. This is unexpected if it\\'s the primary body reader."
+          "Request body already read when CacheRawBodyPlug.read_body_and_cache was called for path #{inspect(conn.request_path)}. This is unexpected if it\\'s the primary body reader."
         )
 
-        # If it\\'s already read, we can\\'t cache it. Return empty or error.
-        # Plug.Parsers might still work if conn.body_params is populated by a previous parser.
-        # For safety, let's return an empty body, which might lead to parsing errors downstream if unexpected.
-        # Or propagate `error`
-        {:ok, "", conn}
+        # If the body was already read by something else, we can't read it again.
+        # We check if :raw_body was somehow assigned by the previous reader.
+        if cached_body = conn.assigns[:raw_body] do
+          Logger.info(
+            "Body already read, but :raw_body was found in assigns. Passing it to parser."
+          )
+
+          {:ok, cached_body, conn}
+        else
+          Logger.warning(
+            "Body already read, and :raw_body NOT in assigns. Returning empty body to parser. Parsing may fail."
+          )
+
+          # Plug.Parsers expects {:ok, body, conn}. Returning an empty string might allow it to proceed
+          # without crashing, though parsing will likely be incorrect if a body was expected.
+          {:ok, "", conn}
+        end
 
       {:error, reason} = error ->
         Logger.error(
