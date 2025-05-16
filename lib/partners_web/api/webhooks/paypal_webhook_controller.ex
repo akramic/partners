@@ -11,6 +11,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
 
   def paypal(conn, params) do
     IO.inspect(conn, label: "CONN")
+     IO.inspect(conn.path_info , label: "*****************************CONN PATH INFO ")
     IO.inspect(params, label: "PARAMS")
 
 

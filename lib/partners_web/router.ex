@@ -33,7 +33,7 @@ defmodule PartnersWeb.Router do
 
   pipeline :api do
     # Add our custom plug here
-  
+
     plug :accepts, ["json"]
   end
 
@@ -42,10 +42,11 @@ defmodule PartnersWeb.Router do
     # Public browser routes here
   end
 
-  # PayPal webhook endpoint
+  # Webhook endpoint
   scope "/api", PartnersWeb do
     # Use the standard API pipeline for webhook endpoints
     pipe_through :api
+    #  PayPal webhook endpoint
     post "/webhooks/paypal", Api.Webhooks.PaypalWebhookController, :paypal
   end
 

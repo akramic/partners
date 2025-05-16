@@ -49,7 +49,7 @@ defmodule PartnersWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    body_reader: {PartnersWeb.Plugs.CacheRawBodyPlug, :read_body_and_cache, []},
+    body_reader: {PartnersWeb.Plugs.CacheBodyReader, :maybe_cache_raw_body?, []},
     json_decoder: Phoenix.json_library()
 
   plug Plug.MethodOverride
