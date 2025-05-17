@@ -1,4 +1,32 @@
 defmodule PartnersWeb.Subscription.SubscriptionHelpers do
+  @moduledoc """
+  Manages the PayPal subscription workflow for trial subscriptions.
+
+  This module provides helper functions to handle the entire PayPal subscription lifecycle:
+
+  1. Initiating a subscription through PayPal
+  2. Processing subscription state transitions via webhooks
+  3. Handling user returns from PayPal (success or cancel flows)
+  4. Managing UI states based on subscription status
+
+  ## Workflow Stages:
+
+  * `:start_trial` - Initial subscription page with PayPal button
+  * `:paypal_return` - Processing after user approval on PayPal
+  * `:subscription_activated` - Successful activation notification
+  * `:paypal_cancel` - Handling when a user cancels on PayPal's site
+
+  ## Key Functions:
+
+  * `request_paypal_approval_url/1` - Creates subscription and redirects to PayPal
+  * `process_subscription_action/2` - Handles different live_action states
+  * `process_subscription_status_update/2` - Processes PayPal webhook events
+
+  The module integrates with the LiveView lifecycle, using socket assigns to maintain
+  state and ensure a consistent user experience throughout the asynchronous subscription
+  activation process.
+  """
+
   use PartnersWeb, :live_view
   require Logger
 
@@ -120,6 +148,93 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     # You could also consider making an API call to PayPal here to get
     # subscription details, although typically this would be unnecessary
     # since webhooks will provide this information
+
+    socket
+  end
+
+  def process_subscription_action(
+        _params,
+        %{assigns: %{live_action: :subscription_activated}} = socket
+      ) do
+    # Log activation details for debugging/auditing
+    user_id = socket.assigns.current_scope.user.id
+    subscription_id = socket.assigns[:subscription_id]
+
+    Logger.info("""
+    🔔 PayPal subscription activated for user #{user_id}:
+    subscription_id: #{inspect(subscription_id)}
+    subscription_status: :active
+    """)
+
+    # Set up the socket with assigns for the activated state
+    socket
+    |> assign(:page_title, "Subscription Activated")
+    |> assign(:subscription_status, :active)
+    |> assign(:error_message, nil)
+    |> assign(:transferring_to_paypal, false)
+  end
+
+  @doc """
+  Handles updates to the subscription status based on PayPal webhook events.
+  """
+  def process_subscription_status_update(
+        %{"event_type" => "BILLING.SUBSCRIPTION.CREATED"} = params,
+        socket
+      ) do
+    subscription_id = get_in(params, ["resource", "id"])
+    status = get_in(params, ["resource", "status"])
+
+    Logger.info("🔔 Subscription created with ID: #{subscription_id}, status: #{status}")
+
+    socket
+    |> assign(:subscription_status, :approval_pending)
+    |> assign(:subscription_details, params["resource"])
+  end
+
+  def process_subscription_status_update(
+        %{"event_type" => "BILLING.SUBSCRIPTION.ACTIVATED"} = params,
+        socket
+      ) do
+    subscription_id = get_in(params, ["resource", "id"])
+    status = get_in(params, ["resource", "status"])
+
+    Logger.info("🔔 Subscription activated with ID: #{subscription_id}, status: #{status}")
+
+    # Update the socket assigns to reflect the active subscription
+    socket =
+      socket
+      |> assign(:subscription_status, :active)
+      |> assign(:subscription_details, params["resource"])
+      |> assign(:page_title, "Subscription Activated")
+      # We need to use push_patch to update the URL and change the live_action
+      |> push_patch(to: ~p"/subscriptions/paypal/subscription_activated")
+
+    # This will cause the UI to render the component for the activated state
+    socket
+  end
+
+  def process_subscription_status_update(
+        %{"event_type" => "BILLING.SUBSCRIPTION.CANCELLED"} = params,
+        socket
+      ) do
+    subscription_id = get_in(params, ["resource", "id"])
+    status = get_in(params, ["resource", "status"])
+    reason = get_in(params, ["resource", "reason"]) || "Not specified"
+
+    Logger.info(
+      "🔔 Subscription cancelled with ID: #{subscription_id}, status: #{status}, reason: #{reason}"
+    )
+
+    socket
+    |> assign(:subscription_status, :cancelled)
+    |> assign(:subscription_details, params["resource"])
+    |> assign(:cancellation_reason, reason)
+  end
+
+  def process_subscription_status_update(params, socket) do
+    Logger.info(
+      "🔔 Subscription status update received that is not required to be handled by this module: #{inspect(params)}"
+    )
 
     socket
   end

@@ -122,6 +122,13 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     end
   end
 
+  # Although there is repetition here we need to match on the event_type. Reason -PartnersWeb.SubscriptionLive is not the only receiver.
+  # Some events will need to be handled here e.g. functions to update database records where there is no receiver for the event.
+  # An example would be the BILLING.SUBSCRIPTION.EXPIRED event or
+  # the BILLING.SUBSCRIPTION.PAYMENT.FAILED event or the BILLING.SUBSCRIPTION.RENEWED event or BILLING.SUBSCRIPTION.UPDATED event
+  # or the BILLING.SUBSCRIPTION.CANCELLED event or the BILLING.SUBSCRIPTION.SUSPENDED event
+  # These events will need to be handled here and not in the SubscriptionLive module.
+
   defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.CREATED"} = params) do
     user_id = params["resource"]["custom_id"]
     topic = "paypal_subscription:#{user_id}"

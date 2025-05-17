@@ -1,6 +1,6 @@
 defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   @moduledoc """
-  This module contains components for the subscription process.
+  This module contains components for the PayPal subscription process.
 
   The components handle different states of the PayPal subscription flow:
 
@@ -10,9 +10,12 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
      the PayPal approval in the background. The modal provides visual feedback that
      the subscription is being set up and prevents user interaction until complete.
   3. `:paypal_cancel` - Displayed when a user cancels the PayPal subscription process
+  4. `:subscription_activated` - Success view shown after receiving PayPal's activation webhook
+     This confirms to the user that their trial subscription is now active.
 
   Each component includes appropriate loading states and transitions between different
-  stages of the subscription process.
+  stages of the subscription process. The components are selected based on the current
+  `live_action` value, which changes as the user progresses through the subscription flow.
   """
 
   use Phoenix.Component
@@ -51,11 +54,12 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
     ~H"""
     <div class="z-50 absolute inset-0 flex items-center justify-center bg-base-200">
       <div class="space-y-8 flex flex-col items-center">
-        <div class="flex flex-col items-center justify-center space-y-4 py-4 px-8 rounded-md bg-base-100/70 shadow-lg">
-          <p>You're awesome! Thank you for your subscription!</p>
-          <p>We are setting up your account now.</p>
-          <span class="inline-block loading loading-ring loading-sm"></span>
-          <p class="text-sm">Please wait ...</p>
+        <div class="flex flex-col items-center justify-center space-y-2 py-4 px-8 rounded-md bg-base-100 shadow-lg">
+          <p>You're awesome! <span>&#128151;</span></p>
+          <p>Thank you for your subscription!</p>
+          <p>Waiting for Paypal approval.</p>
+          <span class="inline-block loading loading-ring loading-lg"></span>
+          <p class="text-sm">Should be just a moment or two ...</p>
         </div>
       </div>
     </div>
@@ -84,6 +88,16 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
           <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
         </div>
       </div>
+    </div>
+    """
+  end
+
+  def render(%{live_action: :subscription_activated} = assigns) do
+    ~H"""
+    <div class="space-y-8 flex flex-col items-center">
+      <p>Well done!</p>
+      <p>Your subscription is now active.</p>
+      <p>Thank you for choosing our service!</p>
     </div>
     """
   end

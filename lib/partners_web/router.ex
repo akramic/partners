@@ -100,6 +100,9 @@ defmodule PartnersWeb.Router do
       # Route if user decides to cancel on paypal's site and decides not to proceed with completing the subscription
       live "/subscriptions/paypal/cancel", SubscriptionLive, :paypal_cancel
 
+      # Route for when the subscription is activated
+      live "/subscriptions/paypal/subscription_activated", SubscriptionLive, :subscription_activated
+
       # PayPal return URLs
       # get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
       # get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel

@@ -99,19 +99,22 @@ defmodule PartnersWeb.SubscriptionLive do
     SubscriptionHelpers.request_paypal_approval_url(socket)
   end
 
-  #   def handle_info({:subscription_status_update, %{subscription_data: params}}, socket) do
-  #   # Process params
-  #   {:noreply, socket}
-  # end
+  def handle_info({:subscription_status_update, %{subscription_data: params}}, socket) do
+    # Process params
+    Logger.info("🔔 Subscription status update received: #{inspect(params)}")
+    socket = SubscriptionHelpers.process_subscription_status_update(params, socket)
+    {:noreply, socket}
+  end
+
+  def handle_info({:subscription_error, %{error_reason: reason}}, socket) do
+    # Process params
+    Logger.error("❌ Error processing subscription: #{inspect(reason)}")
+    {:noreply, socket}
+  end
 
   # # Future enhancement that adds metadata - old handlers still work!
   # def handle_info({:subscription_status_update, %{subscription_data: params, metadata: meta}}, socket) do
   #   # Process params with metadata
-  #   {:noreply, socket}
-  # end
-
-  #   def handle_info({:subscription_error, %{error_reason: reason}}, socket) do
-  #   # Process params
   #   {:noreply, socket}
   # end
 
