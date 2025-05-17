@@ -56,6 +56,22 @@ defmodule PartnersWeb.SubscriptionLive do
     SubscriptionHelpers.request_paypal_approval_url(socket)
   end
 
+  #   def handle_info({:subscription_status_update, %{subscription_data: params}}, socket) do
+  #   # Process params
+  #   {:noreply, socket}
+  # end
+
+  # # Future enhancement that adds metadata - old handlers still work!
+  # def handle_info({:subscription_status_update, %{subscription_data: params, metadata: meta}}, socket) do
+  #   # Process params with metadata
+  #   {:noreply, socket}
+  # end
+
+  #   def handle_info({:subscription_error, %{error_reason: reason}}, socket) do
+  #   # Process params
+  #   {:noreply, socket}
+  # end
+
   @impl true
   def handle_event("request_paypal_approval_url", _, socket) do
     send(self(), :request_paypal_approval_url)
@@ -75,10 +91,7 @@ defmodule PartnersWeb.SubscriptionLive do
     """
   end
 
-
-
-   defp assign_ui(%{assigns: %{live_action: :paypal_cancel}} = socket) do
+  defp assign_ui(%{assigns: %{live_action: :paypal_cancel}} = socket) do
     socket
   end
-
 end

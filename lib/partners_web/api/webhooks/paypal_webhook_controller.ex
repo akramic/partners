@@ -2,22 +2,106 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   @moduledoc """
   Controller for handling PayPal webhook callbacks and subscription events.
   It verifies the webhook signature and processes the event accordingly.
+
+  ## Event Types
+
+  PayPal sends multiple types of webhook events that need different handling:
+
+  ### Trial Subscription Events (require UI updates)
+
+  These events occur during the trial subscription lifecycle and require updating the UI:
+
+  - `BILLING.SUBSCRIPTION.CREATED` - Initial creation of subscription (status: APPROVAL_PENDING)
+    * Contains the approval URL that the user needs to visit
+    * Includes subscription ID and custom_id (our internal user ID)
+    * User must approve this subscription by visiting the approval URL
+
+  - `BILLING.SUBSCRIPTION.ACTIVATED` - User approved the subscription in PayPal
+    * Indicates successful approval and start of the trial period
+    * Status changes from APPROVAL_PENDING to ACTIVE
+    * Trial period begins from this point (typically 7 days)
+    * No payment is collected at this stage
+
+  - `BILLING.SUBSCRIPTION.CANCELLED` - User or merchant canceled before trial ends
+    * Can be initiated by either the user or our application
+    * No charges if canceled during the trial period
+    * UI should be updated to show subscription is no longer active
+
+  - `BILLING.SUBSCRIPTION.SUSPENDED` - Trial temporarily suspended
+    * Subscription paused but not terminated
+    * Can be reactivated later
+    * Typically happens when there's a payment issue after the trial
+
+  For these events, we broadcast via PubSub to update the UI in SubscriptionLive
+  when the user is actively on the website.
+
+  ### Payment Events (require database updates)
+
+  These events occur during the normal payment lifecycle and require database updates:
+
+  - `PAYMENT.SALE.COMPLETED` - Payment successfully processed
+    * Happens when the trial ends and the first regular payment is collected
+    * Also occurs for each recurring payment (monthly/annually)
+    * Contains payment details including amount, fees, and net amount
+
+  - `PAYMENT.SALE.DENIED` - Payment was denied
+    * Payment method declined or insufficient funds
+    * May lead to subscription suspension if not resolved
+    * Requires user intervention to update payment method
+
+  - `PAYMENT.SALE.REFUNDED` - Payment was refunded
+    * Full or partial refund processed
+    * May require adjusting subscription status or extending service period
+    * Should trigger email notification to the user
+
+  - `BILLING.SUBSCRIPTION.PAYMENT.FAILED` - Recurring payment failed
+    * PayPal will retry payment according to retry rules (typically 3 attempts)
+    * After final retry failure, subscription may be suspended
+    * Should trigger communication to user about payment issues
+
+  - `BILLING.SUBSCRIPTION.EXPIRED` - Subscription reached end date
+    * Normal termination at the end of subscription term
+    * Different from cancellation (which can happen anytime)
+    * May trigger renewal offers or re-subscription options
+
+  For these events, we update the database and send email notifications
+  as they might occur when the user is not actively using the application.
+
+  ## Webhook Verification Process
+
+  PayPal webhooks include security headers that allow us to verify the authenticity of each request:
+
+  1. `paypal-transmission-id` - Unique webhook transmission ID
+  2. `paypal-transmission-time` - Timestamp when the webhook was sent
+  3. `paypal-cert-url` - URL to download the PayPal certificate for verification
+  4. `paypal-auth-algo` - Algorithm used for the signature (typically SHA256withRSA)
+  5. `paypal-transmission-sig` - The signature to verify against
+
+  Our `PaypalWebhookVerifier` service handles the cryptographic verification by:
+  1. Extracting these headers from the request
+  2. Reading the raw body of the webhook payload
+  3. Verifying the signature using our locally stored PayPal certificate
+  4. Returning {:ok, result} on success or {:error, reason} on failure
+
+  Even if verification fails, we return HTTP 200 to PayPal to prevent unnecessary retries,
+  but log the error and don't process the webhook payload.
   """
 
   use PartnersWeb, :controller
   require Logger
 
   alias Partners.Services.PaypalWebhookVerifier
+  alias Phoenix.PubSub
 
   def paypal(conn, params) do
-    IO.inspect(conn, label: "CONN")
-    IO.inspect(params, label: "PARAMS")
+    Logger.info("CONN: #{inspect(conn)}")
+    Logger.info("PARAMS: #{inspect(params)}")
 
     case PaypalWebhookVerifier.validate_webhook_signature(conn) do
       {:ok, result} ->
         Logger.info("✅ PayPal webhook signature VERIFIED: #{inspect(result)}")
         # Function for processing successful webhook
-        process_validated_webhook()
+        process_validated_webhook(params)
 
         send_resp(
           conn,
@@ -28,7 +112,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
       {:error, reason} ->
         Logger.error("❌ PayPal webhook signature verification FAILED: #{inspect(reason)}")
         # Function for processing failed webhook
-        process_invalid_webhook(reason)
+        process_invalid_webhook(reason, params)
 
         send_resp(
           conn,
@@ -38,232 +122,96 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     end
   end
 
-  defp process_validated_webhook() do
-    # Function for processing validated webhook
-    Logger.info("✅ Processing validated PayPal webhook.")
+  defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.CREATED"} = params) do
+    user_id = params["resource"]["custom_id"]
+    topic = "paypal_subscription:#{user_id}"
+
+    Logger.info("✅ Processing validated PayPal webhook with event type: #{params["event_type"]}")
+    Logger.info("✅ Broadcasting to topic: #{topic}")
+
+    PubSub.broadcast(
+      Partners.PubSub,
+      topic,
+      {:subscription_status_update, %{subscription_data: params}}
+    )
   end
 
-  defp process_invalid_webhook(reason) do
-    # Function for processing invalid webhook
+  defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.ACTIVATED"} = params) do
+    user_id = params["resource"]["custom_id"]
+    topic = "paypal_subscription:#{user_id}"
+
+    Logger.info("✅ Processing validated PayPal webhook with event type: #{params["event_type"]}")
+    Logger.info("✅ Broadcasting to topic: #{topic}")
+
+    PubSub.broadcast(
+      Partners.PubSub,
+      topic,
+      {:subscription_status_update, %{subscription_data: params}}
+    )
+  end
+
+  defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.CANCELLED"} = params) do
+    user_id = params["resource"]["custom_id"]
+    topic = "paypal_subscription:#{user_id}"
+
+    Logger.info("✅ Processing validated PayPal webhook with event type: #{params["event_type"]}")
+    Logger.info("✅ Broadcasting to topic: #{topic}")
+
+    PubSub.broadcast(
+      Partners.PubSub,
+      topic,
+      {:subscription_status_update, %{subscription_data: params}}
+    )
+  end
+
+  defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.SUSPENDED"} = params) do
+    user_id = params["resource"]["custom_id"]
+    topic = "paypal_subscription:#{user_id}"
+
+    Logger.info("✅ Processing validated PayPal webhook with event type: #{params["event_type"]}")
+    Logger.info("✅ Broadcasting to topic: #{topic}")
+
+    PubSub.broadcast(
+      Partners.PubSub,
+      topic,
+      {:subscription_status_update, %{subscription_data: params}}
+    )
+  end
+
+  # Catch-all for other event types - log but don't broadcast
+  defp process_validated_webhook(params) do
+    Logger.info(
+      "✅ Processing validated PayPal webhook with unhandled event type: #{params["event_type"]}"
+    )
+  end
+
+  defp process_invalid_webhook(reason, params) do
+    # Extract user_id directly from params with defensive coding against nil or invalid structure
+    user_id =
+      case params do
+        %{"resource" => %{"custom_id" => custom_id}}
+        when is_binary(custom_id) and custom_id != "" ->
+          custom_id
+
+        _ ->
+          Logger.warning(
+            "❌ No valid user_id found in params for invalid webhook: #{inspect(params)}"
+          )
+
+          nil
+      end
+
     Logger.error("❌ Processing invalid PayPal webhook: #{inspect(reason)}")
+
+    if user_id do
+      topic = "paypal_subscription:#{user_id}"
+      Logger.info("✅ Broadcasting error to topic: #{topic}")
+
+      PubSub.broadcast(
+        Partners.PubSub,
+        topic,
+        {:subscription_error, %{error_reason: reason}}
+      )
+    end
   end
 end
-
-# Example conn
-# CONN: %Plug.Conn{
-#   adapter: {Bandit.Adapter, :...},
-#   assigns: %{
-#     raw_body: "{\"id\":\"WH-4FH7763559456502B-7YC99486266047817\",\"event_version\":\"1.0\",\"create_time\":\"2025-05-13T07:26:54.521Z\",\"resource_type\":\"subscription\",\"resource_version\":\"2.0\",\"event_type\":\"BILLING.SUBSCRIPTION.CREATED\",\"summary\":\"Subscription created\",\"resource\":{\"start_time\":\"2025-05-13T07:26:54Z\",\"quantity\":\"1\",\"create_time\":\"2025-05-13T07:26:54Z\",\"custom_id\":\"28c8a507-423c-4f36-9074-4654b1cd7b19\",\"links\":[{\"href\":\"https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7J216386D6407125Y\",\"rel\":\"approve\",\"method\":\"GET\"},{\"href\":\"https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X\",\"rel\":\"edit\",\"method\":\"PATCH\"},{\"href\":\"https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X\",\"rel\":\"self\",\"method\":\"GET\"}],\"id\":\"I-SR18H5TSRG6X\",\"plan_overridden\":false,\"plan_id\":\"P-1A446093FD195141FNALUJUY\",\"status\":\"APPROVAL_PENDING\"},\"links\":[{\"href\":\"https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817\",\"rel\":\"self\",\"method\":\"GET\"},{\"href\":\"https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817/resend\",\"rel\":\"resend\",\"method\":\"POST\"}]}"
-#   },
-#   body_params: %{
-#     "create_time" => "2025-05-13T07:26:54.521Z",
-#     "event_type" => "BILLING.SUBSCRIPTION.CREATED",
-#     "event_version" => "1.0",
-#     "id" => "WH-4FH7763559456502B-7YC99486266047817",
-#     "links" => [
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817",
-#         "method" => "GET",
-#         "rel" => "self"
-#       },
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817/resend",
-#         "method" => "POST",
-#         "rel" => "resend"
-#       }
-#     ],
-#     "resource" => %{
-#       "create_time" => "2025-05-13T07:26:54Z",
-#       "custom_id" => "28c8a507-423c-4f36-9074-4654b1cd7b19",
-#       "id" => "I-SR18H5TSRG6X",
-#       "links" => [
-#         %{
-#           "href" => "https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7J216386D6407125Y",
-#           "method" => "GET",
-#           "rel" => "approve"
-#         },
-#         %{
-#           "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#           "method" => "PATCH",
-#           "rel" => "edit"
-#         },
-#         %{
-#           "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#           "method" => "GET",
-#           "rel" => "self"
-#         }
-#       ],
-#       "plan_id" => "P-1A446093FD195141FNALUJUY",
-#       "plan_overridden" => false,
-#       "quantity" => "1",
-#       "start_time" => "2025-05-13T07:26:54Z",
-#       "status" => "APPROVAL_PENDING"
-#     },
-#     "resource_type" => "subscription",
-#     "resource_version" => "2.0",
-#     "summary" => "Subscription created"
-#   },
-#   cookies: %{},
-#   halted: false,
-#   host: "partners-dev-1808.serveo.net",
-#   method: "POST",
-#   owner: #PID<0.898.0>,
-#   params: %{
-#     "create_time" => "2025-05-13T07:26:54.521Z",
-#     "event_type" => "BILLING.SUBSCRIPTION.CREATED",
-#     "event_version" => "1.0",
-#     "id" => "WH-4FH7763559456502B-7YC99486266047817",
-#     "links" => [
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817",
-#         "method" => "GET",
-#         "rel" => "self"
-#       },
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817/resend",
-#         "method" => "POST",
-#         "rel" => "resend"
-#       }
-#     ],
-#     "resource" => %{
-#       "create_time" => "2025-05-13T07:26:54Z",
-#       "custom_id" => "28c8a507-423c-4f36-9074-4654b1cd7b19",
-#       "id" => "I-SR18H5TSRG6X",
-#       "links" => [
-#         %{
-#           "href" => "https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7J216386D6407125Y",
-#           "method" => "GET",
-#           "rel" => "approve"
-#         },
-#         %{
-#           "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#           "method" => "PATCH",
-#           "rel" => "edit"
-#         },
-#         %{
-#           "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#           "method" => "GET",
-#           "rel" => "self"
-#         }
-#       ],
-#       "plan_id" => "P-1A446093FD195141FNALUJUY",
-#       "plan_overridden" => false,
-#       "quantity" => "1",
-#       "start_time" => "2025-05-13T07:26:54Z",
-#       "status" => "APPROVAL_PENDING"
-#     },
-#     "resource_type" => "subscription",
-#     "resource_version" => "2.0",
-#     "summary" => "Subscription created"
-#   },
-#   path_info: ["api", "webhooks", "paypal"],
-#   path_params: %{},
-#   port: 80,
-#   private: %{
-#     :phoenix_view => %{
-#       "html" => PartnersWeb.Api.Webhooks.PaypalWebhookHTML,
-#       "json" => PartnersWeb.Api.Webhooks.PaypalWebhookJSON
-#     },
-#     :phoenix_endpoint => PartnersWeb.Endpoint,
-#     PartnersWeb.Router => [],
-#     :phoenix_action => :paypal,
-#     :phoenix_layout => %{},
-#     :phoenix_controller => PartnersWeb.Api.Webhooks.PaypalWebhookController,
-#     :phoenix_format => "json",
-#     :phoenix_router => PartnersWeb.Router,
-#     :plug_session_fetch => #Function<1.49469887/1 in Plug.Session.fetch_session/1>,
-#     :before_send => [#Function<0.106864063/1 in Plug.Telemetry.call/2>,
-#      #Function<1.27030097/1 in Phoenix.LiveReloader.before_send_inject_reloader/3>],
-#     :phoenix_request_logger => {"request_logger", "request_logger"}
-#   },
-#   query_params: %{},
-#   query_string: "",
-#   remote_ip: {127, 0, 0, 1},
-#   req_cookies: %{},
-#   req_headers: [
-#     {"host", "partners-dev-1808.serveo.net"},
-#     {"user-agent", "PayPal/AUHR-214.0-58843836"},
-#     {"content-length", "1177"},
-#     {"accept", "*/*"},
-#     {"cal_poolstack",
-#      "amqunphttpretryd:UNPHTTPRETRY*CalThreadId=0*TopLevelTxnStartTime=196c88bdc28*Host=ccg18amqunphttpretryd3"},
-#     {"client_pid", "378754"},
-#     {"content-type", "application/json"},
-#     {"correlation-id", "f438946a28c22"},
-#     {"paypal-auth-algo", "SHA256withRSA"},
-#     {"paypal-auth-version", "v2"},
-#     {"paypal-cert-url",
-#      "https://api.sandbox.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-90621ecd"},
-#     {"paypal-transmission-id", "aac5ed50-2fcb-11f0-a48d-0737b43c836c"},
-#     {"paypal-transmission-sig",
-#      "HlCp6MHsQGfDdEIGLzRtFqJZxWbEXiukd+uoqxBRwClJaJmKWs0daiDvR0JwDs8yj9FWoAbtQPZSaipiV6y4xMcmA+I3a+T78JM0ivuCKCaVeIznCDfpOirhjhoRcc/YvlkrNo1oaDkRJctxPWfkhb1WZQ0CBqE/j0pK+Uel6szb+7e9EgTmLseRBwIYvv1b8/5O99X2bwPx0JQoIUTkQJZLQvcMvBZBGJinYh5Huv0KLX3lUnSsXwO+BYZcmtB5reP2kMLMkpgOHwRtGffanHS3+ZYQJCWnCvkYDUd3M0AZQN3uS3xnk1qiUApsMLuFkec3s0FdP4eInhKrOyYxow=="},
-#     {"paypal-transmission-time", "2025-05-13T07:27:03Z"},
-#     {"x-b3-spanid", "f2521f9cb6abf7c4"},
-#     {"x-forwarded-for", "173.0.80.117"},
-#     {"x-forwarded-host", "partners-dev-1808.serveo.net"},
-#     {"x-forwarded-proto", "https"},
-#     {"accept-encoding", "gzip"}
-#   ],
-#   request_path: "/api/webhooks/paypal",
-#   resp_body: nil,
-#   resp_cookies: %{},
-#   resp_headers: [
-#     {"cache-control", "max-age=0, private, must-revalidate"},
-#     {"x-request-id", "GD8FmECfe8lGEZEAAAFI"}
-#   ],
-#   scheme: :http,
-#   script_name: [],
-#   secret_key_base: :...,
-#   state: :unset,
-#   status: nil
-# }
-
-# Example params
-# PARAMS: %{
-#   "create_time" => "2025-05-13T07:26:54.521Z",
-#   "event_type" => "BILLING.SUBSCRIPTION.CREATED",
-#   "event_version" => "1.0",
-#   "id" => "WH-4FH7763559456502B-7YC99486266047817",
-#   "links" => [
-#     %{
-#       "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817",
-#       "method" => "GET",
-#       "rel" => "self"
-#     },
-#     %{
-#       "href" => "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-4FH7763559456502B-7YC99486266047817/resend",
-#       "method" => "POST",
-#       "rel" => "resend"
-#     }
-#   ],
-#   "resource" => %{
-#     "create_time" => "2025-05-13T07:26:54Z",
-#     "custom_id" => "28c8a507-423c-4f36-9074-4654b1cd7b19",
-#     "id" => "I-SR18H5TSRG6X",
-#     "links" => [
-#       %{
-#         "href" => "https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token=BA-7J216386D6407125Y",
-#         "method" => "GET",
-#         "rel" => "approve"
-#       },
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#         "method" => "PATCH",
-#         "rel" => "edit"
-#       },
-#       %{
-#         "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-SR18H5TSRG6X",
-#         "method" => "GET",
-#         "rel" => "self"
-#       }
-#     ],
-#     "plan_id" => "P-1A446093FD195141FNALUJUY",
-#     "plan_overridden" => false,
-#     "quantity" => "1",
-#     "start_time" => "2025-05-13T07:26:54Z",
-#     "status" => "APPROVAL_PENDING"
-#   },
-#   "resource_type" => "subscription",
-#   "resource_version" => "2.0",
-#   "summary" => "Subscription created"
-# }
