@@ -1,4 +1,4 @@
-defmodule PartnersWeb.SubscriptionLive do
+defmodule PartnersWeb.SubscriptionLiveOld do
   @moduledoc """
   LiveView for managing PayPal subscription trial flows and state.
 

@@ -272,16 +272,15 @@ defmodule Partners.Services.Paypal do
   @doc """
   Extracts a specific link from a PayPal API response.
   """
-  def extract_link(subscription_data, rel) do
-    links = subscription_data["links"] || []
+def extract_link(subscription_data, rel) do
+  links = subscription_data["links"] || []
 
-    link = Enum.find(links, fn link -> link["rel"] == rel end)
-
-    case link do
-      %{"href" => url} -> url
-      _ -> nil
-    end
+  case Enum.find(links, fn link -> link["rel"] == rel end) do
+    %{"href" => url} -> {:ok, url}
+    nil -> {:error, :link_not_found}
+    _ -> {:error, :invalid_link_format}
   end
+end
 
   @doc """
   Extracts the approval URL from a PayPal subscription response.

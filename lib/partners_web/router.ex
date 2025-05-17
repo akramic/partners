@@ -92,21 +92,24 @@ defmodule PartnersWeb.Router do
       live "/users/log-in/:token", UserLive.Confirmation, :new
 
       # Subscription routes
-      live "/subscriptions/success", SubscriptionLive, :success
-      live "/subscriptions/cancel", SubscriptionLive, :cancel
       # New route for starting a trial
       live "/subscriptions/start_trial", SubscriptionLive, :start_trial
 
+      live "/subscriptions/paypal/return", SubscriptionLive, :paypal_return
+
+      # Route if user decides to cancel on paypal's site and decides not to proceed with completing the subscription
+      live "/subscriptions/paypal/cancel", SubscriptionLive, :paypal_cancel
+
       # PayPal return URLs
-      get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
-      get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
+      # get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
+      # get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
 
     # Direct PayPal return routes for backwards compatibility
-    get "/paypal/return", Api.Webhooks.PaypalReturnController, :return
-    get "/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
+    # get "/paypal/return", Api.Webhooks.PaypalReturnController, :return
+    # get "/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
   end
 end
