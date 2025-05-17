@@ -1,6 +1,18 @@
 defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   @moduledoc """
   This module contains components for the subscription process.
+
+  The components handle different states of the PayPal subscription flow:
+
+  1. `:start_trial` - Initial subscription page with PayPal button
+  2. `:paypal_return` - Shows when a user returns after approving a subscription on PayPal
+     This component displays a modal with a loading spinner while the system processes
+     the PayPal approval in the background. The modal provides visual feedback that
+     the subscription is being set up and prevents user interaction until complete.
+  3. `:paypal_cancel` - Displayed when a user cancels the PayPal subscription process
+
+  Each component includes appropriate loading states and transitions between different
+  stages of the subscription process.
   """
 
   use Phoenix.Component
@@ -37,10 +49,15 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
 
   def render(%{live_action: :paypal_return} = assigns) do
     ~H"""
-    <div class="space-y-8 flex flex-col items-center">
-      <p>Thank you for your subscription!</p>
-      <p>We are setting up your account.</p>
-      <p>Redirecting...</p>
+    <div class="z-50 absolute inset-0 flex items-center justify-center bg-base-200">
+      <div class="space-y-8 flex flex-col items-center">
+        <div class="flex flex-col items-center justify-center space-y-4 py-4 px-8 rounded-md bg-base-100/70 shadow-lg">
+          <p>You're awesome! Thank you for your subscription!</p>
+          <p>We are setting up your account now.</p>
+          <span class="inline-block loading loading-ring loading-sm"></span>
+          <p class="text-sm">Please wait ...</p>
+        </div>
+      </div>
     </div>
     """
   end
@@ -73,13 +90,15 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
 
   # Fallback for any unhandled live_action
   def render(assigns) do
-  ~H"""
-  <div class="space-y-8 flex flex-col items-center">
-    <h1 class="text-4xl font-bold text-red-500">404</h1>
-    <p class="text-xl">Page not found</p>
-    <p>The page you're looking for doesn't exist or has been moved.</p>
-    <.link navigate={~p"/subscriptions/start_trial"} class="btn btn-primary mt-4">Start trial subscription</.link>
-  </div>
-  """
-end
+    ~H"""
+    <div class="space-y-8 flex flex-col items-center">
+      <h1 class="text-4xl font-bold text-red-500">404</h1>
+      <p class="text-xl">Page not found</p>
+      <p>The page you're looking for doesn't exist or has been moved.</p>
+      <.link navigate={~p"/subscriptions/start_trial"} class="btn btn-primary mt-4">
+        Start trial subscription
+      </.link>
+    </div>
+    """
+  end
 end

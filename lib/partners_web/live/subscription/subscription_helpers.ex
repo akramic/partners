@@ -1,31 +1,4 @@
 defmodule PartnersWeb.Subscription.SubscriptionHelpers do
-  @moduledoc """
-  Helper module containing business logic for PayPal subscription flows.
-
-  This module handles the processing of different subscription actions and states,
-  including PayPal API interactions, parameter processing, and state management.
-
-  ## Key Responsibilities
-
-  1. **Processing Different Live Actions**
-     - Handles state setup for different phases of subscription flow (start_trial, paypal_return, paypal_cancel)
-     - Extracts and processes PayPal URL parameters
-     - Sets appropriate socket assigns based on the current subscription state
-
-  2. **PayPal Integration**
-     - Creates PayPal subscriptions via the PayPal service module
-     - Processes PayPal's response data and extracts URLs, IDs, and tokens
-     - Handles error cases during PayPal API calls
-
-  3. **Error Handling**
-     - Manages various error scenarios in the subscription process
-     - Provides detailed logging for troubleshooting
-     - Sets appropriate error states for the UI
-
-  This module is designed to keep the LiveView focused on handling events and rendering,
-  while encapsulating all subscription-specific business logic here.
-  """
-
   use PartnersWeb, :live_view
   require Logger
 
