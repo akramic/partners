@@ -36,12 +36,6 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
           "Invalid webhook signature."
         )
     end
-
-    send_resp(
-      conn,
-      200,
-      "Webhook processed successfully."
-    )
   end
 
   defp process_validated_webhook() do
