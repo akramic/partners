@@ -57,9 +57,9 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
         <div class="flex flex-col items-center justify-center space-y-2 py-4 px-8 rounded-md bg-base-100 shadow-lg">
           <p>You're awesome! <span>&#128151;</span></p>
           <p>Thank you for your subscription!</p>
-          <p>Waiting for Paypal approval.</p>
+          <p>Waiting for Paypal approval. You will be redirected once approved.</p>
           <span class="inline-block loading loading-ring loading-lg"></span>
-          <p class="text-sm">Should be just a moment or two ...</p>
+          <p class="text-sm">This should not take more than 120 seconds ...</p>
         </div>
       </div>
     </div>

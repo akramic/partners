@@ -38,6 +38,58 @@ defmodule PartnersWeb.SubscriptionLive do
      * This LiveView receives the broadcasts via `handle_info({:subscription_status_update, ...}, socket)`
      * UI updates happen automatically with no page refresh needed
 
+  ## PayPal Subscription Event Types and Statuses
+
+  ### Event Types and Associated Statuses
+
+  * `BILLING.SUBSCRIPTION.CREATED`
+    - Associated status: `APPROVAL_PENDING` (The subscription is created but not yet approved by the buyer)
+
+  * `BILLING.SUBSCRIPTION.ACTIVATED`
+    - Associated status: `ACTIVE` (The subscription is now active)
+
+  * `BILLING.SUBSCRIPTION.UPDATED`
+    - May not change status directly, but updates subscription details
+
+  * `BILLING.SUBSCRIPTION.CANCELLED`
+    - Associated status: `CANCELLED` (The subscription has been terminated)
+
+  * `BILLING.SUBSCRIPTION.SUSPENDED`
+    - Associated status: `SUSPENDED` (The subscription is temporarily paused)
+
+  * `BILLING.SUBSCRIPTION.EXPIRED`
+    - Associated status: `EXPIRED` (The subscription has reached its end date)
+
+  * `BILLING.SUBSCRIPTION.PAYMENT.FAILED`
+    - May lead to `SUSPENDED` status if multiple failures occur
+
+  * `PAYMENT.SALE.COMPLETED`
+    - Confirms successful payment, maintains `ACTIVE` status
+
+  ### Complete List of Official Subscription Statuses
+
+  * `APPROVAL_PENDING` - Initial state when subscription is created
+  * `APPROVED` - Intermediate state after buyer approval but before activation (NOTE: This status is not associated with any webhook event; it's detected through return URL navigation)
+  * `ACTIVE` - Regular active subscription state
+  * `SUSPENDED` - Temporarily paused subscription
+  * `CANCELLED` - Permanently terminated subscription
+  * `EXPIRED` - Subscription that has reached its end date
+
+  ### Status Transitions
+
+  Typical status flow:
+  1. `APPROVAL_PENDING` (triggered by `BILLING.SUBSCRIPTION.CREATED`)
+  2. `APPROVED` (after buyer approves on PayPal site)
+  3. `ACTIVE` (triggered by `BILLING.SUBSCRIPTION.ACTIVATED`)
+
+  Subscription can then transition to:
+  - `SUSPENDED` (triggered by `BILLING.SUBSCRIPTION.SUSPENDED`)
+  - `CANCELLED` (triggered by `BILLING.SUBSCRIPTION.CANCELLED`)
+  - `EXPIRED` (triggered by `BILLING.SUBSCRIPTION.EXPIRED`)
+
+  Note: Refer to PayPal's official documentation for complete details and any updates
+  to these statuses or event types.
+
   ## Key Implementation Details
 
   * Subscribes to topic `paypal_subscription:{user_id}` for receiving PayPal event broadcasts
@@ -109,6 +161,10 @@ defmodule PartnersWeb.SubscriptionLive do
     # Process params
     Logger.error("❌ Error processing subscription: #{inspect(reason)}")
     {:noreply, socket}
+  end
+
+  def handle_info({:check_subscription_status, subscription_id}, socket) do
+    SubscriptionHelpers.process_get_subscription_status_after_timeout(subscription_id, socket)
   end
 
   # # Future enhancement that adds metadata - old handlers still work!

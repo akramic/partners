@@ -211,6 +211,10 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
 
     Logger.info("🔔 Subscription created with ID: #{subscription_id}, status: #{status}")
 
+   
+    # Set a 120-second timeout to check subscription status if we don't receive events
+    Process.send_after(self(), {:check_subscription_status, subscription_id}, 120_000)
+
     socket
     |> assign(:subscription_status, :approval_pending)
     |> assign(:subscription_details, params["resource"])
@@ -332,6 +336,60 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     )
 
     socket
+  end
+
+  def process_get_subscription_status_after_timeout(subscription_id, socket) do
+    Logger.info("🔔 Checking subscription status after timeout: #{subscription_id}")
+
+    # Only proceed if we're still in approval_pending state
+    if socket.assigns.subscription_status == :approval_pending do
+      case Partners.Services.Paypal.get_subscription_details(subscription_id) do
+        {:ok, subscription_data} ->
+          status = Map.get(subscription_data, "status", "UNKNOWN")
+          Logger.info("🔔 Retrieved subscription status after timeout: #{status}")
+
+          socket =
+            case status do
+              "ACTIVE" ->
+                # Subscription is active, transition to active state
+                socket
+                |> assign(:subscription_status, :active)
+                |> assign(:subscription_details, subscription_data)
+                |> assign(:page_title, "Subscription Activated")
+                # Update URL and change live_action
+                |> push_patch(to: ~p"/subscriptions/paypal/subscription_activated")
+
+              _ ->
+                # Any other status (APPROVAL_PENDING, CANCELLED, etc.)
+                # Return to start trial page with flash message
+                socket
+                |> put_flash(
+                  :info,
+                  "Sorry, we did not receive any confirmation from PayPal. Please try again."
+                )
+                |> assign(:subscription_status, nil)
+                |> push_patch(to: ~p"/subscriptions/start_trial")
+            end
+
+          {:noreply, socket}
+
+        {:error, reason} ->
+          # Error retrieving subscription details
+          Logger.error("❌ Error checking subscription status: #{inspect(reason)}")
+
+          # Return to start trial with error flash
+          socket =
+            socket
+            |> put_flash(:error, "Failed to verify subscription status. Please try again.")
+            |> assign(:subscription_status, nil)
+            |> push_patch(to: ~p"/subscriptions/start_trial")
+
+          {:noreply, socket}
+      end
+    else
+      # We've already received an update, no need to do anything
+      {:noreply, socket}
+    end
   end
 
   # Helper function to handle subscription errors and assign error state to socket

@@ -226,6 +226,86 @@ defmodule Partners.Services.Paypal do
   Returns:
     * `{:ok, subscription_data}` - The subscription details were successfully retrieved.
     * `{:error, reason}` - An error occurred while retrieving the subscription details.
+    Example of the data returned:
+
+    {:ok,
+  %{
+   "billing_info" => %{
+     "cycle_executions" => [
+       %{
+         "current_pricing_scheme_version" => 1,
+         "cycles_completed" => 1,
+         "cycles_remaining" => 0,
+         "sequence" => 1,
+         "tenure_type" => "TRIAL",
+         "total_cycles" => 1
+       },
+       %{
+         "current_pricing_scheme_version" => 1,
+         "cycles_completed" => 0,
+         "cycles_remaining" => 0,
+         "sequence" => 2,
+         "tenure_type" => "REGULAR",
+         "total_cycles" => 0
+       }
+     ],
+     "failed_payments_count" => 0,
+     "next_billing_time" => "2025-05-25T10:00:00Z",
+     "outstanding_balance" => %{"currency_code" => "AUD", "value" => "0.0"}
+   },
+   "create_time" => "2025-05-18T03:39:00Z",
+   "custom_id" => "28c8a507-423c-4f36-9074-4654b1cd7b19",
+   "id" => "I-0AVTBF574NP2",
+   "links" => [
+     %{
+       "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-0AVTBF574NP2/cancel",
+       "method" => "POST",
+       "rel" => "cancel"
+     },
+     %{
+       "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-0AVTBF574NP2",
+       "method" => "PATCH",
+       "rel" => "edit"
+     },
+     %{
+       "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-0AVTBF574NP2",
+       "method" => "GET",
+       "rel" => "self"
+     },
+     %{
+       "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-0AVTBF574NP2/suspend",
+       "method" => "POST",
+       "rel" => "suspend"
+     },
+     %{
+       "href" => "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-0AVTBF574NP2/capture",
+       "method" => "POST",
+       "rel" => "capture"
+     }
+   ],
+   "plan_id" => "P-1A446093FD195141FNALUJUY",
+   "plan_overridden" => false,
+   "quantity" => "1",
+   "shipping_amount" => %{"currency_code" => "AUD", "value" => "0.0"},
+   "start_time" => "2025-05-18T03:38:22Z",
+   "status" => "ACTIVE",
+   "status_update_time" => "2025-05-18T03:39:00Z",
+   "subscriber" => %{
+     "email_address" => "sb-tpnob41394833@personal.example.com",
+     "name" => %{"given_name" => "John", "surname" => "Doe"},
+     "payer_id" => "JMVURH2MDQNJA",
+     "tenant" => "PAYPAL"
+   },
+   "update_time" => "2025-05-18T03:39:00Z"
+  }}
+
+
+
+
+
+
+
+
   """
   def get_subscription_details(paypal_subscription_id) do
     # --- ORIGINAL CODE (Reverted after testing Scenario 3) ---
@@ -272,15 +352,15 @@ defmodule Partners.Services.Paypal do
   @doc """
   Extracts a specific link from a PayPal API response.
   """
-def extract_link(subscription_data, rel) do
-  links = subscription_data["links"] || []
+  def extract_link(subscription_data, rel) do
+    links = subscription_data["links"] || []
 
-  case Enum.find(links, fn link -> link["rel"] == rel end) do
-    %{"href" => url} -> {:ok, url}
-    nil -> {:error, :link_not_found}
-    _ -> {:error, :invalid_link_format}
+    case Enum.find(links, fn link -> link["rel"] == rel end) do
+      %{"href" => url} -> {:ok, url}
+      nil -> {:error, :link_not_found}
+      _ -> {:error, :invalid_link_format}
+    end
   end
-end
 
   @doc """
   Extracts the approval URL from a PayPal subscription response.
