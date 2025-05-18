@@ -21,6 +21,11 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
   * `request_paypal_approval_url/1` - Creates subscription and redirects to PayPal
   * `process_subscription_action/2` - Handles different live_action states
   * `process_subscription_status_update/2` - Processes PayPal webhook events
+  * `process_get_subscription_status_after_timeout/2` - Handles checking subscription status after timeout
+
+  The module also implements a timeout mechanism to handle cases where webhooks might be delayed
+  or missing. After a configurable period, it will directly check the subscription status via
+  the PayPal API to ensure users aren't left in an indeterminate state.
 
   The module integrates with the LiveView lifecycle, using socket assigns to maintain
   state and ensure a consistent user experience throughout the asynchronous subscription
@@ -201,6 +206,11 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
 
   @doc """
   Handles updates to the subscription status based on PayPal webhook events.
+
+  When a subscription is created, it sets up a timeout mechanism to handle cases
+  where webhooks might be delayed or missing. After 120 seconds, if no further
+  webhook events are received, it will trigger a direct check of the subscription
+  status via the PayPal API.
   """
   def process_subscription_status_update(
         %{"event_type" => "BILLING.SUBSCRIPTION.CREATED"} = params,
@@ -211,7 +221,6 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
 
     Logger.info("🔔 Subscription created with ID: #{subscription_id}, status: #{status}")
 
-   
     # Set a 120-second timeout to check subscription status if we don't receive events
     Process.send_after(self(), {:check_subscription_status, subscription_id}, 120_000)
 
@@ -338,6 +347,16 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     socket
   end
 
+  @doc """
+  Handles checking subscription status after the timeout period.
+
+  This function is called after the 120-second timeout following subscription creation
+  if no webhook events have updated the subscription status. It directly queries the
+  PayPal API to determine the current state of the subscription and updates the UI accordingly.
+
+  It addresses edge cases where webhooks might be delayed, dropped, or not received,
+  ensuring users don't get stuck in the approval pending state.
+  """
   def process_get_subscription_status_after_timeout(subscription_id, socket) do
     Logger.info("🔔 Checking subscription status after timeout: #{subscription_id}")
 

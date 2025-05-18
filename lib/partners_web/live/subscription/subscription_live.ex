@@ -37,6 +37,13 @@ defmodule PartnersWeb.SubscriptionLive do
      * The controller explicitly broadcasts these events via Phoenix.PubSub to this LiveView
      * This LiveView receives the broadcasts via `handle_info({:subscription_status_update, ...}, socket)`
      * UI updates happen automatically with no page refresh needed
+     * **Pending Approval Check** - After a configurable timeout period (default: 60 seconds),
+       if no webhook events are received confirming activation, the LiveView will:
+       * Automatically check the subscription status via PayPal API
+       * Update the UI based on the retrieved status
+       * Handle edge cases where webhooks might be delayed or lost
+       * This is managed through the `handle_info({:check_subscription_status, subscription_id}, socket)` handler
+       * The check is initiated by `SubscriptionHelpers.schedule_subscription_status_check/2`
 
   ## PayPal Subscription Event Types and Statuses
 
@@ -89,6 +96,20 @@ defmodule PartnersWeb.SubscriptionLive do
 
   Note: Refer to PayPal's official documentation for complete details and any updates
   to these statuses or event types.
+
+  ## Pending Approval Check
+
+  A safety mechanism is implemented to handle cases where webhooks are delayed or missing:
+
+  * After a configurable timeout period (default: 120 seconds) following subscription creation,
+    if a subscription remains in `APPROVAL_PENDING` state with no webhook events confirming
+    activation, the LiveView will:
+    * Automatically check the subscription status via PayPal API
+    * Update the UI based on the direct API check result
+    * Handle various possible states (active, still pending, cancelled, etc.)
+    * Show appropriate user feedback based on the found status
+
+  This ensures users aren't stuck in loading screens if PayPal webhooks are delayed or fail to arrive.
 
   ## Key Implementation Details
 
@@ -144,6 +165,28 @@ defmodule PartnersWeb.SubscriptionLive do
     socket = SubscriptionHelpers.process_subscription_action(params, socket)
     {:noreply, socket}
   end
+
+  @doc """
+  Handles various information messages sent to the LiveView process.
+
+  There are several types of messages handled:
+
+  * `:request_paypal_approval_url` - Initiates the PayPal approval URL request process
+    to begin subscription creation.
+
+  * `{:subscription_status_update, %{subscription_data: params}}` - Processes webhook
+    events from PayPal indicating subscription status changes. Updates the UI based on
+    the new subscription status.
+
+  * `{:subscription_error, %{error_reason: reason}}` - Handles any errors that occur
+    during the subscription process.
+
+  * `{:check_subscription_status, subscription_id}` - Triggered by the timeout set in the
+    `process_subscription_status_update` function when a subscription is created. Delegates to
+    the `SubscriptionHelpers` module to check the current status of the subscription directly
+    via the PayPal API and update the UI accordingly. This is a safety mechanism to handle cases
+    where webhooks might be delayed or missing.
+  """
 
   @impl true
   def handle_info(:request_paypal_approval_url, socket) do
