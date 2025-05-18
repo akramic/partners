@@ -174,6 +174,31 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     |> assign(:transferring_to_paypal, false)
   end
 
+  # This action is related to subscription rejection due to events that
+  # aren't relevant for initial trial subscription setup
+  # def process_subscription_action(
+  #       _params,
+  #       %{assigns: %{live_action: :subscription_rejected}} = socket
+  #     ) do
+  #   # Log rejection details for debugging/auditing
+  #   user_id = socket.assigns.current_scope.user.id
+  #   subscription_id = socket.assigns[:subscription_id]
+  #   failure_reason = socket.assigns[:failure_reason] || "Unknown"
+
+  #   Logger.info("""
+  #   🔔 PayPal subscription rejected for user #{user_id}:
+  #   subscription_id: #{inspect(subscription_id)}
+  #   subscription_status: #{inspect(socket.assigns[:subscription_status])}
+  #   failure_reason: #{failure_reason}
+  #   """)
+
+  #   # Set up the socket with assigns for the rejected state
+  #   socket
+  #   |> assign(:page_title, "Subscription Rejected")
+  #   |> assign(:error_message, nil)
+  #   |> assign(:transferring_to_paypal, false)
+  # end
+
   @doc """
   Handles updates to the subscription status based on PayPal webhook events.
   """
@@ -230,6 +255,76 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     |> assign(:subscription_details, params["resource"])
     |> assign(:cancellation_reason, reason)
   end
+
+  def process_subscription_status_update(
+        %{"event_type" => "BILLING.SUBSCRIPTION.PAYMENT.FAILED"} = params,
+        socket
+      ) do
+    subscription_id = get_in(params, ["resource", "id"])
+    status = get_in(params, ["resource", "status"])
+    reason = get_in(params, ["resource", "last_failed_payment", "reason"]) || "Not specified"
+
+    Logger.info("""
+    🔔 Subscription payment failed with ID: #{subscription_id}, status: #{status}
+    Failed reason: #{reason}
+    """)
+
+    socket
+    |> assign(:subscription_status, :payment_failed)
+    |> assign(:subscription_details, params["resource"])
+    |> assign(:failure_reason, reason)
+    |> push_patch(to: ~p"/subscriptions/paypal/subscription_rejected")
+  end
+
+  # This event is not relevant for initial trial subscription setup as it requires
+  # an existing billing agreement which only exists after successful activation
+  # def process_subscription_status_update(
+  #       %{"event_type" => "PAYMENT.SALE.DENIED"} = params,
+  #       socket
+  #     ) do
+  #   subscription_id = get_in(params, ["resource", "billing_agreement_id"])
+  #   transaction_id = get_in(params, ["resource", "id"])
+  #   reason = get_in(params, ["resource", "reason_code"]) || "Not specified"
+
+  #   Logger.info("""
+  #   🔔 Payment denied for subscription ID: #{subscription_id}, transaction ID: #{transaction_id}
+  #   Denial reason: #{reason}
+  #   """)
+
+  #   socket
+  #   |> assign(:subscription_status, :payment_denied)
+  #   |> assign(:subscription_details, params["resource"])
+  #   |> assign(:transaction_id, transaction_id)
+  #   |> assign(:failure_reason, reason)
+  #   |> push_patch(to: ~p"/subscriptions/paypal/subscription_rejected")
+  # end
+
+  # This event is not relevant for initial trial subscription setup as it relates
+  # to disputes on processed payments which can't happen during trial setup
+  # def process_subscription_status_update(
+  #       %{"event_type" => "RISK.DISPUTE.CREATED"} = params,
+  #       socket
+  #     ) do
+  #   subscription_id =
+  #     get_in(params, ["resource", "disputed_transactions", Access.at(0), "billing_agreement_id"])
+
+  #   dispute_id = get_in(params, ["resource", "dispute_id"])
+  #   reason = get_in(params, ["resource", "reason"]) || "Not specified"
+
+  #   Logger.info("""
+  #   🔔 Risk dispute created for subscription related transaction
+  #   Dispute ID: #{dispute_id}
+  #   Subscription ID: #{subscription_id}
+  #   Dispute reason: #{reason}
+  #   """)
+
+  #   socket
+  #   |> assign(:subscription_status, :dispute_created)
+  #   |> assign(:subscription_details, params["resource"])
+  #   |> assign(:dispute_id, dispute_id)
+  #   |> assign(:failure_reason, reason)
+  #   |> push_patch(to: ~p"/subscriptions/paypal/subscription_rejected")
+  # end
 
   def process_subscription_status_update(params, socket) do
     Logger.info(

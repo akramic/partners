@@ -83,7 +83,6 @@ defmodule PartnersWeb.SubscriptionLive do
      |> assign(:error_message, nil)
      |> assign(:approval_url, nil)
      |> assign(:subscription_id, nil)
-     # Added
      |> assign(:transferring_to_paypal, false)}
   end
 

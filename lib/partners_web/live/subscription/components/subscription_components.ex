@@ -102,6 +102,95 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
     """
   end
 
+  # def render(%{live_action: :subscription_rejected} = assigns) do
+  #   ~H"""
+  #   <div class=" flex flex-col items-center">
+  #     <p class="text-xl font-semibold"><span>&#128542;</span> Subscription Issue</p>
+
+  #     <div class="p-4 bg-base-200 rounded-lg max-w-lg space-y-8 ">
+  #       <%= case @subscription_status do %>
+  #         <% :payment_failed -> %>
+  #           <p>PayPal was unable to set up your free trial subscription.</p>
+  #           <p class="mt-2">
+  #             This appears to be related to their verification process. Please note that we have not attempted to take any payments from your PayPal account.
+  #           </p>
+  #         <% :payment_denied -> %>
+  #           <p>PayPal was unable to authorize your free trial subscription.</p>
+  #           <p class="mt-2">
+  #             This is typically related to security measures on their platform. Please note that we have not attempted to take any payments from your PayPal account.
+  #           </p>
+  #         <% :dispute_created -> %>
+  #           <p>PayPal has placed your subscription under review.</p>
+  #           <p class="mt-2">
+  #             This is a security measure that PayPal sometimes takes to prevent fraud.
+  #           </p>
+  #           <p class="mt-2">
+  #             PayPal will review this transaction manually, which may take 24-72 hours. You do not need to take any action during this time.
+  #           </p>
+  #           <p class="mt-2">
+  #             If approved, your subscription will activate automatically. If denied, PayPal will send you a notification with details.
+  #           </p>
+  #           <p class="mt-2">
+  #             Please note that we have not attempted to take any payments from your PayPal account.
+  #           </p>
+  #         <% _ -> %>
+  #           <p>
+  #             There was an issue setting up your subscription. We have not been given any other information.
+  #           </p>
+  #       <% end %>
+
+  #       <p class="mt-4">Since this is a Paypal subscription processing issue, please:</p>
+  #       <ul class="list-disc text-left pl-8 mt-2">
+  #         <li>Check your PayPal account for any alerts or restrictions</li>
+  #         <li>Verify your payment method details in your PayPal account</li>
+  #         <li>Contact PayPal support for specific details about this rejection</li>
+  #       </ul>
+
+  #       <div class="mt-4 p-3 bg-base-100 rounded border border-base-300 text-center space-y-4">
+  #         <p class="font-medium">Contact PayPal support</p>
+  #         <p :if={@subscription_id} class="text-sm mt-1">
+  #           Paypal subscription ID: <span class="font-mono">{@subscription_id}</span>
+  #         </p>
+  #         <p class="text-sm mt-1 flex justify-center">
+  #           <a
+  #             href="https://www.paypal.com/smarthelp/contact-us"
+  #             target="_blank"
+  #             rel="noopener noreferrer"
+  #             class="text-blue-500 hover:underline flex items-center"
+  #           >
+  #             PayPal Support
+  #             <svg
+  #               xmlns="http://www.w3.org/2000/svg"
+  #               fill="none"
+  #               viewBox="0 0 24 24"
+  #               stroke-width="1.5"
+  #               stroke="currentColor"
+  #               class="ml-1 w-4 h-4"
+  #             >
+  #               <path
+  #                 stroke-linecap="round"
+  #                 stroke-linejoin="round"
+  #                 d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+  #               />
+  #             </svg>
+  #           </a>
+  #         </p>
+  #       </div>
+  #     </div>
+
+  #     <div class="mt-4 flex flex-col space-y-4">
+  #       <p>The good news is your loving.partners account has been created successfully.</p>
+  #       <p class="mt-2">
+  #         Once you've resolved this with PayPal, you can log in anytime to complete your free trial subscription. We're looking forward to seeing you again!
+  #       </p>
+  #       <.link navigate={~p"/"} class="btn btn-primary mt-4">
+  #         Home
+  #       </.link>
+  #     </div>
+  #   </div>
+  #   """
+  # end
+
   # Fallback for any unhandled live_action
   def render(assigns) do
     ~H"""

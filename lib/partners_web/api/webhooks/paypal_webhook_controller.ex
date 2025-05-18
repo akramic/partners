@@ -171,6 +171,8 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
     )
   end
 
+  # The functions below are for events that may occur once a subscription is in place. Not during thesetup of the initial trial subscription.
+
   defp process_validated_webhook(%{"event_type" => "BILLING.SUBSCRIPTION.SUSPENDED"} = params) do
     user_id = params["resource"]["custom_id"]
     topic = "paypal_subscription:#{user_id}"
@@ -184,6 +186,87 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
       {:subscription_status_update, %{subscription_data: params}}
     )
   end
+
+  defp process_validated_webhook(
+         %{"event_type" => "BILLING.SUBSCRIPTION.PAYMENT.FAILED"} = params
+       ) do
+    user_id = params["resource"]["custom_id"]
+    topic = "paypal_subscription:#{user_id}"
+
+    Logger.info("✅ Processing validated PayPal webhook with event type: #{params["event_type"]}")
+    Logger.info("✅ Broadcasting to topic: #{topic}")
+
+    PubSub.broadcast(
+      Partners.PubSub,
+      topic,
+      {:subscription_status_update, %{subscription_data: params}}
+    )
+  end
+
+  # defp process_validated_webhook(%{"event_type" => "PAYMENT.SALE.DENIED"} = params) do
+  #   # For PAYMENT.SALE.DENIED, we need to extract the user ID from billing_agreement_id
+  #   # which requires an additional lookup because this event structure is different
+  #   billing_agreement_id = get_in(params, ["resource", "billing_agreement_id"])
+
+  #   # In a real implementation, we'd need to look up the user_id from our database
+  #   # using the billing_agreement_id. For now, we'll make a simplified approach:
+  #   # TODO: Replace with actual lookup from database using billing_agreement_id
+  #   user_id =
+  #     get_in(params, ["resource", "custom_id"]) ||
+  #       Partners.Subscriptions.get_user_id_by_subscription_id(billing_agreement_id)
+
+  #   if user_id do
+  #     topic = "paypal_subscription:#{user_id}"
+
+  #     Logger.info(
+  #       "✅ Processing validated PayPal webhook with event type: #{params["event_type"]}"
+  #     )
+
+  #     Logger.info("✅ Broadcasting to topic: #{topic}")
+
+  #     PubSub.broadcast(
+  #       Partners.PubSub,
+  #       topic,
+  #       {:subscription_status_update, %{subscription_data: params}}
+  #     )
+  #   else
+  #     Logger.error(
+  #       "❌ Could not determine user_id for PAYMENT.SALE.DENIED event: #{inspect(params)}"
+  #     )
+  #   end
+  # end
+
+  # defp process_validated_webhook(%{"event_type" => "RISK.DISPUTE.CREATED"} = params) do
+  #   # For dispute events, we need to extract billing_agreement_id from disputed_transactions
+  #   # and then look up the user from our database
+  #   billing_agreement_id =
+  #     get_in(params, ["resource", "disputed_transactions", Access.at(0), "billing_agreement_id"])
+
+  #   # In a real implementation, we'd need to look up the user_id from our database
+  #   # using the billing_agreement_id. For now, we'll make a simplified approach:
+  #   # TODO: Replace with actual lookup from database using billing_agreement_id
+  #   user_id = Partners.Subscriptions.get_user_id_by_subscription_id(billing_agreement_id)
+
+  #   if user_id do
+  #     topic = "paypal_subscription:#{user_id}"
+
+  #     Logger.info(
+  #       "✅ Processing validated PayPal webhook with event type: #{params["event_type"]}"
+  #     )
+
+  #     Logger.info("✅ Broadcasting to topic: #{topic}")
+
+  #     PubSub.broadcast(
+  #       Partners.PubSub,
+  #       topic,
+  #       {:subscription_status_update, %{subscription_data: params}}
+  #     )
+  #   else
+  #     Logger.error(
+  #       "❌ Could not determine user_id for RISK.DISPUTE.CREATED event: #{inspect(params)}"
+  #     )
+  #   end
+  # end
 
   # Catch-all for other event types - log but don't broadcast
   defp process_validated_webhook(params) do
