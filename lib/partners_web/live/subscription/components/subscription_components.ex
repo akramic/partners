@@ -57,9 +57,9 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
         <div class="flex flex-col items-center justify-center space-y-2 py-4 px-8 rounded-md bg-base-100 shadow-lg">
           <p>You're awesome! <span>&#128151;</span></p>
           <p>Thank you for your subscription!</p>
-          <p>Waiting for Paypal approval. You will be redirected once approved.</p>
+          <p>We're waiting for your approval from Paypal.</p>
           <span class="inline-block loading loading-ring loading-lg"></span>
-          <p class="text-sm">This should not take more than 120 seconds ...</p>
+          <p class="text-sm">This can take up to two minutes. Don't go anywhere ...</p>
         </div>
       </div>
     </div>
@@ -102,94 +102,85 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
     """
   end
 
-  # def render(%{live_action: :subscription_rejected} = assigns) do
-  #   ~H"""
-  #   <div class=" flex flex-col items-center">
-  #     <p class="text-xl font-semibold"><span>&#128542;</span> Subscription Issue</p>
+  def render(%{live_action: :subscription_rejected} = assigns) do
+    ~H"""
+    <div class=" flex flex-col items-center">
+      <p class="text-xl font-semibold"><span>&#128542;</span> Subscription Issue</p>
 
-  #     <div class="p-4 bg-base-200 rounded-lg max-w-lg space-y-8 ">
-  #       <%= case @subscription_status do %>
-  #         <% :payment_failed -> %>
-  #           <p>PayPal was unable to set up your free trial subscription.</p>
-  #           <p class="mt-2">
-  #             This appears to be related to their verification process. Please note that we have not attempted to take any payments from your PayPal account.
-  #           </p>
-  #         <% :payment_denied -> %>
-  #           <p>PayPal was unable to authorize your free trial subscription.</p>
-  #           <p class="mt-2">
-  #             This is typically related to security measures on their platform. Please note that we have not attempted to take any payments from your PayPal account.
-  #           </p>
-  #         <% :dispute_created -> %>
-  #           <p>PayPal has placed your subscription under review.</p>
-  #           <p class="mt-2">
-  #             This is a security measure that PayPal sometimes takes to prevent fraud.
-  #           </p>
-  #           <p class="mt-2">
-  #             PayPal will review this transaction manually, which may take 24-72 hours. You do not need to take any action during this time.
-  #           </p>
-  #           <p class="mt-2">
-  #             If approved, your subscription will activate automatically. If denied, PayPal will send you a notification with details.
-  #           </p>
-  #           <p class="mt-2">
-  #             Please note that we have not attempted to take any payments from your PayPal account.
-  #           </p>
-  #         <% _ -> %>
-  #           <p>
-  #             There was an issue setting up your subscription. We have not been given any other information.
-  #           </p>
-  #       <% end %>
+      <div class="p-4 bg-base-200 rounded-lg max-w-lg space-y-8 ">
+        <p>
+          Looks like there was a problem with Paypal setting up your subscription.
+        </p>
+        <p>
+          We waited for confirmation from Paypal that your subscription was set up but nothing was received.
+        </p>
+        <p>
+          This issue can happen for a number of reasons and is usually temporary if your Paypal account is in order. Trying again in a few minutes usually works.
+        </p>
+        <p class="mt-2">
+          Retry by clicking the button below.
+        </p>
+        <div class="flex flex-col items-center justify-center space-y-2 mb-20">
+          <button
+            phx-click="request_paypal_approval_url"
+            class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
+          >
+            <span>Subscribe</span>
+            <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
+          </button>
+        </div>
 
-  #       <p class="mt-4">Since this is a Paypal subscription processing issue, please:</p>
-  #       <ul class="list-disc text-left pl-8 mt-2">
-  #         <li>Check your PayPal account for any alerts or restrictions</li>
-  #         <li>Verify your payment method details in your PayPal account</li>
-  #         <li>Contact PayPal support for specific details about this rejection</li>
-  #       </ul>
+        <p class="mt-4">If you've re-tried and have been brought to this page again, please:</p>
+        <ul class="list-disc text-left pl-8 mt-2">
+          <li>Check your PayPal account for any alerts or restrictions</li>
+          <li>Verify your payment method details in your PayPal account</li>
+          <li>Contact PayPal support for specific details about this problem</li>
+        </ul>
 
-  #       <div class="mt-4 p-3 bg-base-100 rounded border border-base-300 text-center space-y-4">
-  #         <p class="font-medium">Contact PayPal support</p>
-  #         <p :if={@subscription_id} class="text-sm mt-1">
-  #           Paypal subscription ID: <span class="font-mono">{@subscription_id}</span>
-  #         </p>
-  #         <p class="text-sm mt-1 flex justify-center">
-  #           <a
-  #             href="https://www.paypal.com/smarthelp/contact-us"
-  #             target="_blank"
-  #             rel="noopener noreferrer"
-  #             class="text-blue-500 hover:underline flex items-center"
-  #           >
-  #             PayPal Support
-  #             <svg
-  #               xmlns="http://www.w3.org/2000/svg"
-  #               fill="none"
-  #               viewBox="0 0 24 24"
-  #               stroke-width="1.5"
-  #               stroke="currentColor"
-  #               class="ml-1 w-4 h-4"
-  #             >
-  #               <path
-  #                 stroke-linecap="round"
-  #                 stroke-linejoin="round"
-  #                 d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-  #               />
-  #             </svg>
-  #           </a>
-  #         </p>
-  #       </div>
-  #     </div>
+        <div class="mt-4 p-3 bg-base-100 rounded border border-base-300 text-center space-y-4">
+          <p class="font-medium">Contact PayPal support</p>
 
-  #     <div class="mt-4 flex flex-col space-y-4">
-  #       <p>The good news is your loving.partners account has been created successfully.</p>
-  #       <p class="mt-2">
-  #         Once you've resolved this with PayPal, you can log in anytime to complete your free trial subscription. We're looking forward to seeing you again!
-  #       </p>
-  #       <.link navigate={~p"/"} class="btn btn-primary mt-4">
-  #         Home
-  #       </.link>
-  #     </div>
-  #   </div>
-  #   """
-  # end
+          <p :if={@subscription_id} class="text-sm mt-1">
+            Paypal subscription ID: <span class="font-mono">{@subscription_id}</span>
+          </p>
+          <p :if={!@subscription_id} class="text-sm mt-1">
+            We did nbot receive a subscription ID from Paypal.
+          </p>
+          <p class="text-sm mt-1 flex justify-center">
+            <a
+              href="https://www.paypal.com/smarthelp/contact-us"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-blue-500 hover:underline flex items-center"
+            >
+              PayPal Support
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="ml-1 w-4 h-4"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                />
+              </svg>
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-col space-y-4">
+        <p class="mt-2">
+          Once you've resolved this with PayPal, you can log in anytime to complete your free trial subscription.
+        </p>
+      </div>
+    </div>
+    """
+  end
 
   # Fallback for any unhandled live_action
   def render(assigns) do

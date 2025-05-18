@@ -21,11 +21,6 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
   * `request_paypal_approval_url/1` - Creates subscription and redirects to PayPal
   * `process_subscription_action/2` - Handles different live_action states
   * `process_subscription_status_update/2` - Processes PayPal webhook events
-  * `process_get_subscription_status_after_timeout/2` - Handles checking subscription status after timeout
-
-  The module also implements a timeout mechanism to handle cases where webhooks might be delayed
-  or missing. After a configurable period, it will directly check the subscription status via
-  the PayPal API to ensure users aren't left in an indeterminate state.
 
   The module integrates with the LiveView lifecycle, using socket assigns to maintain
   state and ensure a consistent user experience throughout the asynchronous subscription
@@ -181,36 +176,31 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
 
   # This action is related to subscription rejection due to events that
   # aren't relevant for initial trial subscription setup
-  # def process_subscription_action(
-  #       _params,
-  #       %{assigns: %{live_action: :subscription_rejected}} = socket
-  #     ) do
-  #   # Log rejection details for debugging/auditing
-  #   user_id = socket.assigns.current_scope.user.id
-  #   subscription_id = socket.assigns[:subscription_id]
-  #   failure_reason = socket.assigns[:failure_reason] || "Unknown"
+  def process_subscription_action(
+        _params,
+        %{assigns: %{live_action: :subscription_rejected}} = socket
+      ) do
+    # Log rejection details for debugging/auditing
+    user_id = socket.assigns.current_scope.user.id
+    subscription_id = socket.assigns[:subscription_id]
+    failure_reason = socket.assigns[:failure_reason] || "Unknown"
 
-  #   Logger.info("""
-  #   🔔 PayPal subscription rejected for user #{user_id}:
-  #   subscription_id: #{inspect(subscription_id)}
-  #   subscription_status: #{inspect(socket.assigns[:subscription_status])}
-  #   failure_reason: #{failure_reason}
-  #   """)
+    Logger.info("""
+    🔔 PayPal subscription rejected for user #{user_id}:
+    subscription_id: #{inspect(subscription_id)}
+    subscription_status: #{inspect(socket.assigns[:subscription_status])}
+    failure_reason: #{failure_reason}
+    """)
 
-  #   # Set up the socket with assigns for the rejected state
-  #   socket
-  #   |> assign(:page_title, "Subscription Rejected")
-  #   |> assign(:error_message, nil)
-  #   |> assign(:transferring_to_paypal, false)
-  # end
+    # Set up the socket with assigns for the rejected state
+    socket
+    |> assign(:page_title, "Subscription Rejected")
+    |> assign(:error_message, nil)
+    |> assign(:transferring_to_paypal, false)
+  end
 
   @doc """
   Handles updates to the subscription status based on PayPal webhook events.
-
-  When a subscription is created, it sets up a timeout mechanism to handle cases
-  where webhooks might be delayed or missing. After 120 seconds, if no further
-  webhook events are received, it will trigger a direct check of the subscription
-  status via the PayPal API.
   """
   def process_subscription_status_update(
         %{"event_type" => "BILLING.SUBSCRIPTION.CREATED"} = params,
@@ -347,16 +337,6 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     socket
   end
 
-  @doc """
-  Handles checking subscription status after the timeout period.
-
-  This function is called after the 120-second timeout following subscription creation
-  if no webhook events have updated the subscription status. It directly queries the
-  PayPal API to determine the current state of the subscription and updates the UI accordingly.
-
-  It addresses edge cases where webhooks might be delayed, dropped, or not received,
-  ensuring users don't get stuck in the approval pending state.
-  """
   def process_get_subscription_status_after_timeout(subscription_id, socket) do
     Logger.info("🔔 Checking subscription status after timeout: #{subscription_id}")
 
@@ -399,9 +379,8 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
           # Return to start trial with error flash
           socket =
             socket
-            |> put_flash(:error, "Failed to verify subscription status. Please try again.")
-            |> assign(:subscription_status, nil)
-            |> push_patch(to: ~p"/subscriptions/start_trial")
+            |> assign(:subscription_status, :subscription_rejected)
+            |> push_patch(to: ~p"/subscriptions/paypal/subscription_rejected")
 
           {:noreply, socket}
       end
