@@ -156,7 +156,8 @@ defmodule PartnersWeb.SubscriptionLive do
      |> assign(:error_message, nil)
      |> assign(:approval_url, nil)
      |> assign(:subscription_id, nil)
-     |> assign(:transferring_to_paypal, false)}
+     |> assign(:transferring_to_paypal, false)
+     |> assign(:retry, false)}
   end
 
   @impl true
@@ -217,9 +218,18 @@ defmodule PartnersWeb.SubscriptionLive do
   # end
 
   @impl true
-  def handle_event("request_paypal_approval_url", _, socket) do
+  def handle_event("request_paypal_approval_url", %{"retry" => "true"}, socket) do
+    Logger.info("🔔 User #{socket.assigns.current_scope.user.id} retrying subscription setup")
     send(self(), :request_paypal_approval_url)
-    socket = assign(socket, transferring_to_paypal: true)
+    socket = assign(socket, transferring_to_paypal: true, retry: true)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("request_paypal_approval_url", _payload, socket) do
+    send(self(), :request_paypal_approval_url)
+    socket = assign(socket, transferring_to_paypal: true, retry: false)
     {:noreply, socket}
   end
 
@@ -227,7 +237,7 @@ defmodule PartnersWeb.SubscriptionLive do
   def render(assigns) do
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
-      <div class="max-w-4xl mx-auto px-4 py-8 h-screen flex justify-center">
+      <div class="max-w-6xl mx-auto px-4 py-8 h-screen flex justify-center">
         <div class="space-y-8 flex flex-col items-center"></div>
         <PartnersWeb.Subscription.Components.SubscriptionComponents.render {assigns} />
       </div>

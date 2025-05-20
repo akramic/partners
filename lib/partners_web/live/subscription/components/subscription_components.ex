@@ -20,6 +20,7 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
 
   use Phoenix.Component
   use PartnersWeb, :html
+  alias PartnersWeb.CustomComponents.Typography
 
   @doc """
   Renders the subscription component based on the live_action.
@@ -27,22 +28,24 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   def render(%{live_action: :start_trial} = assigns) do
     ~H"""
     <div class="space-y-8 flex flex-col items-center">
-      <p>Your free trial is just one click away!</p>
-      <p>Confirm your trial with Paypal</p>
-      <button
-        phx-click="request_paypal_approval_url"
-        class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
-      >
-        <span>Subscribe</span>
-        <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
-      </button>
+      <Typography.p>Your free trial is just one click away!</Typography.p>
+      <Typography.p>Confirm your trial with Paypal</Typography.p>
+      <div class="flex flex-col items-center justify-center space-y-2 mb-20 my-[calc(clamp(1.75rem,2vw,6rem)*1.2)]">
+        <button
+          phx-click="request_paypal_approval_url"
+          class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
+        >
+          <Typography.p class="uppercase">Subscribe</Typography.p>
+          <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
+        </button>
+      </div>
       <div
         :if={@transferring_to_paypal}
         class="z-50 absolute inset-0 flex items-center justify-center bg-base-200"
       >
         <div class="flex flex-col items-center justify-center space-y-4 py-4 px-8 rounded-md bg-base-100/70 shadow-lg">
           <span class="inline-block loading loading-ring loading-sm"></span>
-          <p class="text-sm">Transferring to</p>
+          <Typography.p class="text-sm">Transferring to</Typography.p>
           <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
         </div>
       </div>
@@ -55,11 +58,15 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
     <div class="z-50 absolute inset-0 flex items-center justify-center bg-base-200">
       <div class="space-y-8 flex flex-col items-center">
         <div class="flex flex-col items-center justify-center space-y-2 py-4 px-8 rounded-md bg-base-100 shadow-lg">
-          <p>You're awesome! <span>&#128151;</span></p>
-          <p>Thank you for your subscription!</p>
-          <p>We're waiting for your approval from Paypal.</p>
+          <Typography.p>
+            You're awesome! <span aria-label="heart" role="img">&#128151;</span>
+          </Typography.p>
+          <Typography.p>Thank you for your subscription!</Typography.p>
+          <Typography.p>We're waiting for your approval from Paypal.</Typography.p>
           <span class="inline-block loading loading-ring loading-lg"></span>
-          <p class="text-sm">This can take up to two minutes. Don't go anywhere ...</p>
+          <Typography.p class="text-sm">
+            This can take up to two minutes. Don't go anywhere ...
+          </Typography.p>
         </div>
       </div>
     </div>
@@ -69,13 +76,15 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   def render(%{live_action: :paypal_cancel} = assigns) do
     ~H"""
     <div class="space-y-8 flex flex-col items-center">
-      <p>Looks like you decided not to go ahead</p>
-      <p>Don't forget, your trial is free for 7 days. Pay nothing today. Want to try again?</p>
+      <Typography.p>Looks like you decided not to go ahead</Typography.p>
+      <Typography.p>
+        Don't forget, your trial is free for 7 days. Pay nothing today. Want to try again?
+      </Typography.p>
       <button
         phx-click="request_paypal_approval_url"
         class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
       >
-        <span>Subscribe</span>
+        <Typography.p class="uppercase">Subscribe</Typography.p>
         <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
       </button>
       <div
@@ -84,7 +93,7 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
       >
         <div class="flex flex-col items-center justify-center space-y-4 py-4 px-8 rounded-md bg-base-100/70 shadow-lg">
           <span class="inline-block loading loading-ring loading-sm"></span>
-          <p class="text-sm">Transferring to</p>
+          <Typography.p class="text-sm">Transferring to</Typography.p>
           <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
         </div>
       </div>
@@ -95,58 +104,75 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   def render(%{live_action: :subscription_activated} = assigns) do
     ~H"""
     <div class="space-y-8 flex flex-col items-center">
-      <p>Well done!</p>
-      <p>Your subscription is now active.</p>
-      <p>Thank you for choosing our service!</p>
+      <Typography.p>Well done!</Typography.p>
+      <Typography.p>Your subscription is now active.</Typography.p>
+      <Typography.p>Thank you for choosing our service!</Typography.p>
     </div>
     """
   end
 
   def render(%{live_action: :subscription_rejected} = assigns) do
     ~H"""
-    <div class=" flex flex-col items-center">
-      <p class="text-xl font-semibold"><span>&#128542;</span> Subscription Issue</p>
+    <div>
+      <div :if={!@retry} class=" flex flex-col items-center">
+        <%!-- Clamp used for responsive margins --%>
+        <div class="my-[calc(clamp(1.75rem,2vw,6rem)*1.2)]">
+          <Typography.h4 class="font-semibold ">
+            Subscription Issue <span aria-label="sad face" role="img">&#128542;</span>
+          </Typography.h4>
+        </div>
+        <div class="p-4 bg-base-200 rounded-lg space-y-8 ">
+          <Typography.p>
+            Looks like there was a problem with Paypal setting up your trial subscription.
+          </Typography.p>
+          <Typography.p>
+            We waited for confirmation from Paypal that your trial subscription was set up but nothing was received.
+          </Typography.p>
+          <Typography.p>
+            This issue can happen for a number of reasons and is usually temporary if your Paypal account is in good order. Trying again in a few minutes usually works. You can retry by clicking the button below.
+          </Typography.p>
+          <%!-- Clamp used for responsive margins --%>
+          <div class="flex flex-col items-center justify-center space-y-2 mb-20 my-[calc(clamp(2rem,2vw,6rem)*1.2)]">
+            <button
+              phx-click="request_paypal_approval_url"
+              phx-value-retry="true"
+              class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
+            >
+              <Typography.p class="uppercase">Subscribe</Typography.p>
+              <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <div class="p-4 bg-base-200 rounded-lg max-w-lg space-y-8 ">
-        <p>
-          Looks like there was a problem with Paypal setting up your subscription.
-        </p>
-        <p>
-          We waited for confirmation from Paypal that your subscription was set up but nothing was received.
-        </p>
-        <p>
-          This issue can happen for a number of reasons and is usually temporary if your Paypal account is in order. Trying again in a few minutes usually works.
-        </p>
-        <p class="mt-2">
-          Retry by clicking the button below.
-        </p>
-        <div class="flex flex-col items-center justify-center space-y-2 mb-20">
-          <button
-            phx-click="request_paypal_approval_url"
-            class="gap-4 mt-2 inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-medium text-[#003087] bg-[#ffc439] hover:bg-[#f5bb00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f5bb00]"
-          >
-            <span>Subscribe</span>
-            <img src="/images/paypal_logo.svg" alt="PayPal" class="mr-2 h-5 w-auto" />
-          </button>
+      <div :if={@retry} class=" flex flex-col items-center space-y-10">
+        <div class="my-[calc(clamp(1.75rem,2vw,6rem)*1.2)]">
+          <Typography.h4 class="font-semibold ">
+            Retry failed <span aria-label="sad face" role="img">&#128542;</span>
+          </Typography.h4>
         </div>
 
-        <p class="mt-4">If you've re-tried and have been brought to this page again, please:</p>
-        <ul class="list-disc text-left pl-8 mt-2">
-          <li>Check your PayPal account for any alerts or restrictions</li>
-          <li>Verify your payment method details in your PayPal account</li>
-          <li>Contact PayPal support for specific details about this problem</li>
-        </ul>
+        <Typography.p class="mt-4">
+          Sorry, we still didn't receive confirmation from Paypal that your subscription was correctly set up. Looks like there's an issue with Paypal.
+        </Typography.p>
+        <div class="flex justify-center">
+          <ul class=" items-center list-disc text-left pl-8 mt-2 text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)]">
+            <li>Check your PayPal account for any alerts or restrictions</li>
+            <li>Verify you have a valid payment method set up in your PayPal account</li>
+            <li>Contact PayPal support for further help with this issue</li>
+          </ul>
+        </div>
 
         <div class="mt-4 p-3 bg-base-100 rounded border border-base-300 text-center space-y-4">
-          <p class="font-medium">Contact PayPal support</p>
+          <Typography.p class="font-medium">Contact PayPal support</Typography.p>
 
-          <p :if={@subscription_id} class="text-sm mt-1">
+          <Typography.p :if={@subscription_id} class=" mt-1">
             Paypal subscription ID: <span class="font-mono">{@subscription_id}</span>
-          </p>
-          <p :if={!@subscription_id} class="text-sm mt-1">
-            We did nbot receive a subscription ID from Paypal.
-          </p>
-          <p class="text-sm mt-1 flex justify-center">
+          </Typography.p>
+          <Typography.p :if={!@subscription_id} class=" mt-1">
+            We did not receive a reference subscription ID from Paypal.
+          </Typography.p>
+          <Typography.p class="text-sm mt-1 flex justify-center">
             <a
               href="https://www.paypal.com/smarthelp/contact-us"
               target="_blank"
@@ -169,14 +195,13 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
                 />
               </svg>
             </a>
-          </p>
+          </Typography.p>
         </div>
-      </div>
-
-      <div class="mt-4 flex flex-col space-y-4">
-        <p class="mt-2">
-          Once you've resolved this with PayPal, you can log in anytime to complete your free trial subscription.
-        </p>
+        <div class="mt-4 flex flex-col space-y-4">
+          <Typography.p class="mt-2">
+            Once you've resolved this with PayPal, you can log in anytime to complete your free trial subscription.
+          </Typography.p>
+        </div>
       </div>
     </div>
     """
@@ -187,8 +212,8 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
     ~H"""
     <div class="space-y-8 flex flex-col items-center">
       <h1 class="text-4xl font-bold text-red-500">404</h1>
-      <p class="text-xl">Page not found</p>
-      <p>The page you're looking for doesn't exist or has been moved.</p>
+      <Typography.p class="text-xl">Page not found</Typography.p>
+      <Typography.p>The page you're looking for doesn't exist or has been moved.</Typography.p>
       <.link navigate={~p"/subscriptions/start_trial"} class="btn btn-primary mt-4">
         Start trial subscription
       </.link>

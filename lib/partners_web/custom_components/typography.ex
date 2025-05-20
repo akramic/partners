@@ -21,7 +21,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   def p(assigns) do
     ~H"""
     <p
-      class={["text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)]", @class]}
+      class={["text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] font-light", @class]}
       @rest
     >
       {render_slot(@inner_block)}
@@ -73,7 +73,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h3
       class={[
-        "text-[clamp(1.75rem,6vw,6rem)] leading-[calc(clamp(1.75rem,6vw,6rem)*1.2)] font-bold",
+        "text-[clamp(1.75rem,6vw,6rem)] leading-[calc(clamp(1.75rem,6vw,6rem)*1.2)] font-bold ",
         @class
       ]}
       {@rest}
@@ -91,7 +91,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h4
       class={[
-        "text-[clamp(1.5rem,5vw,4rem)] leading-[calc(clamp(1.5rem,5vw,4rem)*1.2)] font-bold",
+        "text-[clamp(1.5rem,5vw,4rem)] leading-[calc(clamp(1.5rem,5vw,4rem)*1.2)] font-bold ",
         @class
       ]}
       {@rest}
