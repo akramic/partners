@@ -10,6 +10,7 @@ This document provides an overview of the PayPal subscription integration in the
 - [Resource Data Structure](#resource-data-structure)
 - [Implementation Details](#implementation-details)
 - [Troubleshooting](#troubleshooting)
+- [Testing PayPal Webhooks Locally](#testing-paypal-webhooks-locally)
 
 ## Overview
 
@@ -160,3 +161,87 @@ Common issues to check when debugging PayPal subscription problems:
    - Ensure PubSub topics match between broadcast and subscription
    - Check that the user ID in `custom_id` is correct
    - Verify the LiveView is properly handling incoming messages
+
+## Testing PayPal Webhooks Locally
+
+To test PayPal webhooks in your local development environment, you need to expose your local server to the internet. The application includes scripts for using two different tunneling services: localtunnel and serveo.
+
+### Setup Requirements
+
+Before testing webhooks, you must:
+
+1. **Update the PayPal Developer Dashboard**:
+   - Log in to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
+   - Navigate to Webhooks under your app
+   - Update the webhook URL to your tunnel URL (e.g., `https://loving-partners.loca.lt/api/paypal/webhook`)
+   - Make sure to save these changes
+
+2. **Update Environment Variables**:
+   Update the following variables in your `.env` file with the correct tunnel URL:
+
+   ```bash
+   # For localtunnel
+   export PAYPAL_SANDBOX_WEBHOOK_ID="1X225865137037934"
+   export PAYPAL_SANDBOX_RETURN_URL="https://loving-partners.loca.lt/subscriptions/paypal_return?live_action=paypal_return"
+   export PAYPAL_SANDBOX_CANCEL_URL="https://loving-partners.loca.lt/subscriptions/paypal_cancel?live_action=paypal_cancel"
+
+   # For serveo (commented out when not in use)
+   # export PAYPAL_SANDBOX_WEBHOOK_ID="1X225865137037934"
+   # export PAYPAL_SANDBOX_RETURN_URL="https://partners-dev-1808.serveo.net/subscriptions/paypal_return?live_action=paypal_return"
+   # export PAYPAL_SANDBOX_CANCEL_URL="https://partners-dev-1808.serveo.net/subscriptions/paypal_cancel?live_action=paypal_cancel"
+   ```
+
+3. **Source the updated environment variables**:
+   ```bash
+   source .env
+   ```
+
+### Using Localtunnel
+
+Localtunnel provides a stable subdomain that remains consistent between sessions.
+
+1. **Start the tunnel**:
+   ```bash
+   ./start_localtunnel_paypal_webhook.sh
+   ```
+
+2. The script will:
+   - Install localtunnel if it's not already installed
+   - Create a tunnel with the subdomain "loving-partners"
+   - Make your local Phoenix server available at `https://loving-partners.loca.lt`
+
+3. Keep the terminal window open while testing.
+
+### Using Serveo (Alternative)
+
+Serveo is another option that can provide a consistent subdomain, but its service may occasionally experience downtime.
+
+1. **Start the tunnel**:
+   ```bash
+   ./start_serveo_paypal_webhook.sh
+   ```
+
+2. The script will:
+   - Establish an SSH tunnel to serveo.net
+   - Provide a URL like `https://partners-dev-1808.serveo.net`
+
+3. Keep the terminal window open while testing.
+
+### Testing Workflow
+
+1. Start your Phoenix server (`mix phx.server`)
+2. Start the tunnel of your choice in a separate terminal
+3. Update the PayPal Developer Dashboard with your webhook URL
+4. Update and source your `.env` file
+5. Trigger webhook events by performing actions in the PayPal Sandbox
+6. Monitor your Phoenix server logs for incoming webhook events
+
+### Troubleshooting Tunnel Issues
+
+- **Connection refused errors**: The tunneling service may be temporarily down. Try the alternative tunneling service.
+- **Webhook verification failures**: Ensure your webhook URL in the PayPal dashboard exactly matches your tunnel URL.
+- **Random subdomains**: For localtunnel, if the requested subdomain is already taken, a random one will be assigned. Update your PayPal dashboard and `.env` accordingly.
+
+
+
+
