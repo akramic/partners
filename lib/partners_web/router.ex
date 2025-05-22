@@ -83,6 +83,8 @@ defmodule PartnersWeb.Router do
 
   scope "/", PartnersWeb do
     pipe_through [:browser]
+    post "/users/log-in", UserSessionController, :create
+    delete "/users/log-out", UserSessionController, :delete
 
     live_session :current_user,
       on_mount: [{PartnersWeb.UserAuth, :mount_current_scope}] do
@@ -112,9 +114,6 @@ defmodule PartnersWeb.Router do
       # get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
       # get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
     end
-
-    post "/users/log-in", UserSessionController, :create
-    delete "/users/log-out", UserSessionController, :delete
 
     # Direct PayPal return routes for backwards compatibility
     # get "/paypal/return", Api.Webhooks.PaypalReturnController, :return

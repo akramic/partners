@@ -12,10 +12,17 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
   3. `:paypal_cancel` - Displayed when a user cancels the PayPal subscription process
   4. `:subscription_activated` - Success view shown after receiving PayPal's activation webhook
      This confirms to the user that their trial subscription is now active.
+  5. `:subscription_rejected` - Shown when there's an issue with PayPal subscription setup
+     * Handles both initial rejection and retry scenarios
+     * Offers troubleshooting steps based on retry status
+     * Provides PayPal support contact information after failed retries
 
   Each component includes appropriate loading states and transitions between different
   stages of the subscription process. The components are selected based on the current
   `live_action` value, which changes as the user progresses through the subscription flow.
+
+  The components also track retry attempts for subscription failures, showing progressively
+  more detailed troubleshooting guidance when retries fail.
   """
 
   use Phoenix.Component

@@ -1,4 +1,4 @@
-defmodule PartnersWeb.CoreComponents do
+defmodule PartnersWeb.CoreComponentsOriginal do
   @moduledoc """
   Provides core UI components.
 
@@ -84,15 +84,8 @@ defmodule PartnersWeb.CoreComponents do
         <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
         <.icon :if={@kind == :success} name="hero-check-circle-mini" class="size-5 shrink-0" />
         <div>
-          <p
-            :if={@title}
-            class="font-semibold text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]"
-          >
-            {@title}
-          </p>
-          <p class="text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]">
-            {msg}
-          </p>
+          <p :if={@title} class="font-semibold">{@title}</p>
+          <p>{msg}</p>
         </div>
         <div class="flex-1" />
         <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
@@ -212,7 +205,7 @@ defmodule PartnersWeb.CoreComponents do
     <fieldset class="fieldset mb-2">
       <label>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
-        <span class="fieldset-label text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]">
+        <span class="fieldset-label">
           <input
             type="checkbox"
             id={@id}
@@ -233,12 +226,7 @@ defmodule PartnersWeb.CoreComponents do
     ~H"""
     <fieldset class="fieldset mb-2">
       <label>
-        <span
-          :if={@label}
-          class="fieldset-label text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)] mb-1"
-        >
-          {@label}
-        </span>
+        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
         <select
           id={@id}
           name={@name}
@@ -259,12 +247,7 @@ defmodule PartnersWeb.CoreComponents do
     ~H"""
     <fieldset class="fieldset mb-2">
       <label>
-        <span
-          :if={@label}
-          class="fieldset-label text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)] mb-1"
-        >
-          {@label}
-        </span>
+        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
         <textarea
           id={@id}
           name={@name}
@@ -282,12 +265,7 @@ defmodule PartnersWeb.CoreComponents do
     ~H"""
     <fieldset class="fieldset mb-2">
       <label>
-        <span
-          :if={@label}
-          class="fieldset-label text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)] mb-1"
-        >
-          {@label}
-        </span>
+        <span :if={@label} class="fieldset-label mb-1">{@label}</span>
         <input
           type={@type}
           name={@name}
@@ -305,8 +283,8 @@ defmodule PartnersWeb.CoreComponents do
   # Helper used by inputs to generate form errors
   defp error(assigns) do
     ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)] text-error">
-      <.icon name="hero-exclamation-circle-mini" class="size-[clamp(1.1rem,2.2vw,1.65rem)] shrink-0" />
+    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
+      <.icon name="hero-exclamation-circle-mini" class="size-5" />
       {render_slot(@inner_block)}
     </p>
     """
@@ -325,13 +303,10 @@ defmodule PartnersWeb.CoreComponents do
     ~H"""
     <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4", @class]}>
       <div>
-        <h1 class="text-[clamp(1.125rem,2.25vw,1.6875rem)] leading-[calc(clamp(1.125rem,2.25vw,1.6875rem)*1.4)] font-semibold">
+        <h1 class="text-lg font-semibold leading-8">
           {render_slot(@inner_block)}
         </h1>
-        <p
-          :if={@subtitle != []}
-          class="text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)] text-base-content/70"
-        >
+        <p :if={@subtitle != []} class="text-sm text-base-content/70">
           {render_slot(@subtitle)}
         </p>
       </div>
@@ -375,12 +350,7 @@ defmodule PartnersWeb.CoreComponents do
     <table class="table table-zebra">
       <thead>
         <tr>
-          <th
-            :for={col <- @col}
-            class="text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]"
-          >
-            {col[:label]}
-          </th>
+          <th :for={col <- @col}>{col[:label]}</th>
           <th :if={@action != []}>
             <span class="sr-only">{gettext("Actions")}</span>
           </th>
@@ -391,17 +361,11 @@ defmodule PartnersWeb.CoreComponents do
           <td
             :for={col <- @col}
             phx-click={@row_click && @row_click.(row)}
-            class={[
-              @row_click && "hover:cursor-pointer",
-              "text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]"
-            ]}
+            class={@row_click && "hover:cursor-pointer"}
           >
             {render_slot(col, @row_item.(row))}
           </td>
-          <td
-            :if={@action != []}
-            class="w-0 font-semibold text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]"
-          >
+          <td :if={@action != []} class="w-0 font-semibold">
             <div class="flex gap-4">
               <%= for action <- @action do %>
                 {render_slot(action, @row_item.(row))}
@@ -433,12 +397,8 @@ defmodule PartnersWeb.CoreComponents do
     <ul class="list">
       <li :for={item <- @item} class="list-row">
         <div>
-          <div class="font-bold text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]">
-            {item.title}
-          </div>
-          <div class="text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.4)]">
-            {render_slot(item)}
-          </div>
+          <div class="font-bold">{item.title}</div>
+          <div>{render_slot(item)}</div>
         </div>
       </li>
     </ul>

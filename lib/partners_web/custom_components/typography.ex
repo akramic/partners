@@ -21,8 +21,65 @@ defmodule PartnersWeb.CustomComponents.Typography do
   def p(assigns) do
     ~H"""
     <p
-      class={["text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] font-light", @class]}
+      class={[
+        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] font-light",
+        @class
+      ]}
       @rest
+    >
+      {render_slot(@inner_block)}
+    </p>
+    """
+  end
+
+  attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
+  slot :inner_block, doc: "the optional inner block that renders the text"
+
+  def p_xs(assigns) do
+    ~H"""
+    <p
+      class={[
+        "text-[clamp(0.75rem,1.5vw,1.125rem)] leading-[calc(clamp(0.75rem,1.5vw,1.125rem)*1.6)] font-light",
+        @class
+      ]}
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </p>
+    """
+  end
+
+  attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
+  slot :inner_block, doc: "the optional inner block that renders the text"
+
+  def p_sm(assigns) do
+    ~H"""
+    <p
+      class={[
+        "text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.6)] font-light",
+        @class
+      ]}
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </p>
+    """
+  end
+
+  attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
+  slot :inner_block, doc: "the optional inner block that renders the text"
+
+  def p_lg(assigns) do
+    ~H"""
+    <p
+      class={[
+        "text-[clamp(1.125rem,2.25vw,1.6875rem)] leading-[calc(clamp(1.125rem,2.25vw,1.6875rem)*1.6)] font-light",
+        @class
+      ]}
+      {@rest}
     >
       {render_slot(@inner_block)}
     </p>
