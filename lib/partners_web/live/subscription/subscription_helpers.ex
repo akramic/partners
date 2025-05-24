@@ -229,12 +229,16 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     Logger.info("🔔 Subscription activated with ID: #{subscription_id}, status: #{status}")
 
     # Update the socket assigns to reflect the active subscription
+    socket =
+      socket
+      |> assign(:subscription_status, :active)
+      |> assign(:subscription_details, params["resource"])
+      |> assign(:page_title, "Subscription Activated")
+      # We need to use push_patch to update the URL and change the live_action
+      |> push_patch(to: ~p"/subscriptions/paypal/subscription_activated")
 
+    # This will cause the UI to render the component for the activated state
     socket
-    |> assign(:subscription_status, :subscription_activated)
-    |> assign(:subscription_details, params["resource"])
-    |> assign(:page_title, "Subscription Activated")
-    |> push_patch(to: ~p"/subscriptions/paypal/subscription_activated")
   end
 
   def process_subscription_status_update(

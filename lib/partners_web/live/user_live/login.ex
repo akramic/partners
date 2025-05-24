@@ -5,8 +5,9 @@ defmodule PartnersWeb.UserLive.Login do
 
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm">
+    <%!-- <Layouts.app flash={@flash} current_scope={@current_scope}> --%>
+    <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
+      <div class="mx-auto max-w-4xl ">
         <.header class="text-center">
           <p>Log in</p>
           <:subtitle>
@@ -87,7 +88,7 @@ defmodule PartnersWeb.UserLive.Login do
           </div>
         </div>
       </div>
-    </Layouts.app>
+    </PartnersWeb.Layouts.app>
     """
   end
 

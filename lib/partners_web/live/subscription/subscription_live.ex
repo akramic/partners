@@ -134,7 +134,9 @@ defmodule PartnersWeb.SubscriptionLive do
   def mount(_params, _session, socket) do
     # Use the real user from the current scope
     Logger.info("Mounting Subscription LiveView live_action: #{socket.assigns.live_action}")
-    user = socket.assigns.current_scope.user
+    # user = socket.assigns.current_scope.user
+    # Placeholder for actual user - to be fetched from socket
+    user = %{id: 123, name: "Test User"}
     user_id = user.id
 
     Logger.info("Subscription LiveView mounted with user_id: #{user_id}")
@@ -237,7 +239,7 @@ defmodule PartnersWeb.SubscriptionLive do
   def render(assigns) do
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
-      <div class="max-w-6xl mx-auto px-4 py-8 h-screen flex justify-center">
+      <div class="max-w-6xl mx-auto px-4 py-8 h-screen flex justify-center mt-[clamp(2rem,8vw,4rem)]">
         <div class="space-y-8 flex flex-col items-center"></div>
         <PartnersWeb.Subscription.Components.SubscriptionComponents.render {assigns} />
       </div>

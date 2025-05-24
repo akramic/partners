@@ -32,14 +32,12 @@ defmodule PartnersWeb.Router do
   end
 
   pipeline :api do
-    # Add our custom plug here
-
     plug :accepts, ["json"]
   end
 
-  scope "/", PartnersWeb do
-    pipe_through :browser
-    # Public browser routes here
+  # Pipeline for routes that shouldn't be accessible to authenticated users
+  pipeline :redirect_if_authenticated do
+    plug :redirect_if_authenticated_user
   end
 
   # Webhook endpoint
@@ -69,6 +67,21 @@ defmodule PartnersWeb.Router do
 
   ## Authentication routes
 
+  # Public routes - accessible to all users
+  scope "/", PartnersWeb do
+    pipe_through [:browser]
+
+    # Authentication actions
+    delete "/users/log-out", UserSessionController, :delete
+
+    # Home and other public pages
+    live_session :current_user,
+      on_mount: [{PartnersWeb.UserAuth, :mount_current_scope}] do
+      live "/", Home.HomeLive
+    end
+  end
+
+  # Routes that require authentication - protected pages
   scope "/", PartnersWeb do
     pipe_through [:browser, :require_authenticated_user]
 
@@ -81,19 +94,19 @@ defmodule PartnersWeb.Router do
     post "/users/update-password", UserSessionController, :update_password
   end
 
+  # Routes that should redirect if user is already authenticated - sign up/in flow
   scope "/", PartnersWeb do
-    pipe_through [:browser]
-    post "/users/log-in", UserSessionController, :create
-    delete "/users/log-out", UserSessionController, :delete
+    pipe_through [:browser, :redirect_if_authenticated]
 
-    live_session :current_user,
-      on_mount: [{PartnersWeb.UserAuth, :mount_current_scope}] do
-      live "/", Home.HomeLive
+    post "/users/log-in", UserSessionController, :create
+
+    live_session :redirect_if_authenticated,
+      on_mount: [{PartnersWeb.UserAuth, :redirect_if_authenticated}] do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
 
-      # Subscription routes
+      # Subscription routes - part of new user registration flow
       # New route for starting a trial
       live "/subscriptions/start_trial", SubscriptionLive, :start_trial
 
@@ -109,14 +122,6 @@ defmodule PartnersWeb.Router do
 
       # Route for when the subscription is rejected
       live "/subscriptions/paypal/subscription_rejected", SubscriptionLive, :subscription_rejected
-
-      # PayPal return URLs
-      # get "/subscriptions/paypal/return", Api.Webhooks.PaypalReturnController, :return
-      # get "/subscriptions/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
     end
-
-    # Direct PayPal return routes for backwards compatibility
-    # get "/paypal/return", Api.Webhooks.PaypalReturnController, :return
-    # get "/paypal/cancel", Api.Webhooks.PaypalReturnController, :cancel
   end
 end

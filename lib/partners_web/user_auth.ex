@@ -187,6 +187,21 @@ defmodule PartnersWeb.UserAuth do
     end
   end
 
+  def on_mount(:redirect_if_authenticated, _params, session, socket) do
+    socket = mount_current_scope(socket, session)
+
+    if socket.assigns.current_scope && socket.assigns.current_scope.user do
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You are already logged in.")
+        |> Phoenix.LiveView.redirect(to: ~p"/")
+
+      {:halt, socket}
+    else
+      {:cont, socket}
+    end
+  end
+
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       user =
@@ -196,6 +211,23 @@ defmodule PartnersWeb.UserAuth do
 
       Scope.for_user(user)
     end)
+  end
+
+  @doc """
+  Used for routes that should not be accessible by authenticated users, such as
+  login and registration pages.
+
+  Redirects authenticated users to the home page.
+  """
+  def redirect_if_authenticated_user(conn, _opts) do
+    if conn.assigns.current_scope && conn.assigns.current_scope.user do
+      conn
+      |> put_flash(:error, "You are already logged in.")
+      |> redirect(to: ~p"/")
+      |> halt()
+    else
+      conn
+    end
   end
 
   @doc """

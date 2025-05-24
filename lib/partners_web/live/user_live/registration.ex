@@ -6,7 +6,8 @@ defmodule PartnersWeb.UserLive.Registration do
 
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <%!-- <Layouts.app flash={@flash} current_scope={@current_scope}> --%>
+    <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
       <div class="mx-auto max-w-sm">
         <.header class="text-center">
           Register for an account
@@ -34,7 +35,7 @@ defmodule PartnersWeb.UserLive.Registration do
           </.button>
         </.form>
       </div>
-    </Layouts.app>
+    </PartnersWeb.Layouts.app>
     """
   end
 

@@ -17,9 +17,11 @@ defmodule PartnersWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main>
+    <main class="flex flex-col min-h-screen">
       <PartnersWeb.CustomComponents.Layout.site_header current_scope={@current_scope} />
+      <div class="mt-[clamp(2rem,8vw,8rem)]">
       {render_slot(@inner_block)}
+      </div>
     </main>
     <.flash_group flash={@flash} />
     """
