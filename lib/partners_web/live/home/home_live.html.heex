@@ -111,9 +111,12 @@
               aria-label="Start your free 7-day trial"
               class="transition duration-400 ease-in-out hover:-translate-y-1 hover:scale-110  btn btn-xl btn-info rounded-full px-6 py-2.5 uppercase"
             >
-              <p class="text-[clamp(1.25rem,4vw,2rem)] leading-[calc(clamp(1.25rem,4vw,2rem)*1.2)] font-semibold text-white">
+              <.link
+                navigate={~p"/users/registration"}
+                class="text-[clamp(1.25rem,4vw,2rem)] leading-[calc(clamp(1.25rem,4vw,2rem)*1.2)] font-semibold text-white"
+              >
                 Start 7-Day Free Trial
-              </p>
+              </.link>
             </button>
           </nav>
         </footer>
@@ -202,7 +205,7 @@
                   <div>
                     <dt class="font-medium ">No tolerance for bad behaviour</dt>
                     <dd class="mt-2 ">
-                       <Typography.p class="font-light">
+                      <Typography.p class="font-light">
                         We don't tolerate bad behaviour. Report any inappropriate behaviour and we will take action.
                       </Typography.p>
                     </dd>
@@ -259,7 +262,7 @@
                   <div>
                     <dt class="font-medium ">Live Video Chat</dt>
                     <dd class="mt-2">
-                    <Typography.p class="font-light">
+                      <Typography.p class="font-light">
                         Really get to know your match with video chat. See their engaging smile, hear their voice. No more catfishing.
                       </Typography.p>
                     </dd>
@@ -283,7 +286,7 @@
                   <div>
                     <dt class="font-medium ">In-app Voice Messaging</dt>
                     <dd class="mt-2 ">
-                    <Typography.p class="font-light">
+                      <Typography.p class="font-light">
                         See a profile you like? Send a voice message to introduce yourself.
                       </Typography.p>
                     </dd>
@@ -291,7 +294,7 @@
                   <div>
                     <dt class="font-medium ">Advanced Search</dt>
                     <dd class="mt-2 ">
-                    <Typography.p class="font-light">
+                      <Typography.p class="font-light">
                         Connect with singles in your city or suburb. Search for your perfect match by location.
                       </Typography.p>
                     </dd>
@@ -299,7 +302,7 @@
                   <div>
                     <dt class="font-medium ">Personal Dashboard</dt>
                     <dd class="mt-2 t">
-                     <Typography.p class="font-light">
+                      <Typography.p class="font-light">
                         Your personal dashboard keeps track of your matches, messages, and more.
                       </Typography.p>
                     </dd>
@@ -354,23 +357,20 @@
               Dive in and test the water
             </Typography.h2>
 
-            <article class="rounded-xl border bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white">
-              <Typography.p class="text-pretty text-center text-lg font-semibold sm:text-xl/8">
-                7-Day Free Trial
-              </Typography.p>
-              <Typography.p class="text-pretty text-center text-lg font-semibold  sm:text-xl/8">
-                No payment required
+            <article class="rounded-xl border bg-base-100 p-6 ">
+              <Typography.p class="text-pretty text-center  font-semibold mb-6 ">
+                Pay nothing now.<br />Get started for free!
               </Typography.p>
 
               <div>
-                <button
-                  type="button"
-                  phx-click="start_trial"
-                  class="btn btn-secondary rounded-full mt-3"
-                  aria-label="Begin your 7-day free trial with no payment required"
+                <.link
+                  aria-label="Begin your 7-day free trial with no credit card required"
+                  class="btn btn-secondary m-4 rounded-full uppercase"
+                  navigate={~p"/users/registration"}
+                  aria-label="Begin your 7-day free trial with no credit card required"
                 >
-                  Start for free!
-                </button>
+                  Start 7-Day Free trial
+                </.link>
               </div>
               <Typography.p class="text-pretty mx-auto mt-6 inline-flex max-w-2xl px-6 py-3 text-lg font-medium  sm:text-xl/8">
                 Let's find your perfect match.
@@ -485,40 +485,41 @@
                 </li>
               </ul>
             </div>
-            <aside class="-mt-2 p-2 lg:mt-0 lg:w-full lg:max-w-md lg:shrink-0">
-              <div class="ring-gray-900/5 relative overflow-hidden rounded-2xl border border-zinc-500  py-10 text-center ring-1 ring-inset lg:flex lg:flex-col lg:justify-center lg:py-16">
-                <!-- Launch Offer Ribbon -->
-                <div
-                  class="h-[250px] w-[375px] absolute top-0 -right-10 overflow-hidden opacity-90"
-                  role="complementary"
-                  aria-label="Special launch offer"
-                >
-                  <div class="top-[20px] right-[-90px] w-[375px] absolute rotate-45 bg-gradient-to-r from-amber-200 to-amber-600 py-2 text-center shadow-md">
-                    <p class="text-xl font-bold uppercase tracking-wide ">
-                      <span style="font-size:30px;">&#127880;</span> Special <br />Launch Offer!
-                    </p>
-                  </div>
-                </div>
+            <aside class="-mt-2  lg:mt-0 lg:w-full lg:max-w-md lg:shrink-0 self-center h-full">
+              <div class="ring-gray-900/5  overflow-hidden  bg-base-100 rounded-2xl  py-8 text-center ring-1 ring-inset lg:flex lg:flex-col lg:justify-center lg:py-16">
+                <div class="mx-auto max-w-xs px-8 relative ">
+                  <h3 class="text-2xl font-semibold ">
+                    Free Trial Subscription
+                  </h3>
+                  <p class="mt-4 text-sm ">
+                    Enjoy all the features of our app with a 7 day free trial subscription.
+                  </p>
 
-                <div class="mx-auto max-w-xs px-8">
                   <p class="mt-6 flex items-baseline justify-center gap-x-2">
-                    <span class="text-6xl font-semibold tracking-tight ">$19</span>
+                    <span class="text-7xl font-semibold tracking-tight  opacity-70">$19</span>
                     <span class="text-sm/6 tracking-wide ">AUD</span>
                   </p>
                   <p class="text-base">Monthly</p>
-                  <button
-                    type="button"
+                  <p class="mt-4 text-sm ">
+                    Charged only after your trial ends. Pay nothing if you cancel before the trial ends.
+                  </p>
+
+                  <.link
+                    aria-label="Begin your 7-day free trial with no credit card required"
                     class="btn btn-secondary m-4 rounded-full uppercase"
+                    navigate={~p"/users/registration"}
                     aria-label="Begin your 7-day free trial with no credit card required"
                   >
                     Start 7-Day Free trial
-                  </button>
-                  <p class="text-xs/5 mt-6 ">
+                  </.link>
+
+                  <p class="text-base/5 font-semibold mt-6 ">
                     Pay no money now.
-                    <span class="font-semibold">
+                    <span class="text-sm/5 ">
                       Your subscription only begins after your free trial ends.
+
+                      Cancel your subscription at anytime.
                     </span>
-                    Cancel your subscription at anytime.
                   </p>
                 </div>
               </div>

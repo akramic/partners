@@ -19,7 +19,6 @@ defmodule PartnersWeb.Layouts do
     ~H"""
     <main class="flex flex-col min-h-screen">
       <PartnersWeb.CustomComponents.Layout.site_header current_scope={@current_scope} />
-
       {render_slot(@inner_block)}
     </main>
     <.flash_group flash={@flash} />

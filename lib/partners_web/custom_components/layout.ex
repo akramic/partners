@@ -24,7 +24,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
   A section component with dynamic vertical spacing and horizontal divider.
   Use this as the container for other html section elements.
   """
- 
+
   def page_container(assigns) do
     ~H"""
     <main class="mt-[clamp(2rem,8vw,8rem)]" role="main" aria-label="Main content" {@rest}>
