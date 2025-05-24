@@ -1,7 +1,7 @@
 defmodule PartnersWeb.UserLive.Settings do
   use PartnersWeb, :live_view
 
-  on_mount {PartnersWeb.UserAuth, :require_sudo_mode}
+  # Authentication is now handled at the router level
 
   alias Partners.Accounts
 

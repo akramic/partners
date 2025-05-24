@@ -24,10 +24,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
   A section component with dynamic vertical spacing and horizontal divider.
   Use this as the container for other html section elements.
   """
-
+ 
   def page_container(assigns) do
     ~H"""
-    <main class="mt-20" role="main" aria-label="Main content" {@rest}>
+    <main class="mt-[clamp(2rem,8vw,8rem)]" role="main" aria-label="Main content" {@rest}>
       {render_slot(@inner_block)}
     </main>
     """
@@ -132,90 +132,93 @@ defmodule PartnersWeb.CustomComponents.Layout do
     ~H"""
     <header role="banner">
       <div class="flex justify-between items-center px-4 w-full py-2 bg-transparent z-10">
-        <h1>
-          <.link href={~p"/"}>
-            <img
-              src={~p"/images/heart.svg"}
-              alt="Logo"
-              class="transition transform ease-in duration-300 hover:-rotate-360 h-6 w-6"
-            />
-          </.link>
-        </h1>
+        <div class="flex items-center gap-4">
+          <h1>
+            <.link href={~p"/"}>
+              <img
+                src={~p"/images/heart.svg"}
+                alt="Logo"
+                class="transition transform ease-in duration-300 hover:-rotate-360 h-6 w-6"
+              />
+            </.link>
+          </h1>
 
-        <PartnersWeb.Layouts.theme_toggle />
-
-        <nav>
-          <ul
-            class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
-            role="menu"
-            aria-label="User account navigation"
-          >
-            <%= if @current_scope do %>
-              <li>
-                <.link href={~p"/users/settings"}>Settings</.link>
-              </li>
-              <li>
-                <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-              </li>
-            <% else %>
-              <li>
-                <.link href={~p"/users/register"}>Register</.link>
-              </li>
-              <li>
-                <.link href={~p"/users/log-in"}>Log in</.link>
-              </li>
-            <% end %>
-          </ul>
-        </nav>
-        <nav class="relative" aria-label="Main menu navigation">
-          <label
-            phx-click={
-              %JS{}
-              |> JS.toggle(
-                to: "#backdrop",
-                in: {"ease-in-out duration-300 ", "-translate-x-full ", "translate-x-0 "},
-                out: {"ease-in-out duration-300 ", "translate-x-0 ", "-translate-x-full "},
-                time: 200
-              )
-            }
-            class="z-20 btn btn-circle swap swap-rotate"
-            aria-haspopup="true"
-            aria-controls="side-bar"
-            aria-expanded="false"
-            aria-label="Toggle main menu"
-          >
-            <!-- this hidden checkbox controls the state -->
-            <input type="checkbox" aria-hidden="true" />
+          <PartnersWeb.Layouts.theme_toggle />
+        </div>
+        <div class="flex items-center gap-4">
+          <nav>
+            <ul
+              class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
+              role="menu"
+              aria-label="User account navigation"
+            >
+              <%= if @current_scope do %>
+                <li>
+                  <.link href={~p"/users/settings"}>Settings</.link>
+                </li>
+                <li>
+                  <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+                </li>
+              <% else %>
+                <li>
+                  <.link href={~p"/users/register"}>Register</.link>
+                </li>
+                <li>
+                  <.link href={~p"/users/log-in"}>Log in</.link>
+                </li>
+              <% end %>
+            </ul>
+          </nav>
+          <nav class="relative" aria-label="Main menu navigation">
+            <label
+              phx-click={
+                %JS{}
+                |> JS.toggle(
+                  to: "#backdrop",
+                  in: {"ease-in-out duration-300 ", "-translate-x-full ", "translate-x-0 "},
+                  out: {"ease-in-out duration-300 ", "translate-x-0 ", "-translate-x-full "},
+                  time: 200
+                )
+              }
+              class="z-20 btn btn-circle swap swap-rotate"
+              aria-haspopup="true"
+              aria-controls="side-bar"
+              aria-expanded="false"
+              aria-label="Toggle main menu"
+            >
+              <!-- this hidden checkbox controls the state -->
+              <input type="checkbox" aria-hidden="true" />
 
     <!-- hamburger icon -->
-            <svg
-              class="swap-off fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
-              viewBox="0 0 512 512"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
-            </svg>
+              <svg
+                class="swap-off fill-current"
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 512 512"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
+              </svg>
 
     <!-- close icon -->
-            <svg
-              class="swap-on fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
-              viewBox="0 0 512 512"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
-            </svg>
-          </label>
+              <svg
+                class="swap-on fill-current"
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 512 512"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
+              </svg>
+            </label>
 
-          <%!--  --%>
-        </nav>
+            <%!--  --%>
+          </nav>
+        </div>
       </div>
 
       <%!-- This is the overlay with menu--%>

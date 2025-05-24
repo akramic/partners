@@ -1,4 +1,73 @@
 defmodule PartnersWeb.UserAuth do
+  @moduledoc """
+  Authentication and authorization module for Partners web application.
+
+  This module provides functionality for user authentication, including:
+
+  * Regular user authentication (login/logout)
+  * Session management
+  * Protection for authenticated-only routes
+  * Protection for sensitive routes via sudo mode
+  * Prevention of authenticated users accessing login pages
+  * LiveView authentication hooks and controller plugs
+
+  ## Authentication Components
+
+  The authentication system consists of two main components:
+
+  1. **Controller Plugs** - For traditional controller-based routes
+  2. **LiveView Hooks** - For LiveView routes using `on_mount` callbacks
+
+  ### Mapping between LiveView hooks and controller plugs
+
+  | LiveView (on_mount)            | Controller Plug                   | Purpose                          |
+  |--------------------------------|-----------------------------------|----------------------------------|
+  | `:mount_current_scope`         | `:fetch_current_scope_for_user`   | Assign current user to context   |
+  | `:require_authenticated`       | `:require_authenticated_user`     | Require user to be logged in     |
+  | `:redirect_if_authenticated`   | `:redirect_if_authenticated_user` | Prevent access if logged in      |
+  | `:require_sudo_mode`           | (No direct controller equivalent) | Require recent authentication    |
+
+  ## Sudo Mode Authentication
+
+  Sudo mode provides enhanced security for sensitive operations (like account settings) by
+  requiring re-authentication even if the user is already logged in. The system checks if
+  the user has authenticated recently (within 10 minutes by default).
+
+  ### Sudo Mode Flow:
+
+  1. User attempts to access a sensitive route (e.g., `/users/settings`)
+  2. System checks if they've authenticated recently
+  3. If not, redirects to login with special parameters:
+     * `sudo=true` - Indicates this is a sudo mode re-authentication
+     * `return_to=<original_path>` - Preserves the destination
+  4. Login page permits access despite user already being logged in
+  5. After re-authentication, user is redirected back to the original page
+
+  ## Return-To Functionality
+
+  The `return_to` parameter is used to redirect users back to their intended destination
+  after authentication. It works in two ways:
+
+  ### 1. Regular Authentication:
+
+  When an unauthenticated user attempts to access a protected route:
+
+  * The `maybe_store_return_to/1` function stores the current path in the session
+  * After login, `log_in_user/3` redirects to this stored path
+  * If no stored path exists, it uses `signed_in_path/1`
+
+  ### 2. Sudo Mode Re-Authentication:
+
+  The sudo mode flow uses query parameters instead of session storage:
+
+  * The `on_mount(:require_sudo_mode, ...)` function adds `return_to=<path>` to the URL
+  * The login page receives and preserves this parameter
+  * After login, `log_in_user/3` checks query params first, then session
+  * This preserves the return path across the re-authentication flow
+
+  This approach prevents circular redirects while maintaining proper destination tracking.
+  """
+
   use PartnersWeb, :verified_routes
 
   import Plug.Conn
@@ -17,28 +86,59 @@ defmodule PartnersWeb.UserAuth do
   @doc """
   Logs the user in.
 
-  It renews the session ID and clears the whole session
-  to avoid fixation attacks. See the renew_session
-  function to customize this behaviour.
+  ## Authentication Flow
 
-  It also sets a `:live_socket_id` key in the session,
-  so LiveView sessions are identified and automatically
-  disconnected on log out. The line can be safely removed
-  if you are not using LiveView.
+  This function handles both standard login and sudo mode re-authentication:
 
-  In case the user re-authenticates for sudo mode,
-  the existing remember_me setting is kept, writing a new remember_me cookie.
+  1. Standard login: When a user logs in for the first time, they're redirected
+     based on the `user_return_to` session value or the `signed_in_path/1`.
+
+  2. Sudo mode re-authentication: For security-sensitive operations (like settings pages),
+     we require re-authentication even for logged-in users. When initiated:
+     - URL contains `sudo=true` param to indicate it's a re-auth request
+     - The `return_to` path is preserved for post-authentication redirection
+     - The sudo timestamp is updated to mark recent authentication
+
+  ## Session Security
+
+  It renews the session ID and clears the whole session to avoid fixation attacks.
+  See the renew_session function to customize this behavior.
+
+  It also sets a `:live_socket_id` key in the session, so LiveView sessions are
+  identified and automatically disconnected on log out.
+
+  ## Authentication Persistence
+
+  In case the user re-authenticates for sudo mode, the existing remember_me
+  setting is kept, writing a new remember_me cookie.
   """
   def log_in_user(conn, user, params \\ %{}) do
     token = Accounts.generate_user_session_token(user)
-    user_return_to = get_session(conn, :user_return_to)
+
+    # Check for return_to in query params first (for sudo mode), then session
+    return_to =
+      conn.query_params["return_to"] ||
+        get_session(conn, :user_return_to)
+
     remember_me = get_session(conn, :user_remember_me)
+
+    # Update sudo mode timestamp if this is a sudo re-auth
+    # This timestamp is used by Accounts.sudo_mode?/2 to determine if the user
+    # has recently authenticated for access to security-sensitive routes
+    conn =
+      if conn.query_params["sudo"] == "true" do
+        # When a successful sudo login occurs, update the sudo timestamp in the session
+        # This marks the user as recently authenticated for sudo-protected routes
+        put_session(conn, :sudo_timestamp, System.system_time(:second))
+      else
+        conn
+      end
 
     conn
     |> renew_session()
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params, remember_me)
-    |> redirect(to: user_return_to || signed_in_path(conn))
+    |> redirect(to: return_to || signed_in_path(conn))
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
@@ -124,33 +224,65 @@ defmodule PartnersWeb.UserAuth do
   @doc """
   Handles mounting and authenticating the current_scope in LiveViews.
 
-  ## `on_mount` arguments
+  ## Function Heads
 
-    * `:mount_current_scope` - Assigns current_scope
-      to socket assigns based on user_token, or nil if
-      there's no user_token or no matching user.
+  ### on_mount(:mount_current_scope, _params, session, socket)
 
-    * `:require_authenticated` - Authenticates the user from the session,
-      and assigns the current_scope to socket assigns based
-      on user_token.
-      Redirects to login page if there's no logged user.
+  Basic hook that only assigns the current user scope without restricting access.
+  Used for pages that should be accessible to all users but need to know the
+  authentication state.
+
+  ### on_mount(:require_authenticated, _params, session, socket)
+
+  Ensures the user is logged in. If not authenticated, redirects to login page
+  with an error message. Used for pages that require authentication.
+
+  ### on_mount(:require_sudo_mode, _params, session, socket)
+
+  Ensures the user has recently authenticated (within 10 minutes by default) for
+  security-sensitive routes. If not recently authenticated, redirects to the login
+  page with special `sudo=true` parameter.
+
+  This hook handles the first part of the sudo mode flow, which enables enhanced
+  security for sensitive operations like account settings changes.
+
+  ### on_mount(:redirect_if_authenticated, params, session, socket)
+
+  Prevents logged-in users from accessing login/registration pages, but with special
+  handling for sudo mode re-authentication. When the `sudo=true` parameter is present,
+  it allows authenticated users to access the login page to re-authenticate.
+
+  ## Sudo Mode Authentication Flow
+
+  The sudo mode feature provides enhanced security through re-authentication:
+
+  1. User accesses a sensitive route (e.g., settings)
+  2. The `:require_sudo_mode` hook checks if authentication is recent
+  3. If re-authentication is needed, user is redirected to login with:
+     - `sudo=true` to indicate it's a sudo mode request
+     - `return_to` to preserve the destination path
+  4. The `:redirect_if_authenticated` hook detects the sudo parameter and allows
+     access to the login page despite the user already being logged in
+  5. After re-authentication, `log_in_user` updates the sudo timestamp and
+     redirects back to the original protected page
+
+  This design prevents circular redirect loops while maintaining security for
+  sensitive operations.
 
   ## Examples
 
-  Use the `on_mount` lifecycle macro in LiveViews to mount or authenticate
-  the `current_scope`:
+  Use in LiveViews:
 
       defmodule PartnersWeb.PageLive do
         use PartnersWeb, :live_view
-
         on_mount {PartnersWeb.UserAuth, :mount_current_scope}
-        ...
+        # ...
       end
 
-  Or use the `live_session` of your router to invoke the on_mount callback:
+  Use in router's `live_session`:
 
-      live_session :authenticated, on_mount: [{PartnersWeb.UserAuth, :require_authenticated}] do
-        live "/profile", ProfileLive, :index
+      live_session :require_sudo_mode, on_mount: [{PartnersWeb.UserAuth, :require_sudo_mode}] do
+        live "/users/settings", UserLive.Settings, :edit
       end
   """
   def on_mount(:mount_current_scope, _params, session, socket) do
@@ -178,19 +310,29 @@ defmodule PartnersWeb.UserAuth do
     if Accounts.sudo_mode?(socket.assigns.current_scope.user, -10) do
       {:cont, socket}
     else
+      # Store the return path to avoid the circular redirect issue
+      path = Phoenix.LiveView.get_connect_params(socket)["path"] || "/users/settings"
+
       socket =
         socket
-        |> Phoenix.LiveView.put_flash(:error, "You must re-authenticate to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log-in")
+        |> Phoenix.LiveView.put_flash(
+          :info,
+          "Please re-authenticate for security purposes to access your settings."
+        )
+        |> Phoenix.LiveView.redirect(to: ~p"/users/log-in?sudo=true&return_to=#{path}")
 
       {:halt, socket}
     end
   end
 
-  def on_mount(:redirect_if_authenticated, _params, session, socket) do
+  def on_mount(:redirect_if_authenticated, params, session, socket) do
     socket = mount_current_scope(socket, session)
 
-    if socket.assigns.current_scope && socket.assigns.current_scope.user do
+    # Check if this is a sudo mode re-authentication from URL params or connect params
+    connect_params = Phoenix.LiveView.get_connect_params(socket) || %{}
+    sudo_auth? = params["sudo"] == "true" || connect_params["sudo"] == "true"
+
+    if socket.assigns.current_scope && socket.assigns.current_scope.user && !sudo_auth? do
       socket =
         socket
         |> Phoenix.LiveView.put_flash(:error, "You are already logged in.")
@@ -217,10 +359,23 @@ defmodule PartnersWeb.UserAuth do
   Used for routes that should not be accessible by authenticated users, such as
   login and registration pages.
 
-  Redirects authenticated users to the home page.
+  ## Part of the Sudo Mode Authentication Flow
+
+  This function is the controller-based counterpart to the LiveView
+  `:redirect_if_authenticated` hook. Both serve the same purpose:
+
+  1. For regular requests: Prevent logged-in users from accessing authentication pages
+  2. For sudo mode requests: Allow access when the `sudo=true` parameter is present,
+     enabling the re-authentication flow for sensitive operations
+
+  By checking both `conn.params` and `conn.query_params`, we ensure this works
+  consistently regardless of how the parameters are passed.
   """
   def redirect_if_authenticated_user(conn, _opts) do
-    if conn.assigns.current_scope && conn.assigns.current_scope.user do
+    # Check if this is a sudo mode re-authentication
+    sudo_auth? = conn.params["sudo"] == "true" || conn.query_params["sudo"] == "true"
+
+    if conn.assigns.current_scope && conn.assigns.current_scope.user && !sudo_auth? do
       conn
       |> put_flash(:error, "You are already logged in.")
       |> redirect(to: ~p"/")

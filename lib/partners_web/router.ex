@@ -87,8 +87,13 @@ defmodule PartnersWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{PartnersWeb.UserAuth, :require_authenticated}] do
-      live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+    end
+
+    # Routes that require sudo mode (reauthentication)
+    live_session :require_sudo_mode,
+      on_mount: [{PartnersWeb.UserAuth, :require_sudo_mode}] do
+      live "/users/settings", UserLive.Settings, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -109,17 +114,13 @@ defmodule PartnersWeb.Router do
       # Subscription routes - part of new user registration flow
       # New route for starting a trial
       live "/subscriptions/start_trial", SubscriptionLive, :start_trial
-
       live "/subscriptions/paypal/return", SubscriptionLive, :paypal_return
-
       # Route if user decides to cancel on paypal's site and decides not to proceed with completing the subscription
       live "/subscriptions/paypal/cancel", SubscriptionLive, :paypal_cancel
-
       # Route for when the subscription is activated
       live "/subscriptions/paypal/subscription_activated",
            SubscriptionLive,
            :subscription_activated
-
       # Route for when the subscription is rejected
       live "/subscriptions/paypal/subscription_rejected", SubscriptionLive, :subscription_rejected
     end
