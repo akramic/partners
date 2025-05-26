@@ -22,7 +22,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] font-light",
+        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] ",
         @class
       ]}
       @rest
@@ -76,7 +76,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1.125rem,2.25vw,1.6875rem)] leading-[calc(clamp(1.125rem,2.25vw,1.6875rem)*1.6)] font-light",
+        "text-[clamp(1.125rem,2.25vw,1.6875rem)] leading-[calc(clamp(1.125rem,2.25vw,1.6875rem)*1.6)] ",
         @class
       ]}
       {@rest}

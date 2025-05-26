@@ -107,10 +107,10 @@ defmodule PartnersWeb.Router do
 
     live_session :redirect_if_authenticated,
       on_mount: [{PartnersWeb.UserAuth, :redirect_if_authenticated}] do
-
       live "/users/register", UserLive.Registration, :new
       # Routes for new user registration flow
       live "/users/registration", Registration.RegistrationLive, :new
+      live "/users/registration/email", Registration.RegistrationLive, :email
       #  Login flow
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
@@ -119,12 +119,14 @@ defmodule PartnersWeb.Router do
       # New route for starting a trial
       live "/subscriptions/start_trial", SubscriptionLive, :start_trial
       live "/subscriptions/paypal/return", SubscriptionLive, :paypal_return
+
       # Route if user decides to cancel on paypal's site and decides not to proceed with completing the subscription
       live "/subscriptions/paypal/cancel", SubscriptionLive, :paypal_cancel
       # Route for when the subscription is activated
       live "/subscriptions/paypal/subscription_activated",
            SubscriptionLive,
            :subscription_activated
+
       # Route for when the subscription is rejected
       live "/subscriptions/paypal/subscription_rejected", SubscriptionLive, :subscription_rejected
     end
