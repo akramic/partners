@@ -16,231 +16,187 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
     """
   end
 
-  def render_form(%{live_action: :new} = assigns) do
+  # Welcome screen component (no navigation buttons)
+  attr :id, :string, required: true
+  slot :inner_block, required: true
+
+  def welcome_container(assigns) do
     ~H"""
     <div
-      id="welcome"
-      phx-mounted={entry_animation(assigns, "#welcome")}
+      id={@id}
+      phx-mounted={entry_animation(assigns, "##{@id}")}
       class="hero min-h-screen"
       style="background-image: url(/images/couple2.jpg);"
     >
       <div class="hero-overlay"></div>
       <div class="hero-content text-neutral-content text-center">
-        <div class="max-w-4xl space-y-6">
-          <Typography.h3>Let's get your free trial underway</Typography.h3>,
-          <Typography.p class="mb-5">
-            We just need a few details to create your account.
-          </Typography.p>,
-          <button type="button" phx-click={JS.push("ready")} class="btn btn-lg btn-info">
-            <Typography.p_lg>I'm ready</Typography.p_lg>
-          </button>
-        </div>
+        {render_slot(@inner_block)}
       </div>
     </div>
     """
   end
 
-  def render_form(%{live_action: :email} = assigns) do
+  # Reusable component for form containers with animations
+  attr :id, :string, required: true
+  attr :show_nav, :boolean, default: true
+  slot :inner_block, required: true
+  slot :custom_nav, required: false
+
+  def form_container(assigns) do
     ~H"""
     <div
-      id="email"
-      phx-mounted={entry_animation(assigns, "#email")}
+      id={@id}
+      phx-mounted={entry_animation(assigns, "##{@id}")}
       class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
     >
-      <p>Email form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#email")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#email")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
+      {render_slot(@inner_block)}
+
+      <%= if @show_nav && !render_slot(@custom_nav) do %>
+        <.form_nav form_id={@id} />
+      <% else %>
+        {render_slot(@custom_nav)}
+      <% end %>
     </div>
+    """
+  end
+
+  # Reusable navigation buttons for forms
+  attr :form_id, :string, required: true
+  attr :show_back, :boolean, default: true
+  attr :show_next, :boolean, default: true
+  attr :back_label, :string, default: "Back"
+  attr :next_label, :string, default: "Next"
+  attr :back_class, :string, default: "btn btn-primary"
+  attr :next_class, :string, default: "btn btn-primary"
+
+  def form_nav(assigns) do
+    ~H"""
+    <div class="flex justify-between mt-4">
+      <%= if @show_back do %>
+        <button
+          type="button"
+          phx-click={
+            %JS{}
+            |> move(:exit_right, "##{@form_id}")
+            |> JS.push("prev_step")
+          }
+          class={@back_class}
+        >
+          {@back_label}
+        </button>
+      <% else %>
+        <div></div>
+        <!-- Spacer when back button is hidden -->
+      <% end %>
+
+      <%= if @show_next do %>
+        <button
+          type="button"
+          phx-click={
+            %JS{}
+            |> move(:exit_left, "##{@form_id}")
+            |> JS.push("next_step")
+          }
+          class={@next_class}
+        >
+          {@next_label}
+        </button>
+      <% else %>
+        <div></div>
+        <!-- Spacer when next button is hidden -->
+      <% end %>
+    </div>
+    """
+  end
+
+  def render_form(%{live_action: :new} = assigns) do
+    ~H"""
+    <.welcome_container id="welcome" {assigns}>
+      <div class="max-w-4xl space-y-6">
+        <Typography.h3>Let's get your free trial underway</Typography.h3>
+        <Typography.p class="mb-5">
+          We just need a few details to create your account.
+        </Typography.p>
+        <button type="button" phx-click={JS.push("ready")} class="btn btn-lg btn-info">
+          <Typography.p_lg>I'm ready</Typography.p_lg>
+        </button>
+      </div>
+    </.welcome_container>
+    """
+  end
+
+  def render_form(%{live_action: :email} = assigns) do
+    ~H"""
+    <.form_container id="email" {assigns}>
+      <p>Email form goes here</p>
+    </.form_container>
     """
   end
 
   def render_form(%{live_action: :username} = assigns) do
     ~H"""
-    <div
-      id="username"
-      phx-mounted={entry_animation(assigns, "#username")}
-      class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
-    >
+    <.form_container id="username" {assigns}>
       <p>Username form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#username")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#username")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
-    </div>
+    </.form_container>
     """
   end
 
   def render_form(%{live_action: :phone} = assigns) do
     ~H"""
-    <div
-      id="phone"
-      phx-mounted={entry_animation(assigns, "#phone")}
-      class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
-    >
+    <.form_container id="phone" {assigns}>
       <p>Phone form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#phone")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#phone")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
-    </div>
+    </.form_container>
     """
   end
 
   def render_form(%{live_action: :dob} = assigns) do
     ~H"""
-    <div
-      id="dob"
-      phx-mounted={entry_animation(assigns, "#dob")}
-      class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
-    >
+    <.form_container id="dob" {assigns}>
       <p>Date of Birth form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#dob")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#dob")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
-    </div>
+    </.form_container>
     """
   end
 
   def render_form(%{live_action: :gender} = assigns) do
     ~H"""
-    <div
-      id="gender"
-      phx-mounted={entry_animation(assigns, "#gender")}
-      class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
-    >
+    <.form_container id="gender" {assigns}>
       <p>Gender form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#gender")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#gender")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
-    </div>
+    </.form_container>
     """
   end
 
   def render_form(%{live_action: :terms} = assigns) do
     ~H"""
-    <div
-      id="terms"
-      phx-mounted={entry_animation(assigns, "#terms")}
-      class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
-    >
+    <.form_container id="terms" {assigns}>
       <p>Terms and Conditions form goes here</p>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_left, "#terms")
-          |> JS.push("next_step")
-        }
-        class="btn btn-primary"
-      >
-        Next
-      </button>
-      <button
-        type="button"
-        phx-click={
-          %JS{}
-          |> move(:exit_right, "#terms")
-          |> JS.push("prev_step")
-        }
-        class="btn btn-primary"
-      >
-        Back
-      </button>
-    </div>
+
+      <:custom_nav>
+        <div class="flex justify-between mt-4">
+          <button
+            type="button"
+            phx-click={
+              %JS{}
+              |> move(:exit_right, "#terms")
+              |> JS.push("prev_step")
+            }
+            class="btn btn-primary"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            phx-click={
+              %JS{}
+              |> move(:exit_left, "#terms")
+              |> JS.push("complete_registration")
+            }
+            class="btn btn-success"
+          >
+            Complete Registration
+          </button>
+        </div>
+      </:custom_nav>
+    </.form_container>
     """
   end
 

@@ -14,7 +14,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, live_action: :new, nav_direction: :forward)}
+    {:ok, assign(socket, live_action: :new, nav_direction: :forward, steps: @steps)}
   end
 
   @impl true
@@ -75,6 +75,19 @@ defmodule PartnersWeb.Registration.RegistrationLive do
       |> assign(:current_step, 2)
       |> assign(:nav_direction, :forward)
       |> push_patch(to: ~p"/users/registration/#{2}")
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("complete_registration", _params, socket) do
+    # Here you would process the final registration
+    # For now, we'll just redirect to the subscription start page
+
+    socket =
+      socket
+      |> put_flash(:info, "Registration complete! Starting your free trial...")
+      |> push_navigate(to: ~p"/subscriptions/start_trial")
 
     {:noreply, socket}
   end
