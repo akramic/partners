@@ -1,7 +1,7 @@
 defmodule PartnersWeb.Registration.RegistrationComponents do
   use Phoenix.Component
   use PartnersWeb, :html
-  alias PartnersWeb.CustomComponents.{Typography, Layout}
+  alias PartnersWeb.CustomComponents.Typography
 
   alias Phoenix.LiveView.JS
 

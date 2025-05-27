@@ -18,7 +18,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   @impl true
-  def handle_params(params, uri, socket) do
+  def handle_params(params, _uri, socket) do
     Logger.info("🔔 RegistrationLive handle_params: #{inspect(params)}")
 
     socket =
