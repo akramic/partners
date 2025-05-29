@@ -94,9 +94,27 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
   @impl true
   def render(assigns) do
+    current_form_id =
+      case @live_action do
+        :new -> "welcome"
+        :email -> "email"
+        :username -> "username"
+        :phone -> "phone"
+        :dob -> "dob"
+        :gender -> "gender"
+        :terms -> "terms"
+        _ -> "form-step"
+      end
+
+    assigns = Map.put(assigns, :current_form_id, current_form_id)
+
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
-      <PartnersWeb.Registration.RegistrationComponents.form_wrapper>
+      <PartnersWeb.Registration.RegistrationComponents.form_wrapper
+        nav_direction={@nav_direction}
+        current_form_id={@current_form_id}
+        live_action={@live_action}
+      >
         <PartnersWeb.Registration.RegistrationComponents.render_form {assigns} />
       </PartnersWeb.Registration.RegistrationComponents.form_wrapper>
     </PartnersWeb.Layouts.app>

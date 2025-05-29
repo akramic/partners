@@ -2,16 +2,48 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
   use Phoenix.Component
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.Typography
-
+  alias PartnersWeb.CoreComponents, as: CoreComponents
   alias Phoenix.LiveView.JS
 
   # Wrapper component to ensure consistent layout during transitions
   slot :inner_block
 
+  attr :nav_direction, :atom, default: :forward
+  attr :current_form_id, :string, required: true
+  attr :live_action, :atom, required: true
+
   def form_wrapper(assigns) do
     ~H"""
     <div class="relative overflow-hidden w-full overscroll-none" role="group" aria-live="polite">
       {render_slot(@inner_block)}
+      <%= if @live_action != :new do %>
+        <div class="fixed bottom-0 left-0 w-full bg-base-100 shadow-md z-10">
+          <div class="flex justify-between p-4">
+            <button
+              type="button"
+              phx-click={
+                %JS{}
+                |> move(:exit_right, "##{@current_form_id}")
+                |> JS.push("prev_step")
+              }
+              class="btn btn-ghost"
+            >
+              <.icon name="hero-arrow-left" class="w-5 h-5 mr-2" /> Prev
+            </button>
+            <button
+              type="button"
+              phx-click={
+                %JS{}
+                |> move(:exit_left, "##{@current_form_id}")
+                |> JS.push("next_step")
+              }
+              class="btn btn-primary"
+            >
+              Next <.icon name="hero-arrow-right" class="w-5 h-5 ml-2" />
+            </button>
+          </div>
+        </div>
+      <% end %>
     </div>
     """
   end
@@ -50,12 +82,6 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       class={"transition-transform duration-300 w-full #{initial_position_class(assigns)}"}
     >
       {render_slot(@inner_block)}
-
-      <%= if @show_nav && !render_slot(@custom_nav) do %>
-        <.form_nav form_id={@id} />
-      <% else %>
-        {render_slot(@custom_nav)}
-      <% end %>
     </div>
     """
   end
