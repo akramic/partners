@@ -45,19 +45,12 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
           )
         }
       >
-        <.form for={@form} phx-change="validate" id={"#{@live_action}-form"}>
+        <.form for={@form} phx-change="validate" phx-submit="submit" id={"#{@live_action}-form"}>
           <.inputs_for :let={user} field={@form[:user]}>
             <.input field={user[:email]} type="email" label="Email address" required />
           </.inputs_for>
 
-          <button
-            type="button"
-            phx-click={
-              %JS{}
-              |> JS.push("next_step", value: %{direction: "forward"})
-            }
-            class="btn btn-primary mt-4"
-          >
+          <button type="submit" class="btn btn-primary mt-4">
             next
           </button>
         </.form>
@@ -78,7 +71,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
           )
         }
       >
-        <.form for={@form} phx-change="validate" id={"#{@live_action}-form"}>
+        <.form for={@form} phx-change="validate" phx-submit="submit" id={"#{@live_action}-form"}>
           <.inputs_for :let={profile} field={@form[:profile]}>
             <.input field={profile[:username]} type="text" label="Username" required />
           </.inputs_for>
@@ -100,14 +93,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
               back
             </button>
 
-            <button
-              type="button"
-              phx-click={
-                %JS{}
-                |> JS.push("next_step", value: %{direction: "forward"})
-              }
-              class="btn btn-primary"
-            >
+            <button type="submit" class="btn btn-primary mt-4">
               next
             </button>
           </div>

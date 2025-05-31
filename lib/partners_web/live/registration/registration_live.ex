@@ -34,16 +34,24 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     {:noreply, assign_form(socket, changeset)}
   end
 
-  
-
   @impl true
-  def handle_event("next_step", %{"direction" => "forward"}, socket) do
-    socket =
-      socket
-      |> assign_mount_transition_direction("forward")
-      |> push_patch(to: ~p"/users/registration/#{socket.assigns.current_step + 1}")
+  def handle_event("submit", %{"registration_form" => params}, socket) do
+    case RegistrationForm.submit(socket.assigns.form, params) do
+      {:ok, %RegistrationForm{} = form} ->
+        changeset = RegistrationForm.new(form)
+        IO.inspect(changeset, label: "🔔 Submit received and handled producing changeset")
 
-    {:noreply, socket}
+        socket =
+          socket
+          |> assign_mount_transition_direction("forward")
+          |> push_patch(to: ~p"/users/registration/#{socket.assigns.current_step + 1}")
+
+        {:noreply, assign_form(socket, changeset)}
+
+      {:error, changeset} ->
+        Logger.error("🔔 Error submitting form: #{inspect(changeset.errors)}")
+        {:noreply, assign_form(socket, changeset)}
+    end
   end
 
   @impl true
@@ -97,6 +105,6 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   defp assign_form(socket, changeset) do
-    assign(socket, :form, to_form(changeset))
+    assign(socket, :form, to_form(changeset, as: "registration_form"))
   end
 end

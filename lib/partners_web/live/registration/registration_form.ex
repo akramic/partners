@@ -5,6 +5,7 @@ defmodule PartnersWeb.Registration.RegistrationForm do
   """
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query, warn: false
 
   alias __MODULE__
 
@@ -51,11 +52,37 @@ defmodule PartnersWeb.Registration.RegistrationForm do
     user
     |> cast(params, [:email])
     |> validate_required([:email])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "Please enter a valid email")
+    |> validate_email_unique()
+  end
+
+  defp validate_email_unique(changeset) do
+    email = get_change(changeset, :email)
+
+    if is_nil(email) do
+      changeset
+    else
+      # Check if email is already in use
+      email_exists =
+        Partners.Repo.exists?(from u in Partners.Accounts.User, where: u.email == ^email)
+
+      if email_exists do
+        add_error(changeset, :email, "Email already registered")
+      else
+        changeset
+      end
+    end
   end
 
   def validate(%Phoenix.HTML.Form{} = form, attrs) do
     form.source.data
     |> changeset(attrs)
     |> Map.put(:action, :validate)
+  end
+
+  def submit(%Phoenix.HTML.Form{} = form, attrs) do
+    form.source.data
+    |> changeset(attrs)
+    |> apply_action(:insert)
   end
 end
