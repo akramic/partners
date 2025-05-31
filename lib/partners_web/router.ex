@@ -109,7 +109,7 @@ defmodule PartnersWeb.Router do
       on_mount: [{PartnersWeb.UserAuth, :redirect_if_authenticated}] do
       live "/users/register", UserLive.Registration, :new
       # Routes for new user registration flow
-      live "/users/registration/1", Registration.RegistrationLive, :new
+      live "/users/registration/", Registration.RegistrationLive, :new
       live "/users/registration/:current_step", Registration.RegistrationLive
       #  Login flow
       live "/users/log-in", UserLive.Login, :new
