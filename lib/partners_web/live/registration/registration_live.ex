@@ -2,6 +2,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   use PartnersWeb, :live_view
   require Logger
 
+  alias PartnersWeb.Registration.RegistrationForm
+
   @live_actions %{
     1 => :new,
     2 => :email,
@@ -14,6 +16,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    socket = assign_form(socket, RegistrationForm.new())
     {:ok, assign(socket, live_action: @live_actions[1], current_step: 1)}
   end
 
@@ -24,6 +27,14 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
     {:noreply, assign_step(socket, params)}
   end
+
+  @impl true
+  def handle_event("validate", %{"registration_form" => params}, socket) do
+    changeset = RegistrationForm.validate(socket.assigns.form, params)
+    {:noreply, assign_form(socket, changeset)}
+  end
+
+  
 
   @impl true
   def handle_event("next_step", %{"direction" => "forward"}, socket) do
@@ -83,5 +94,9 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           transition_direction: {"ease-out duration-300", "translate-x-0", "translate-x-0"}
         )
     end
+  end
+
+  defp assign_form(socket, changeset) do
+    assign(socket, :form, to_form(changeset))
   end
 end
