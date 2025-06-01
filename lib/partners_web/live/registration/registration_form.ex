@@ -14,6 +14,7 @@ defmodule PartnersWeb.Registration.RegistrationForm do
     embeds_one :profile, Profile, on_replace: :update, primary_key: false do
       field :username, :string
       field :dob, :date
+
     end
 
     embeds_one :user, User, on_replace: :update, primary_key: false do

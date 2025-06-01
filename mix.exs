@@ -65,7 +65,8 @@ defmodule Partners.MixProject do
       {:req, "~> 0.5.0"},
       # Required for Paypal webhook verification
       {:x509, "~> 0.8.10"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:ex_phone_number, "~> 0.4.5"}
     ]
   end
 

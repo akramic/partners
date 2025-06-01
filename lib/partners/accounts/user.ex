@@ -60,7 +60,7 @@ defmodule Partners.Accounts.User do
       uniqueness of the email, useful when displaying live validations.
       Defaults to `true`.
   """
-  def email_changeset(user, attrs, opts \\ []) do
+  def email_changeset(user \\ new(), attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
     |> validate_email(opts)

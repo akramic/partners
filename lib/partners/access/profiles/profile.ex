@@ -7,6 +7,11 @@ defmodule Partners.Access.Profiles.Profile do
   alias Partners.Access.Demographics.Postcodes.Postcode
   alias Partners.Access.Demographics.Occupations.Occupation
 
+  use Timex
+
+  @max_age 100
+  @min_age 18
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "profiles" do
@@ -60,12 +65,111 @@ defmodule Partners.Access.Profiles.Profile do
       :ip_data,
       :telephone
     ])
-    |> unsafe_validate_unique(:username, Partners.Repo)
-    |> unique_constraint(:username)
+    |> validate_username()
 
     # Scope is not required here as this is for a new user
     # |> put_change(:user_id, user_scope.user.id)
   end
+
+  defp validate_username(struct_or_changeset) do
+    struct_or_changeset
+    |> validate_length(:username, min: 6, max: 72)
+    |> validate_format(:username, ~r/^[a-zA-Z-_0-9]+$/,
+      message: "only letters, numbers, - and _ allowed"
+    )
+    |> unsafe_validate_unique(
+      :username,
+      Partners.Repo,
+      message: "this username is already taken"
+    )
+    |> unique_constraint(:username, message: "this username is already taken")
+  end
+
+  defp validate_dob_min_age(changeset) do
+    validate_change(changeset, :dob, fn :dob, dob ->
+      if Timex.after?(dob, latest_dob_allowed()) do
+        [dob: "must be at least #{@min_age} to join"]
+      else
+        []
+      end
+    end)
+  end
+
+  defp validate_dob_max_age(changeset) do
+    validate_change(changeset, :dob, fn :dob, dob ->
+      if Timex.before?(dob, earliest_dob_allowed()) do
+        [dob: "cannot join if older than #{@max_age}"]
+      else
+        []
+      end
+    end)
+  end
+
+  defp validate_telephone(struct_or_changeset, country_code) do
+    validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
+      with {:ok, phone_number} <- ExPhoneNumber.parse(telephone, country_code),
+           true <- ExPhoneNumber.is_possible_number?(phone_number),
+           true <- ExPhoneNumber.is_valid_number?(phone_number) do
+        case ExPhoneNumber.get_number_type(phone_number) do
+          :mobile ->
+            []
+
+          _ ->
+            [telephone: "not a mobile phone number"]
+        end
+      else
+        _ -> [telephone: "invalid mobile phone number"]
+      end
+    end)
+  end
+
+  defp validate_accepted(changeset) do
+    validate_change(changeset, :terms, fn :terms, terms ->
+      if terms do
+        []
+      else
+        [terms: "need to accept terms of membership"]
+      end
+    end)
+  end
+
+  defp validate_telephone_unique(struct_or_changeset, country_code) do
+    validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
+      with {:ok, phone_number_map} <- ExPhoneNumber.parse(telephone, country_code),
+           formatted_telephone_number <- ExPhoneNumber.format(phone_number_map, :e164) do
+        case Soulmates.Repo.get_by(Soulmates.Profiles.Profile,
+               telephone: formatted_telephone_number
+             ) do
+          nil -> []
+          _ -> [telephone: "user with this phone number already exists."]
+        end
+      else
+        _ -> [telephone: "invalid phone number."]
+      end
+    end)
+  end
+
+  defp validate_otp(struct_or_changeset, stored_otp) do
+    validate_change(struct_or_changeset, :otp, fn :otp, otp ->
+      if String.length(otp) == 6 do
+        case otp === stored_otp do
+          true ->
+            []
+
+          false ->
+            [otp: "OTP code does not match."]
+        end
+      else
+        []
+      end
+    end)
+  end
+
+  defp latest_dob_allowed, do: Timex.shift(Timex.today(), years: -@min_age)
+  defp earliest_dob_allowed, do: Timex.shift(Timex.today(), years: -@max_age)
+
+  def max_age, do: @max_age
+  def min_age, do: @min_age
 
   # Custom function to validate place_name belongs to the selected postcode
   # Only validates if both postcode_id and place_name are present
@@ -183,4 +287,62 @@ defmodule Partners.Access.Profiles.Profile do
     |> validate_required([:occupation_id])
     |> foreign_key_constraint(:occupation_id)
   end
+
+  ###################################################
+  # Changesets for onboarding (registering) new users
+  ###################################################
+
+  def registration_username_changeset(struct_or_changeset \\ new(), attrs) do
+    struct_or_changeset
+    |> cast(attrs, [:username])
+    |> validate_username()
+  end
+
+  def registration_gender_changeset(struct_or_changeset \\ new(), attrs) do
+    struct_or_changeset
+    |> cast(attrs, [:gender])
+    |> validate_required([:gender])
+  end
+
+  def registration_dob_changeset(struct_or_changeset \\ new(), attrs) do
+    struct_or_changeset
+    |> cast(attrs, [:dob])
+    |> validate_required([:dob])
+    |> validate_dob_min_age()
+    |> validate_dob_max_age()
+  end
+
+  def registration_terms_changeset(struct_or_changeset \\ new(), attrs) do
+    struct_or_changeset
+    |> cast(attrs, [:terms])
+    |> validate_required([:terms])
+    |> validate_accepted()
+  end
+
+  def registration_telephone_changeset(
+        struct_or_changeset \\ new(),
+        attrs
+      ) do
+    struct_or_changeset
+    |> cast(attrs, [:telephone, :country_code])
+    |> validate_required([:telephone, :country_code])
+    |> validate_length(:telephone, min: 5, max: 13, message: "must be between 5 and 13 digits")
+    |> validate_telephone(attrs["country_code"])
+    |> validate_telephone_unique(attrs["country_code"])
+  end
+
+  def registration_otp_changeset(struct_or_changeset \\ new(), attrs) do
+    struct_or_changeset
+    |> cast(attrs, [:otp, :stored_otp])
+    |> validate_required([:otp, :stored_otp])
+    |> validate_length(:otp, min: 6, max: 6, message: "must be 6 digits")
+    |> validate_format(:otp, ~r/^[0-9]+$/, message: "only digits are allowed")
+    |> validate_otp(attrs["stored_otp"])
+  end
+
+  # End Changesets for onboarding (registering) new users
+
+  ###################################################
+
+  ###################################################
 end
