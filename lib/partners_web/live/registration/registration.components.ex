@@ -2,7 +2,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
   use Phoenix.Component
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.{Typography}
-  alias PartnersWeb.Registration.Components.{EmailComponent}
+  alias PartnersWeb.Registration.Components.{EmailComponent, UsernameComponent}
 
   attr :transition_direction, :any,
     default: {"ease-out duration-300", "translate-x-full", "translate-x-0"},
@@ -10,7 +10,17 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
 
   def render(%{current_step: "start"} = assigns) do
     ~H"""
-    <div id="welcome" class="hero min-h-screen" style="background-image: url(/images/couple2.jpg);">
+    <div
+      phx-mounted={
+        %JS{}
+        |> JS.transition(@transition_direction,
+          time: 300
+        )
+      }
+      id="welcome"
+      class="hero min-h-screen"
+      style="background-image: url(/images/couple2.jpg);"
+    >
       <div class="hero-overlay"></div>
       <div class="hero-content text-neutral-content text-center">
         <div class="max-w-4xl space-y-6">
@@ -36,9 +46,23 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
 
   def render(%{current_step: "email"} = assigns) do
     ~H"""
-    <.live_component module={EmailComponent} transition_direction={@transition_direction} id="email" />
+    <.live_component
+      module={EmailComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="email"
+    />
     """
   end
 
-
+  def render(%{current_step: "username"} = assigns) do
+    ~H"""
+    <.live_component
+      module={UsernameComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="username"
+    />
+    """
+  end
 end

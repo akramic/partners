@@ -66,7 +66,7 @@ defmodule PartnersWeb.Registration.RegistrationLiveCopy do
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
       <div class="overflow-x-hidden w-full relative">
-        <PartnersWeb.Registration.RegistrationComponents.render_form {assigns} />
+        <PartnersWeb.Registration.RegistrationComponentsCopy.render_form {assigns} />
       </div>
     </PartnersWeb.Layouts.app>
     """

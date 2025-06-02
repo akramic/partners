@@ -137,7 +137,7 @@ defmodule Partners.Access.Profiles.Profile do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
       with {:ok, phone_number_map} <- ExPhoneNumber.parse(telephone, country_code),
            formatted_telephone_number <- ExPhoneNumber.format(phone_number_map, :e164) do
-        case Soulmates.Repo.get_by(Soulmates.Profiles.Profile,
+        case Partners.Repo.get_by(Partners.Profiles.Profile,
                telephone: formatted_telephone_number
              ) do
           nil -> []

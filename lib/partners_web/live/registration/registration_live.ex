@@ -2,7 +2,6 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   use PartnersWeb, :live_view
   require Logger
 
-  alias PartnersWeb.CustomComponents.{Typography, Layout}
   alias PartnersWeb.Registration.Step
 
   @steps [
@@ -39,20 +38,30 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   @impl true
-  def handle_info({:proceed, input_name, %{} = form}, socket) do
-    params = %{
-      input_name => Map.get(form, input_name)
-    }
+   def handle_info({:proceed, input_name, data}, socket) do
 
-    {:noreply,
-     socket
-     |> assign(:params, Map.merge(socket.assigns.params, params))
-     |> assign_step(:next)}
+    IO.inspect(input_name, label: "🔔 Received payload in handle_info", pretty: true)
+    IO.inspect(data, label: "🔔 Received payload in handle_info", pretty: true)
+  # def handle_info({:proceed, input_name, %{} = form}, socket) do
+    # params = %{
+    #   input_name => Map.get(form, input_name)
+    # }
+
+    # {:noreply,
+    #  socket
+    #  |> assign(:params, Map.merge(socket.assigns.params, params))
+    #  |> assign_step(:next)}
+    {:noreply, assign_step(socket, :next)}
   end
 
   @impl true
-  def handle_event("prev-step", _params, socket) do
-    {:noreply, assign_step(socket, :prev)}
+  def handle_event("prev_step", %{"transition_direction" => transition_direction}, socket) do
+    socket =
+      socket
+      |> assign_mount_transition_direction(transition_direction)
+      |> assign_step(:prev)
+
+    {:noreply, socket}
   end
 
   @impl true
