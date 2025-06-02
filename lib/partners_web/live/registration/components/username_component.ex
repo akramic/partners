@@ -1,6 +1,5 @@
 defmodule PartnersWeb.Registration.Components.UsernameComponent do
-
- use PartnersWeb, :live_component
+  use PartnersWeb, :live_component
 
   alias Partners.Access.Profiles.Profile
 
@@ -43,7 +42,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
               time: 300,
               to: "##{@current_step}-form"
             )
-            |> JS.push("prev_step", value: %{transition_direction: "backward"})
+            |> JS.push("prev_step", value: %{direction: "backward"})
           }
           class={[
             "btn btn-ghost",
@@ -89,13 +88,11 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "username")
+
     if changeset.valid? do
       assign(socket, form: form, check_errors: false)
     else
       assign(socket, form: form)
     end
   end
-
-
-
 end

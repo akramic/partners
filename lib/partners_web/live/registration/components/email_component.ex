@@ -41,7 +41,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
                 time: 300,
                 to: "##{@current_step}-form"
               )
-              |> JS.push("prev_step", value: %{transition_direction: "backward"})
+              |> JS.push("prev_step", value: %{direction: "backward"})
             }
             class={[
               "btn btn-ghost",

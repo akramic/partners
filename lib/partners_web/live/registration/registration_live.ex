@@ -38,11 +38,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   @impl true
-   def handle_info({:proceed, input_name, data}, socket) do
-
+  def handle_info({:proceed, input_name, data}, socket) do
     IO.inspect(input_name, label: "🔔 Received payload in handle_info", pretty: true)
     IO.inspect(data, label: "🔔 Received payload in handle_info", pretty: true)
-  # def handle_info({:proceed, input_name, %{} = form}, socket) do
+    socket = assign_mount_transition_direction(socket, "forward")
+    # def handle_info({:proceed, input_name, %{} = form}, socket) do
     # params = %{
     #   input_name => Map.get(form, input_name)
     # }
@@ -55,10 +55,10 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   @impl true
-  def handle_event("prev_step", %{"transition_direction" => transition_direction}, socket) do
+  def handle_event("prev_step", %{"direction" => direction}, socket) do
     socket =
       socket
-      |> assign_mount_transition_direction(transition_direction)
+      |> assign_mount_transition_direction(direction)
       |> assign_step(:prev)
 
     {:noreply, socket}
@@ -67,7 +67,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   @impl true
   def handle_event("start", params, socket) do
     Logger.info("🔔 Starting registration with params: #{inspect(params)}")
-
+    socket = assign_mount_transition_direction(socket, "forward")
     {:noreply, assign_step(socket, :next)}
   end
 
@@ -100,7 +100,12 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
+    <PartnersWeb.Layouts.app
+      current_scope={@current_scope}
+      transition_direction={@transition_direction}
+      flash={@flash}
+    >
+      <pre>{inspect(@transition_direction, pretty: true)}</pre>
       <div class="overflow-x-hidden w-full relative">
         <PartnersWeb.Registration.RegistrationComponents.render {assigns} />
       </div>
@@ -121,9 +126,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         )
 
       _ ->
-        assign(socket,
-          transition_direction: {"ease-out duration-300", "translate-x-0", "translate-x-0"}
-        )
+        raise ArgumentError,
+              "Invalid transition direction: #{inspect(direction)}. Expected 'forward' or 'backward'."
     end
   end
 end
