@@ -1,12 +1,15 @@
 defmodule PartnersWeb.Registration.Components.EmailComponent do
   use PartnersWeb, :live_component
 
+  alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Accounts.User
+
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col items-center justify-center w-full px-4">
+    <div class="flex flex-col items-center justify-center w-full px-4 h-full">
       <.form
         :let={f}
         for={@form}
@@ -15,12 +18,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
         phx-submit="save"
         phx-target={@myself}
         class="w-full max-w-xl"
-        phx-mounted={
-          %JS{}
-          |> JS.transition(@transition_direction,
-            time: 300
-          )
-        }
+        phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
         <div class="mb-4">
           <.input
@@ -31,18 +29,13 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
             required
           />
         </div>
-        <div class="flex items-center justify-between w-full max-w-xl">
+        <div
+          phx-mounted={RegistrationLive.button_container_transition()}
+          class="flex items-center justify-between w-full max-w-xl"
+        >
           <button
             type="button"
-            phx-click={
-              %JS{}
-              |> JS.transition(
-                {"ease-out duration-300", "translate-x-0", "translate-x-full"},
-                time: 300,
-                to: "##{@current_step}-form"
-              )
-              |> JS.push("prev_step", value: %{direction: "backward"})
-            }
+            phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class={[
               "btn btn-ghost",
               if(@current_step == "email", do: "", else: "invisible")
@@ -60,7 +53,6 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
           </button>
         </div>
       </.form>
-      <pre>{inspect @form, pretty: true}</pre>
     </div>
     """
   end
@@ -92,20 +84,9 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   end
 
   @impl true
-  def handle_event("save", %{"email" => %{"email" => "michael.akram@proton.me"}}, socket) do
+  def handle_event("save", %{"email" => %{"email" => email}}, socket) do
     # Handle the save event, e.g., by calling an API or updating the database
-    send(self(), {:proceed, :email, %{email: "some@email"}})
+    send(self(), {:proceed, :email, %{email: email}})
     {:noreply, socket}
-  end
-
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "email")
-
-    if changeset.valid? do
-      # Make API call to verify email
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
   end
 end

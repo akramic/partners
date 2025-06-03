@@ -100,17 +100,47 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <PartnersWeb.Layouts.app
-      current_scope={@current_scope}
-      transition_direction={@transition_direction}
-      flash={@flash}
-    >
-      <pre>{inspect(@transition_direction, pretty: true)}</pre>
-      <div class="overflow-x-hidden w-full relative">
+    <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
+      <div class="overflow-x-hidden overflow-y-hidden w-full relative">
         <PartnersWeb.Registration.RegistrationComponents.render {assigns} />
       </div>
     </PartnersWeb.Layouts.app>
     """
+  end
+
+  def assign_form(socket, %Ecto.Changeset{} = changeset) do
+    form = to_form(changeset, as: socket.assigns.current_step)
+
+    if changeset.valid? do
+      assign(socket, form: form, check_errors: false)
+    else
+      assign(socket, form: form)
+    end
+  end
+
+  def button_container_transition do
+    %JS{}
+    |> JS.transition(
+      {"ease-out duration-[0.4s]", "translate-y-full", "translate-y-0"},
+      time: 400
+    )
+  end
+
+  def back_button_transition_push(current_step) do
+    %JS{}
+    |> JS.transition(
+      {"ease-out duration-300", "translate-x-0", "translate-x-full"},
+      time: 300,
+      to: "##{current_step}-form"
+    )
+    |> JS.push("prev_step", value: %{direction: "backward"})
+  end
+
+  def form_mounted_transition(transition_direction) do
+    %JS{}
+    |> JS.transition(transition_direction,
+      time: 300
+    )
   end
 
   defp assign_mount_transition_direction(socket, direction) do

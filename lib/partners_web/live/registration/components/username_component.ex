@@ -1,12 +1,15 @@
 defmodule PartnersWeb.Registration.Components.UsernameComponent do
   use PartnersWeb, :live_component
 
+  alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
+
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col items-center justify-center w-full px-4">
+    <div class="flex flex-col items-center justify-center w-full px-4 h-full">
       <.form
         :let={f}
         for={@form}
@@ -15,12 +18,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
         phx-change="validate"
         phx-target={@myself}
         class="w-full max-w-xl"
-        phx-mounted={
-          %JS{}
-          |> JS.transition(@transition_direction,
-            time: 300
-          )
-        }
+        phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
         <div class="mb-4">
           <.input
@@ -32,18 +30,13 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
           />
         </div>
       </.form>
-      <div class="flex items-center justify-between w-full max-w-xl">
+      <div
+        phx-mounted={RegistrationLive.button_container_transition()}
+        class="flex items-center justify-between w-full max-w-xl"
+      >
         <button
           type="button"
-          phx-click={
-            %JS{}
-            |> JS.transition(
-              {"ease-out duration-300", "translate-x-0", "translate-x-full"},
-              time: 300,
-              to: "##{@current_step}-form"
-            )
-            |> JS.push("prev_step", value: %{direction: "backward"})
-          }
+          phx-click={RegistrationLive.back_button_transition_push(@current_step)}
           class={[
             "btn btn-ghost",
             if(@current_step == "email", do: "invisible", else: "")
@@ -55,7 +48,6 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
           Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
         </button>
       </div>
-      <pre>{inspect @form, pretty: true}</pre>
     </div>
     """
   end
@@ -84,15 +76,5 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
 
     changeset = Profile.registration_username_changeset(username_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
-  end
-
-  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    form = to_form(changeset, as: "username")
-
-    if changeset.valid? do
-      assign(socket, form: form, check_errors: false)
-    else
-      assign(socket, form: form)
-    end
   end
 end
