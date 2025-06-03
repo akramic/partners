@@ -2,7 +2,15 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
   use Phoenix.Component
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.{Typography}
-  alias PartnersWeb.Registration.Components.{EmailComponent, UsernameComponent}
+
+  alias PartnersWeb.Registration.Components.{
+    EmailComponent,
+    UsernameComponent,
+    GenderComponent,
+    DobComponent,
+    TelephoneComponent,
+    TermsComponent
+  }
 
   attr :transition_direction, :any,
     default: {"ease-out duration-300", "translate-x-full", "translate-x-0"},
@@ -62,6 +70,50 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       current_step={@current_step}
       transition_direction={@transition_direction}
       id="username"
+    />
+    """
+  end
+
+  def render(%{current_step: "gender"} = assigns) do
+    ~H"""
+    <.live_component
+      module={GenderComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="gender"
+    />
+    """
+  end
+
+  def render(%{current_step: "dob"} = assigns) do
+    ~H"""
+    <.live_component
+      module={DobComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="dob"
+    />
+    """
+  end
+
+  def render(%{current_step: "telephone"} = assigns) do
+    ~H"""
+    <.live_component
+      module={TelephoneComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="telephone"
+    />
+    """
+  end
+
+  def render(%{current_step: "terms"} = assigns) do
+    ~H"""
+    <.live_component
+      module={TermsComponent}
+      current_step={@current_step}
+      transition_direction={@transition_direction}
+      id="terms"
     />
     """
   end

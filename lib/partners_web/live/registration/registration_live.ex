@@ -7,8 +7,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   @steps [
     %Step{name: "start", prev: nil, next: "email"},
     %Step{name: "email", prev: "start", next: "username"},
-    %Step{name: "username", prev: "email", next: "email"},
-    %Step{name: "gender", prev: "username", next: "password"},
+    %Step{name: "username", prev: "email", next: "gender"},
+    %Step{name: "gender", prev: "username", next: "dob"},
     %Step{name: "dob", prev: "gender", next: "terms"},
     %Step{name: "terms", prev: "dob", next: nil}
   ]
@@ -27,9 +27,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         progress: first_step,
         form_params: %{}
       )
-      |> assign_mount_transition_direction("forward")
 
-    {:ok, socket}
+    {:ok, assign_mount_transition_direction(socket, "forward")}
   end
 
   @impl true
@@ -38,20 +37,18 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   @impl true
-  def handle_info({:proceed, input_name, data}, socket) do
-    IO.inspect(input_name, label: "🔔 Received payload in handle_info", pretty: true)
-    IO.inspect(data, label: "🔔 Received payload in handle_info", pretty: true)
-    socket = assign_mount_transition_direction(socket, "forward")
-    # def handle_info({:proceed, input_name, %{} = form}, socket) do
-    # params = %{
-    #   input_name => Map.get(form, input_name)
-    # }
+  def handle_info({:proceed, input_name, %{} = form}, socket) do
+    params = %{
+      input_name => Map.get(form, input_name)
+    }
 
-    # {:noreply,
-    #  socket
-    #  |> assign(:params, Map.merge(socket.assigns.params, params))
-    #  |> assign_step(:next)}
-    {:noreply, assign_step(socket, :next)}
+    socket =
+      socket
+      |> assign_mount_transition_direction("forward")
+      |> assign(:form_params, Map.merge(socket.assigns.form_params, params))
+      |> assign_step(:next)
+
+    {:noreply, socket}
   end
 
   @impl true

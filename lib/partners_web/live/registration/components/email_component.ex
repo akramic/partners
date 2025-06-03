@@ -65,9 +65,6 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
     socket =
       socket
       |> assign(assigns)
-      |> assign(messages: [])
-      |> assign(show_modal: false)
-      |> assign(trigger_submit: false, check_errors: false)
       |> assign_form(changeset)
 
     {:ok, socket}

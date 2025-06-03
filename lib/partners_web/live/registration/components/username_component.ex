@@ -29,25 +29,26 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
             required
           />
         </div>
-      </.form>
-      <div
-        phx-mounted={RegistrationLive.button_container_transition()}
-        class="flex items-center justify-between w-full max-w-xl"
-      >
-        <button
-          type="button"
-          phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-          class={[
-            "btn btn-ghost",
-            if(@current_step == "email", do: "invisible", else: "")
-          ]}
+
+        <div
+          phx-mounted={RegistrationLive.button_container_transition()}
+          class="flex items-center justify-between w-full max-w-xl"
         >
-          back
-        </button>
-        <button type="submit" disabled={!@form.source.valid?} class="btn btn-primary">
-          Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
-        </button>
-      </div>
+          <button
+            type="button"
+            phx-click={RegistrationLive.back_button_transition_push(@current_step)}
+            class={[
+              "btn btn-ghost",
+              if(@current_step == "email", do: "invisible", else: "")
+            ]}
+          >
+            back
+          </button>
+          <button type="submit" disabled={!@form.source.valid?} class="btn btn-primary">
+            Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+          </button>
+        </div>
+      </.form>
     </div>
     """
   end
@@ -55,14 +56,11 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
   @impl true
   def update(assigns, socket) do
     params = %{}
-    changeset = Partners.Accounts.User.email_changeset(params)
+    changeset = Profile.registration_username_changeset(params)
 
     socket =
       socket
       |> assign(assigns)
-      |> assign(messages: [])
-      |> assign(show_modal: false)
-      |> assign(trigger_submit: false, check_errors: false)
       |> assign_form(changeset)
 
     {:ok, socket}
@@ -76,5 +74,22 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
 
     changeset = Profile.registration_username_changeset(username_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
+  end
+
+  @impl true
+  def handle_event("save", %{"username" => username_params} = _params, socket) do
+    IO.inspect("SAVE FIRED username")
+
+    _changeset =
+      Profile.registration_username_changeset(username_params)
+      |> Ecto.Changeset.apply_action(:insert)
+      |> case do
+        {:ok, record} ->
+          send(self(), {:proceed, :username, record})
+          {:noreply, socket}
+
+        {:error, changeset} ->
+          {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+      end
   end
 end
