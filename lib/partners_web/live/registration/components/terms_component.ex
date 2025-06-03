@@ -56,7 +56,14 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for terms acceptance
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :terms) do
+        %{"terms" => assigns.form_params.terms}
+      else
+        %{}
+      end
+
     changeset = Profile.registration_terms_changeset(params)
 
     socket =

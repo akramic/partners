@@ -53,7 +53,14 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for gender
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :gender) do
+        %{"gender" => assigns.form_params.gender}
+      else
+        %{}
+      end
+
     changeset = Profile.registration_gender_changeset(params)
 
     socket =

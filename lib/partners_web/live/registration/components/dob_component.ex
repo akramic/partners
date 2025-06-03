@@ -52,7 +52,14 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for DOB
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :dob) do
+        %{"dob" => assigns.form_params.dob}
+      else
+        %{}
+      end
+
     changeset = Profile.registration_dob_changeset(params)
 
     socket =

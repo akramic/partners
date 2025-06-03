@@ -59,7 +59,14 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for email
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :email) do
+        %{"email" => assigns.form_params.email}
+      else
+        %{}
+      end
+
     changeset = Partners.Accounts.User.email_changeset(params)
 
     socket =

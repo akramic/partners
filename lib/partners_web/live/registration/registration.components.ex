@@ -58,6 +58,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={EmailComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="email"
     />
     """
@@ -69,6 +70,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={UsernameComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="username"
     />
     """
@@ -80,6 +82,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={GenderComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="gender"
     />
     """
@@ -91,6 +94,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={DobComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="dob"
     />
     """
@@ -102,6 +106,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={TelephoneComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="telephone"
     />
     """
@@ -113,6 +118,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       module={TermsComponent}
       current_step={@current_step}
       transition_direction={@transition_direction}
+      form_params={@form_params}
       id="terms"
     />
     """

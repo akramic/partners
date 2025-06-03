@@ -55,7 +55,14 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for username
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :username) do
+        %{"username" => assigns.form_params.username}
+      else
+        %{}
+      end
+
     changeset = Profile.registration_username_changeset(params)
 
     socket =

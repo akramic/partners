@@ -53,7 +53,17 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
 
   @impl true
   def update(assigns, socket) do
-    params = %{}
+    # Check if we have existing form params for telephone
+    params =
+      if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :telephone) do
+        %{
+          "telephone" => assigns.form_params.telephone,
+          "country_code" => Map.get(assigns.form_params, :country_code, "AU")
+        }
+      else
+        %{}
+      end
+
     changeset = Profile.registration_telephone_changeset(params)
 
     socket =
