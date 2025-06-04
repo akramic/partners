@@ -4,7 +4,7 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
 
-  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
   def render(assigns) do
@@ -20,14 +20,24 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4">
-          <.input
-            field={f[:dob]}
-            type="date"
-            label="Date of Birth"
-            placeholder="Select your date of birth"
-            required
-          />
+        <div class="mb-4 relative">
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <.input
+                field={f[:dob]}
+                type="date"
+                label="Date of Birth"
+                placeholder="Select your date of birth"
+                required
+              />
+            </div>
+            <div
+              :if={show_tick?(:dob, @form)}
+              class="ml-4 text-success self-start mt-8"
+            >
+              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            </div>
+          </div>
         </div>
 
         <div

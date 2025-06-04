@@ -4,7 +4,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
 
-  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
   def render(assigns) do
@@ -20,15 +20,25 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4">
-          <.input
-            field={f[:gender]}
-            type="select"
-            label="Gender"
-            options={[Male: "Male", Female: "Female"]}
-            prompt="Select your gender"
-            required
-          />
+        <div class="mb-4 relative">
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <.input
+                field={f[:gender]}
+                type="select"
+                label="Gender"
+                options={[Male: "Male", Female: "Female"]}
+                prompt="Select your gender"
+                required
+              />
+            </div>
+            <div
+              :if={show_tick?(:gender, @form)}
+              class="ml-4 text-success self-start mt-8"
+            >
+              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            </div>
+          </div>
         </div>
 
         <div

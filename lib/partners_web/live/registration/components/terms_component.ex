@@ -4,7 +4,7 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
 
-  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
   def render(assigns) do
@@ -20,17 +20,24 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4">
-          <.input
-            field={f[:terms]}
-            type="checkbox"
-            label="I agree to the Terms and Conditions"
-            required
-          />
-          <div class="mt-2 text-sm text-gray-600">
-            By checking this box, you agree to our
-            <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a>
-            and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
+        <div class="mb-4 relative">
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <.input
+                field={f[:terms]}
+                type="checkbox"
+                label="I agree to the Terms and Conditions"
+                required
+              />
+              <div class="mt-2 text-sm text-gray-600">
+                By checking this box, you agree to our
+                <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a>
+                and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
+              </div>
+            </div>
+            <div :if={show_tick?(:terms, @form)} class="ml-4 text-success self-start">
+              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            </div>
           </div>
         </div>
 

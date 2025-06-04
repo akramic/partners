@@ -4,7 +4,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
 
-  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
   def render(assigns) do
@@ -20,15 +20,25 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4">
-          <.input
-            field={f[:telephone]}
-            type="tel"
-            label="Mobile Phone Number"
-            placeholder="Enter your Australian mobile number"
-            required
-          />
-          <.input field={f[:country_code]} type="hidden" value="AU" />
+        <div class="mb-4 relative">
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <.input
+                field={f[:telephone]}
+                type="tel"
+                label="Mobile Phone Number"
+                placeholder="Enter your Australian mobile number"
+                required
+              />
+              <.input field={f[:country_code]} type="hidden" value="AU" />
+            </div>
+            <div
+              :if={show_tick?(:telephone, @form)}
+              class="ml-4 text-success self-start mt-8"
+            >
+              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            </div>
+          </div>
         </div>
 
         <div

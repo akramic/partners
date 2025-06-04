@@ -324,8 +324,8 @@ defmodule Partners.Access.Profiles.Profile do
         attrs
       ) do
     struct_or_changeset
-    |> cast(attrs, [:telephone, :country_code])
-    |> validate_required([:telephone, :country_code])
+    |> cast(attrs, [:telephone])
+    |> validate_required([:telephone])
     |> validate_length(:telephone, min: 5, max: 13, message: "must be between 5 and 13 digits")
     |> validate_telephone(attrs["country_code"])
     |> validate_telephone_unique(attrs["country_code"])
@@ -339,6 +339,8 @@ defmodule Partners.Access.Profiles.Profile do
     |> validate_format(:otp, ~r/^[0-9]+$/, message: "only digits are allowed")
     |> validate_otp(attrs["stored_otp"])
   end
+
+ 
 
   # End Changesets for onboarding (registering) new users
 

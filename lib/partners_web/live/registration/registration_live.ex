@@ -140,6 +140,10 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     )
   end
 
+  def show_tick?(atom, form) do
+    form.source.valid? && form[atom].value && form[atom].value != ""
+  end
+
   defp assign_mount_transition_direction(socket, direction) do
     case direction do
       "forward" ->

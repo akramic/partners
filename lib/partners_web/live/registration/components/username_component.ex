@@ -4,7 +4,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
 
-  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2]
+  import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
   def render(assigns) do
@@ -20,14 +20,21 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4">
-          <.input
-            field={f[:username]}
-            type="text"
-            label="Username"
-            placeholder="Enter your username"
-            required
-          />
+        <div class="mb-4 relative">
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <.input
+                field={f[:username]}
+                type="text"
+                label="Username"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+            <div :if={show_tick?(:username, @form)} class="ml-4 text-success self-start mt-8">
+              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            </div>
+          </div>
         </div>
 
         <div
