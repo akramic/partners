@@ -22,10 +22,10 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)] ",
+        "text-[clamp(1.125rem,2.25vw,1.75rem)] leading-[calc(clamp(1.125rem,2.25vw,1.75rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
         @class
       ]}
-      @rest
+      {@rest}
     >
       {render_slot(@inner_block)}
     </p>
@@ -40,7 +40,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.75rem,1.5vw,1.125rem)] leading-[calc(clamp(0.75rem,1.5vw,1.125rem)*1.6)] font-light",
+        "text-[clamp(0.875rem,1.75vw,1.25rem)] leading-[calc(clamp(0.875rem,1.75vw,1.25rem)*1.5)] tracking-[clamp(0.01em,0.015vw,0.015em)] font-light",
         @class
       ]}
       {@rest}
@@ -58,7 +58,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.875rem,1.75vw,1.3125rem)] leading-[calc(clamp(0.875rem,1.75vw,1.3125rem)*1.6)] font-light",
+        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] font-light",
         @class
       ]}
       {@rest}
@@ -76,7 +76,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1.125rem,2.25vw,1.6875rem)] leading-[calc(clamp(1.125rem,2.25vw,1.6875rem)*1.6)] ",
+        "text-[clamp(1.25rem,2.5vw,2rem)] leading-[calc(clamp(1.25rem,2.5vw,2rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
         @class
       ]}
       {@rest}
@@ -94,7 +94,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h1
       class={[
-        "text-[clamp(2.25rem,8vw,8rem)] leading-[calc(clamp(2.25rem,8vw,8rem)*1.2)] font-extrabold tracking-tight",
+        "text-[clamp(2.5rem,6vw,4rem)] leading-[calc(clamp(2.5rem,6vw,4rem)*1.1)] font-extrabold tracking-[clamp(-0.02em,-0.01vw,-0.01em)]",
         @class
       ]}
       {@rest}
@@ -112,7 +112,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h2
       class={[
-        "text-[clamp(2rem,7vw,8rem)] leading-[calc(clamp(2rem,7vw,8rem)*1.2)] font-extrabold",
+        "text-[clamp(2.25rem,5.5vw,3.5rem)] leading-[calc(clamp(2.25rem,5.5vw,3.5rem)*1.1)] font-extrabold tracking-[clamp(-0.015em,-0.01vw,-0.01em)]",
         @class
       ]}
       {@rest}
@@ -130,7 +130,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h3
       class={[
-        "text-[clamp(1.75rem,6vw,6rem)] leading-[calc(clamp(1.75rem,6vw,6rem)*1.2)] font-bold ",
+        "text-[clamp(2rem,5vw,3rem)] leading-[calc(clamp(2rem,5vw,3rem)*1.1)] font-bold tracking-[clamp(-0.01em,-0.005vw,-0.005em)]",
         @class
       ]}
       {@rest}
@@ -148,7 +148,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h4
       class={[
-        "text-[clamp(1.5rem,5vw,4rem)] leading-[calc(clamp(1.5rem,5vw,4rem)*1.2)] font-bold ",
+        "text-[clamp(1.75rem,4.5vw,2.5rem)] leading-[calc(clamp(1.75rem,4.5vw,2.5rem)*1.1)] font-bold tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
       {@rest}
@@ -166,7 +166,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.25rem,4vw,2rem)] leading-[calc(clamp(1.25rem,4vw,2rem)*1.2)] font-semibold",
+        "text-[clamp(1.5rem,4vw,2.25rem)] leading-[calc(clamp(1.5rem,4vw,2.25rem)*1.15)] font-semibold tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
       {@rest}
@@ -184,7 +184,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h6
       class={[
-        "text-[clamp(1rem,3vw,1.75rem)] leading-[calc(clamp(1rem,3vw,1.75rem)*1.2)] font-semibold",
+        "text-[clamp(1.25rem,3.5vw,2rem)] leading-[calc(clamp(1.25rem,3.5vw,2rem)*1.15)] font-semibold tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}
       {@rest}
@@ -202,7 +202,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.125rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.6)]] font-semibold",
+        "text-[clamp(1.25rem,2.5vw,1.75rem)] leading-[calc(clamp(1.25rem,2.5vw,1.75rem)*1.4)] font-semibold tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}
       {@rest}

@@ -9,8 +9,9 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     %Step{name: "email", prev: "start", next: "username"},
     %Step{name: "username", prev: "email", next: "gender"},
     %Step{name: "gender", prev: "username", next: "dob"},
-    %Step{name: "dob", prev: "gender", next: "terms"},
-    %Step{name: "terms", prev: "dob", next: nil}
+    %Step{name: "dob", prev: "gender", next: "telephone"},
+    %Step{name: "telephone", prev: "dob", next: "terms"},
+    %Step{name: "terms", prev: "telephone", next: nil}
   ]
 
   @impl true
@@ -21,6 +22,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     socket =
       socket
       |> assign(
+        steps: tl(@steps),
         step: 1,
         current_step: hd(@steps).name,
         total_steps: total_steps,
@@ -99,10 +101,85 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
       <div class="overflow-x-hidden overflow-y-hidden w-full relative">
+        <.progress_indicator
+          :if={@current_step !== "start"}
+          current_step={@current_step}
+          form_params={@form_params}
+          steps={@steps}
+        />
         <PartnersWeb.Registration.RegistrationComponents.render {assigns} />
       </div>
     </PartnersWeb.Layouts.app>
     """
+  end
+
+  def progress_indicator(assigns) do
+    ~H"""
+    <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
+      <ol role="list" class="flex items-center">
+        <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
+          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+            <%!-- The edge color between nodes --%>
+            <div class={[
+              "h-0.5 w-full",
+              (is_completed_step?(step, @form_params) && "bg-indigo-600") || "bg-gray-200"
+            ]}>
+            </div>
+          </div>
+          <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
+            <a
+              href="#"
+              class="relative flex size-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
+            >
+              <svg
+                class="size-4 text-white"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span class="sr-only">{step.name}</span>
+            </a>
+          <% end %>
+
+          <%= if step.name == @current_step do %>
+            <a
+              href="#"
+              class="relative flex size-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white"
+              aria-current="step"
+            >
+              <span class="size-2.5 rounded-full bg-indigo-600" aria-hidden="true"></span>
+              <span class="sr-only">{step.name}</span>
+            </a>
+          <% end %>
+
+          <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
+            <a
+              href="#"
+              class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
+            >
+              <span
+                class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"
+                aria-hidden="true"
+              >
+              </span>
+              <span class="sr-only">{step.name}</span>
+            </a>
+          <% end %>
+        </li>
+      </ol>
+    </nav>
+    """
+  end
+
+  defp is_completed_step?(step, form_params) do
+    Map.has_key?(form_params, String.to_atom(step.name))
   end
 
   def assign_form(socket, %Ecto.Changeset{} = changeset) do

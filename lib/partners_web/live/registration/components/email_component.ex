@@ -64,6 +64,8 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
 
   @impl true
   def update(assigns, socket) do
+
+    IO.inspect(assigns, label: "EmailComponent update assigns")
     # Check if we have existing form params for email
     params =
       if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :email) do
