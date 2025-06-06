@@ -3,7 +3,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   require Logger
 
   alias PartnersWeb.Registration.Step
-  alias PartnersWeb.CustomComponents.Typography
+  alias PartnersWeb.Registration.RegistrationFormAgent
 
   @steps [
     %Step{name: "start", prev: nil, next: "email"},
@@ -16,7 +16,13 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   ]
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, %{"_csrf_token" => user_token} = session, socket) do
+    # Get the session ID from the session map using the user token
+    Logger.info("🔔 Mounting RegistrationLive with session: #{inspect(session)}")
+    session_id = Map.get(session, user_token)
+    # Get the form data from the supervised GenServer
+    form_params = get_agent_data(session_id)
+
     first_step = List.first(@steps)
     total_steps = length(@steps)
 
@@ -28,7 +34,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         current_step: hd(@steps).name,
         total_steps: total_steps,
         progress: first_step,
-        form_params: %{}
+        form_params: form_params,
+        session_id: session_id
       )
 
     {:ok, assign_mount_transition_direction(socket, "forward")}
@@ -45,12 +52,24 @@ defmodule PartnersWeb.Registration.RegistrationLive do
       input_name => Map.get(form, input_name)
     }
 
+    updated_form_params = Map.merge(socket.assigns.form_params, params)
+    # Update the form data in the agent
+    RegistrationFormAgent.update_form_data(socket.assigns.session_id, updated_form_params)
+
     socket =
       socket
       |> assign_mount_transition_direction("forward")
-      |> assign(:form_params, Map.merge(socket.assigns.form_params, params))
+      |> assign(:form_params, updated_form_params)
       |> assign_step(:next)
 
+    {:noreply, socket}
+  end
+
+  # Called when the LiveView client disconnects
+  @impl true
+  def handle_info({:disconnected, _}, socket) do
+    # We don't delete immediately, as the user might just be refreshing
+    # The TTL mechanism will handle cleanup if they don't come back
     {:noreply, socket}
   end
 
@@ -186,139 +205,6 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     """
   end
 
-  # def progress_indicator(assigns) do
-  #   ~H"""
-  #   <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
-  #     <ol role="list" class="flex items-center">
-  #       <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
-
-  #         <div class="absolute inset-0 flex items-center" aria-hidden="true">
-  #           <%!-- The edge color between nodes --%>
-  #           <div class={[
-  #             "h-0.5 w-full",
-  #             (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
-  #           ]}>
-  #           </div>
-  #         </div>
-
-  #         <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
-  #           <a
-  #             href="#"
-  #             class="relative flex size-8 items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
-  #           >
-  #             <svg
-  #               class="size-4 text-primary-content"
-  #               viewBox="0 0 20 20"
-  #               fill="currentColor"
-  #               aria-hidden="true"
-  #               data-slot="icon"
-  #             >
-  #               <path
-  #                 fill-rule="evenodd"
-  #                 d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-  #                 clip-rule="evenodd"
-  #               />
-  #             </svg>
-  #             <span class="sr-only">{step.name}</span>
-
-  #           </a>
-  #         <% end %>
-
-  #         <%= if step.name == @current_step do %>
-  #           <a
-  #             href="#"
-  #             class="relative flex size-8 items-center justify-center rounded-full border-2 border-primary bg-base-100"
-  #             aria-current="step"
-  #           >
-  #             <span class="size-2.5 rounded-full bg-primary" aria-hidden="true"></span>
-  #             <span class="sr-only">{step.name}</span>
-  #           </a>
-  #         <% end %>
-
-  #         <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
-  #           <a
-  #             href="#"
-  #             class="group relative flex size-8 items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
-  #           >
-  #             <span
-  #               class="size-2.5 rounded-full bg-transparent group-hover:bg-base-300"
-  #               aria-hidden="true"
-  #             >
-  #             </span>
-  #             <span class="sr-only">{step.name}</span>
-  #           </a>
-  #         <% end %>
-  #       </li>
-  #     </ol>
-  #   </nav>
-  #   """
-  # end
-
-  # def progress_indicator(assigns) do
-  #   ~H"""
-  #   <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
-  #     <ol role="list" class="flex items-center">
-  #       <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
-  #         <div class="absolute inset-0 flex items-center" aria-hidden="true">
-  #           <%!-- The edge color between nodes --%>
-  #           <div class={[
-  #             "h-0.5 w-full",
-  #             (is_completed_step?(step, @form_params) && "bg-indigo-600") || "bg-gray-200"
-  #           ]}>
-  #           </div>
-  #         </div>
-  #         <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
-  #           <a
-  #             href="#"
-  #             class="relative flex size-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
-  #           >
-  #             <svg
-  #               class="size-4 text-white"
-  #               viewBox="0 0 20 20"
-  #               fill="currentColor"
-  #               aria-hidden="true"
-  #               data-slot="icon"
-  #             >
-  #               <path
-  #                 fill-rule="evenodd"
-  #                 d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-  #                 clip-rule="evenodd"
-  #               />
-  #             </svg>
-  #             <span class="sr-only">{step.name}</span>
-  #           </a>
-  #         <% end %>
-
-  #         <%= if step.name == @current_step do %>
-  #           <a
-  #             href="#"
-  #             class="relative flex size-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white"
-  #             aria-current="step"
-  #           >
-  #             <span class="size-2.5 rounded-full bg-indigo-600" aria-hidden="true"></span>
-  #             <span class="sr-only">{step.name}</span>
-  #           </a>
-  #         <% end %>
-
-  #         <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
-  #           <a
-  #             href="#"
-  #             class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
-  #           >
-  #             <span
-  #               class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"
-  #               aria-hidden="true"
-  #             >
-  #             </span>
-  #             <span class="sr-only">{step.name}</span>
-  #           </a>
-  #         <% end %>
-  #       </li>
-  #     </ol>
-  #   </nav>
-  #   """
-  # end
-
   defp is_completed_step?(step, form_params) do
     Map.has_key?(form_params, String.to_atom(step.name))
   end
@@ -378,5 +264,19 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         raise ArgumentError,
               "Invalid transition direction: #{inspect(direction)}. Expected 'forward' or 'backward'."
     end
+  end
+
+  # Genserver to handle the registration process
+  defp get_agent_data(session_id) do
+    RegistrationFormAgent.get_form_data(session_id)
+  end
+
+  @impl true
+  def terminate(_reason, socket) do
+    if connected?(socket) do
+      RegistrationFormAgent.touch_session(socket.assigns.session_id)
+    end
+
+    :ok
   end
 end

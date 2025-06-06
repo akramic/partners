@@ -19,6 +19,7 @@ defmodule Partners.Application do
           {Agent, :start_link,
            [fn -> %{} end, [name: Partners.Services.PaypalCertificateManager]]}
       },
+       PartnersWeb.Registration.RegistrationFormAgent,
       # Start a worker by calling: Partners.Worker.start_link(arg)
       # {Partners.Worker, arg},
       # Start to serve requests, typically the last entry
