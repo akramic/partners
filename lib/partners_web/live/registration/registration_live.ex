@@ -1,4 +1,18 @@
 defmodule PartnersWeb.Registration.RegistrationLive do
+  @moduledoc """
+  LiveView module that handles the multi-step registration flow.
+
+  This module manages the entire user registration process, including:
+  - Tracking progress through multiple registration steps
+  - Persisting form data between steps
+  - Restoring form state after page refreshes
+  - Managing transitions between steps
+  - Rendering appropriate form components for each step
+
+  The registration flow uses a GenServer (RegistrationFormAgent) to persist
+  form data across page refreshes, ensuring users don't lose progress.
+  """
+
   use PartnersWeb, :live_view
   require Logger
 
@@ -15,6 +29,13 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     %Step{name: "terms", prev: "telephone", next: nil, index: 6}
   ]
 
+  @doc """
+  Initializes the LiveView when it's first rendered.
+
+  Retrieves the form data from the RegistrationFormAgent based on the session ID,
+  determines the appropriate step to show based on previously completed steps,
+  and sets up the initial socket assigns.
+  """
   @impl true
   def mount(_params, %{"_csrf_token" => user_token} = session, socket) do
     Logger.info("🔔 Mounting RegistrationLive with session: #{inspect(session)}")
@@ -40,7 +61,14 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     {:ok, assign_mount_transition_direction(socket, "forward")}
   end
 
-  # Determine which step to show based on completed form data
+  # Determines which step to show based on the user's completed form data.
+  #
+  # Analyzes the form_params map to find all completed steps, then identifies
+  # the most recently completed step by its index. Returns the next step after
+  # the last completed step, or the first step if no steps are completed.
+  #
+  # Uses a with expression to handle the sequential data transformations and
+  # early returns for edge cases.
   defp determine_current_step(form_params) do
     with form_params when map_size(form_params) > 0 <- form_params,
          completed_step_names =
@@ -61,11 +89,30 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     end
   end
 
+  @doc """
+  Handles URL parameters when the page loads or parameters change.
+
+  Currently passes through without modifications as parameter handling
+  is not implemented for this LiveView.
+  """
   @impl true
   def handle_params(_unsigned_params, _uri, socket) do
     {:noreply, socket}
   end
 
+  @doc """
+  Handles LiveView info events.
+
+  Multiple implementations exist for different event types:
+
+  - {:proceed, input_name, form} - Sent when a step component completes. Updates the form_params
+    with the new data from the current step, persists it to the RegistrationFormAgent, and
+    advances to the next step.
+
+  - {:disconnected, _} - Triggered when the user's browser disconnects from the LiveView.
+    Does not delete the session immediately as the user might just be refreshing the page.
+    The TTL mechanism in the RegistrationFormAgent handles cleanup if needed.
+  """
   @impl true
   def handle_info({:proceed, input_name, %{} = form}, socket) do
     params = %{
@@ -93,6 +140,17 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     {:noreply, socket}
   end
 
+  @doc """
+  Handles LiveView client events.
+
+  Multiple implementations exist for different event types:
+
+  - "prev_step" - Triggered when the user navigates to the previous step.
+    Sets the transition direction to backward and moves to the previous step in the flow.
+
+  - "start" - Triggered when beginning the registration process.
+    Sets the transition direction to forward and moves to the first step in the registration flow.
+  """
   @impl true
   def handle_event("prev_step", %{"direction" => direction}, socket) do
     socket =
@@ -112,6 +170,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
   # See if there is another step in the multi-step form and set it as the next step. If all steps are done, call the save(socket) function
   # to create the final changeset for registration of this new user account
+  # Updates the socket with the next or previous step in the registration flow.
+  #
+  # Finds the next or previous step in the steps list based on the current step
+  # and direction (prev or next). If there is no next step, calls the save/1 function
+  # to complete the registration process.
   defp assign_step(socket, step) do
     # Check if there is another step to do and either assign it to the socket or this must be the final step and call the save function
     if new_step = Enum.find(@steps, &(&1.name == Map.get(socket.assigns.progress, step))) do
@@ -124,7 +187,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     end
   end
 
-  # Increments or decrements the current step
+  # Increments or decrements the current step index.
+  # Takes the current step index and a direction (:prev or :next),
+  # and returns the new step index. Used to determine which step
+  # to display when navigating through the registration flow.
+
   defp assign_current_step(current_step, prev_or_next) do
     case prev_or_next do
       :prev -> current_step - 1
@@ -132,10 +199,21 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     end
   end
 
+  # Handles the final step of the registration process.
+  #
+  # Called when all steps have been completed. Currently returns the socket
+  # unchanged, but would typically create the user account and handle
+  # the completed registration.
   defp save(socket) do
     socket
   end
 
+  @doc """
+  Renders the LiveView template with the progress indicator and current step.
+
+  Displays the appropriate registration component based on the current_step,
+  along with the progress indicator showing completion status.
+  """
   @impl true
   def render(assigns) do
     ~H"""
@@ -153,6 +231,16 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     """
   end
 
+  @doc """
+  Renders the progress indicator component for the multi-step registration.
+
+  Shows the user's progress through the registration steps with visual cues:
+  - Completed steps show a checkmark
+  - The current step shows a filled dot
+  - Future steps show an empty dot
+
+  Each step is color-coded and labeled to help users track their progress.
+  """
   def progress_indicator(assigns) do
     ~H"""
     <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
@@ -225,10 +313,22 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     """
   end
 
+  @doc """
+  Determines if a step has been completed based on the form_params.
+
+  A step is considered completed if there's an entry in the form_params map
+  with a key matching the step name.
+  """
   defp is_completed_step?(step, form_params) do
     Map.has_key?(form_params, String.to_atom(step.name))
   end
 
+  @doc """
+  Creates and assigns a form to the socket based on a changeset.
+
+  If the changeset is valid, doesn't show error messages.
+  If invalid, enables error display in the form.
+  """
   def assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: socket.assigns.current_step)
 
@@ -239,6 +339,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     end
   end
 
+  @doc """
+  Creates a JS transition for button containers.
+
+  Defines a smooth animation for buttons appearing from the bottom of the screen.
+  """
   def button_container_transition do
     %JS{}
     |> JS.transition(
@@ -247,6 +352,12 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     )
   end
 
+  @doc """
+  Creates a JS transition and push event for the back button.
+
+  Animates the form sliding out and pushes an event to go to the previous step
+  with a 'backward' transition direction.
+  """
   def back_button_transition_push(current_step) do
     %JS{}
     |> JS.transition(
@@ -257,6 +368,12 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     |> JS.push("prev_step", value: %{direction: "backward"})
   end
 
+  @doc """
+  Creates a JS transition for when a form is mounted.
+
+  Applies the specified transition animation when a form component is rendered,
+  creating smooth transitions between registration steps.
+  """
   def form_mounted_transition(transition_direction) do
     %JS{}
     |> JS.transition(transition_direction,
@@ -264,10 +381,19 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     )
   end
 
+  @doc """
+  Determines if a checkmark indicator should be shown for a form field.
+
+  Shows a checkmark when a field is valid and has a non-empty value.
+  """
   def show_tick?(atom, form) do
     form.source.valid? && form[atom].value && form[atom].value != ""
   end
 
+  # Assigns the appropriate CSS transition direction to the socket.
+  #
+  # Sets the transition direction for step animations based on whether
+  # the user is moving forward or backward in the registration flow.
   defp assign_mount_transition_direction(socket, direction) do
     case direction do
       "forward" ->
@@ -286,11 +412,20 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     end
   end
 
-  # Genserver to handle the registration process
+  # Retrieves the form data for the given session ID from the RegistrationFormAgent.
+  #
+  # This is a wrapper around RegistrationFormAgent.get_form_data/1 to simplify
+  # access to the GenServer from within the LiveView.
   defp get_agent_data(session_id) do
     RegistrationFormAgent.get_form_data(session_id)
   end
 
+  @doc """
+  Callback that runs when the LiveView process is terminating.
+
+  Updates the last access timestamp for the session in the RegistrationFormAgent
+  to prevent premature cleanup of session data.
+  """
   @impl true
   def terminate(_reason, socket) do
     if connected?(socket) do
