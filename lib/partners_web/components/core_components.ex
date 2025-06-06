@@ -300,7 +300,7 @@ defmodule PartnersWeb.CoreComponents do
       <label>
         <span
           :if={@label}
-          class="fieldset-label text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] mb-1"
+          class="fieldset-label text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] font-light mb-1"
         >
           {@label}
         </span>

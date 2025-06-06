@@ -3,6 +3,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   require Logger
 
   alias PartnersWeb.Registration.Step
+  alias PartnersWeb.CustomComponents.Typography
 
   @steps [
     %Step{name: "start", prev: nil, next: "email"},
@@ -122,61 +123,201 @@ defmodule PartnersWeb.Registration.RegistrationLive do
             <%!-- The edge color between nodes --%>
             <div class={[
               "h-0.5 w-full",
-              (is_completed_step?(step, @form_params) && "bg-indigo-600") || "bg-gray-200"
+              (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
             ]}>
             </div>
           </div>
-          <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
-            <a
-              href="#"
-              class="relative flex size-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
-            >
-              <svg
-                class="size-4 text-white"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-                data-slot="icon"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              <span class="sr-only">{step.name}</span>
-            </a>
-          <% end %>
 
-          <%= if step.name == @current_step do %>
-            <a
-              href="#"
-              class="relative flex size-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white"
-              aria-current="step"
-            >
-              <span class="size-2.5 rounded-full bg-indigo-600" aria-hidden="true"></span>
-              <span class="sr-only">{step.name}</span>
-            </a>
-          <% end %>
-
-          <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
-            <a
-              href="#"
-              class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
-            >
-              <span
-                class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"
-                aria-hidden="true"
+          <div class="relative flex flex-col items-center">
+            <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
+              <a
+                href="#"
+                class="relative flex size-8 items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
               >
-              </span>
-              <span class="sr-only">{step.name}</span>
-            </a>
-          <% end %>
+                <svg
+                  class="size-4 text-primary-content"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  data-slot="icon"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <span class="sr-only">{step.name}</span>
+              </a>
+            <% end %>
+
+            <%= if step.name == @current_step do %>
+              <a
+                href="#"
+                class="relative flex size-8 items-center justify-center rounded-full border-2 border-primary bg-base-100"
+                aria-current="step"
+              >
+                <span class="size-2.5 rounded-full bg-primary" aria-hidden="true"></span>
+                <span class="sr-only">{step.name}</span>
+              </a>
+            <% end %>
+
+            <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
+              <a
+                href="#"
+                class="group relative flex size-8 items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
+              >
+                <span
+                  class="size-2.5 rounded-full bg-transparent group-hover:bg-base-300"
+                  aria-hidden="true"
+                >
+                </span>
+                <span class="sr-only">{step.name}</span>
+              </a>
+            <% end %>
+
+            <p class="absolute top-full mt-2 text-[10px] text-center text-base-content/70 whitespace-nowrap uppercase">
+              {step.name}
+            </p>
+          </div>
         </li>
       </ol>
     </nav>
     """
   end
+
+  # def progress_indicator(assigns) do
+  #   ~H"""
+  #   <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
+  #     <ol role="list" class="flex items-center">
+  #       <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
+
+  #         <div class="absolute inset-0 flex items-center" aria-hidden="true">
+  #           <%!-- The edge color between nodes --%>
+  #           <div class={[
+  #             "h-0.5 w-full",
+  #             (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
+  #           ]}>
+  #           </div>
+  #         </div>
+
+  #         <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
+  #           <a
+  #             href="#"
+  #             class="relative flex size-8 items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
+  #           >
+  #             <svg
+  #               class="size-4 text-primary-content"
+  #               viewBox="0 0 20 20"
+  #               fill="currentColor"
+  #               aria-hidden="true"
+  #               data-slot="icon"
+  #             >
+  #               <path
+  #                 fill-rule="evenodd"
+  #                 d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+  #                 clip-rule="evenodd"
+  #               />
+  #             </svg>
+  #             <span class="sr-only">{step.name}</span>
+
+  #           </a>
+  #         <% end %>
+
+  #         <%= if step.name == @current_step do %>
+  #           <a
+  #             href="#"
+  #             class="relative flex size-8 items-center justify-center rounded-full border-2 border-primary bg-base-100"
+  #             aria-current="step"
+  #           >
+  #             <span class="size-2.5 rounded-full bg-primary" aria-hidden="true"></span>
+  #             <span class="sr-only">{step.name}</span>
+  #           </a>
+  #         <% end %>
+
+  #         <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
+  #           <a
+  #             href="#"
+  #             class="group relative flex size-8 items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
+  #           >
+  #             <span
+  #               class="size-2.5 rounded-full bg-transparent group-hover:bg-base-300"
+  #               aria-hidden="true"
+  #             >
+  #             </span>
+  #             <span class="sr-only">{step.name}</span>
+  #           </a>
+  #         <% end %>
+  #       </li>
+  #     </ol>
+  #   </nav>
+  #   """
+  # end
+
+  # def progress_indicator(assigns) do
+  #   ~H"""
+  #   <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
+  #     <ol role="list" class="flex items-center">
+  #       <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
+  #         <div class="absolute inset-0 flex items-center" aria-hidden="true">
+  #           <%!-- The edge color between nodes --%>
+  #           <div class={[
+  #             "h-0.5 w-full",
+  #             (is_completed_step?(step, @form_params) && "bg-indigo-600") || "bg-gray-200"
+  #           ]}>
+  #           </div>
+  #         </div>
+  #         <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
+  #           <a
+  #             href="#"
+  #             class="relative flex size-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
+  #           >
+  #             <svg
+  #               class="size-4 text-white"
+  #               viewBox="0 0 20 20"
+  #               fill="currentColor"
+  #               aria-hidden="true"
+  #               data-slot="icon"
+  #             >
+  #               <path
+  #                 fill-rule="evenodd"
+  #                 d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+  #                 clip-rule="evenodd"
+  #               />
+  #             </svg>
+  #             <span class="sr-only">{step.name}</span>
+  #           </a>
+  #         <% end %>
+
+  #         <%= if step.name == @current_step do %>
+  #           <a
+  #             href="#"
+  #             class="relative flex size-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white"
+  #             aria-current="step"
+  #           >
+  #             <span class="size-2.5 rounded-full bg-indigo-600" aria-hidden="true"></span>
+  #             <span class="sr-only">{step.name}</span>
+  #           </a>
+  #         <% end %>
+
+  #         <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
+  #           <a
+  #             href="#"
+  #             class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
+  #           >
+  #             <span
+  #               class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"
+  #               aria-hidden="true"
+  #             >
+  #             </span>
+  #             <span class="sr-only">{step.name}</span>
+  #           </a>
+  #         <% end %>
+  #       </li>
+  #     </ol>
+  #   </nav>
+  #   """
+  # end
 
   defp is_completed_step?(step, form_params) do
     Map.has_key?(form_params, String.to_atom(step.name))
