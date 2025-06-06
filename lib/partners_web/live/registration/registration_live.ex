@@ -313,12 +313,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     """
   end
 
-  @doc """
-  Determines if a step has been completed based on the form_params.
+  # Determines if a step has been completed based on the form_params.
 
-  A step is considered completed if there's an entry in the form_params map
-  with a key matching the step name.
-  """
+  # A step is considered completed if there's an entry in the form_params map
+  # with a key matching the step name.
+
   defp is_completed_step?(step, form_params) do
     Map.has_key?(form_params, String.to_atom(step.name))
   end
