@@ -6,39 +6,59 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.RegistrationFormAgent
 
   @steps [
-    %Step{name: "start", prev: nil, next: "email"},
-    %Step{name: "email", prev: "start", next: "username"},
-    %Step{name: "username", prev: "email", next: "gender"},
-    %Step{name: "gender", prev: "username", next: "dob"},
-    %Step{name: "dob", prev: "gender", next: "telephone"},
-    %Step{name: "telephone", prev: "dob", next: "terms"},
-    %Step{name: "terms", prev: "telephone", next: nil}
+    %Step{name: "start", prev: nil, next: "email", index: 0},
+    %Step{name: "email", prev: "start", next: "username", index: 1},
+    %Step{name: "username", prev: "email", next: "gender", index: 2},
+    %Step{name: "gender", prev: "username", next: "dob", index: 3},
+    %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
+    %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
+    %Step{name: "terms", prev: "telephone", next: nil, index: 6}
   ]
 
   @impl true
   def mount(_params, %{"_csrf_token" => user_token} = session, socket) do
-    # Get the session ID from the session map using the user token
     Logger.info("🔔 Mounting RegistrationLive with session: #{inspect(session)}")
     session_id = Map.get(session, user_token)
-    # Get the form data from the supervised GenServer
     form_params = get_agent_data(session_id)
 
-    first_step = List.first(@steps)
-    total_steps = length(@steps)
+    # Find the appropriate step based on form data
+    current_step = determine_current_step(form_params)
 
     socket =
       socket
       |> assign(
         steps: tl(@steps),
-        step: 1,
-        current_step: hd(@steps).name,
-        total_steps: total_steps,
-        progress: first_step,
+        # +1 for 1-indexed UI display
+        step: current_step.index + 1,
+        current_step: current_step.name,
+        total_steps: length(@steps),
+        progress: current_step,
         form_params: form_params,
         session_id: session_id
       )
 
     {:ok, assign_mount_transition_direction(socket, "forward")}
+  end
+
+  # Determine which step to show based on completed form data
+  defp determine_current_step(form_params) do
+    with form_params when map_size(form_params) > 0 <- form_params,
+         completed_step_names =
+           form_params |> Map.keys() |> Enum.map(&Atom.to_string/1) |> MapSet.new(),
+         true <- not Enum.empty?(completed_step_names),
+         completed_steps =
+           Enum.filter(@steps, fn step -> MapSet.member?(completed_step_names, step.name) end),
+         true <- not Enum.empty?(completed_steps),
+         last_completed = Enum.max_by(completed_steps, & &1.index),
+         next_index = last_completed.index + 1,
+         next_step when not is_nil(next_step) <-
+           Enum.find(@steps, fn step -> step.index == next_index end) do
+      # Found the next step after the last completed one
+      next_step
+    else
+      # No form params, empty keys, or no completed steps - start at beginning
+      _ -> List.first(@steps)
+    end
   end
 
   @impl true
