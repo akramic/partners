@@ -54,6 +54,8 @@ defmodule PartnersWeb do
     quote do
       use Phoenix.LiveView
 
+      on_mount PartnersWeb.LiveFlash
+
       unquote(html_helpers())
     end
   end
@@ -61,6 +63,10 @@ defmodule PartnersWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
+
+      # added  this line
+      #  See https://elixirforum.com/t/liveview-flash-assigns-not-available-in-child-livecomponent/29558/9
+      import PartnersWeb.LiveFlash, only: [push_flash: 2]
 
       unquote(html_helpers())
     end
