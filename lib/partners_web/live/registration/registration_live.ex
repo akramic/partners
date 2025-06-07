@@ -119,8 +119,6 @@ defmodule PartnersWeb.Registration.RegistrationLive do
       input_name => Map.get(form, input_name)
     }
 
-   
-
     updated_form_params = Map.merge(socket.assigns.form_params, params)
     # Update the form data in the agent
     RegistrationFormAgent.update_form_data(socket.assigns.session_id, updated_form_params)

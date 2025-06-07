@@ -246,6 +246,13 @@ auth_socket_secret_key =
 
     """
 
+big_data_api_key =
+  System.get_env("BIG_DATA_API_KEY") ||
+    raise """
+    environment variable BIG_DATA_API_KEY is missing.
+    """
+
 config :partners,
   ip_registry_api_key: ip_registry_api_key,
-  auth_socket_secret_key: auth_socket_secret_key
+  auth_socket_secret_key: auth_socket_secret_key,
+  big_data_api_key: big_data_api_key
