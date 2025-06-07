@@ -83,17 +83,18 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
       socket
       |> assign(assigns)
       |> assign_form(changeset)
+      |> assign(messages: [])
 
     {:ok, socket}
   end
 
   @doc """
 
-  handle_event multiple function heads.We match on the "validate" event to handle form validation
-  and the "save" event to handle form submission. The "validate" event checks the email format
-  and updates the form state accordingly.
+  handle_event multiple function heads.We match on the "validate" event to handle form validation.
+  The "validate" event checks the email format and updates the form state accordingly.
 
-  The validate function heads are designed to handle the verification of the email domain using the external email verification API.
+  The validate function heads are designed to handle the verification of the email domain using
+  the email verification API in services.
 
   """
 
@@ -107,10 +108,6 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
 
   @impl true
   def handle_event("validate", %{"email" => email_params} = _params, socket) do
-    socket =
-      socket
-      |> assign(messages: [])
-
     changeset = User.email_changeset(email_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end

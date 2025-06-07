@@ -14,39 +14,63 @@ import Config
 # - Test (:test) - Testing environment
 # - Production (:prod) - Live environments with staging/production variants
 #
+# Environment Variable Naming Convention
+# ----------------------------------
+# We use environment-specific suffixes for all variables:
+# - _DEV: Development environment variables
+# - _STAGING: Staging environment variables
+# - _PROD: Production environment variables
+#
+# This enables a single .env file to work across all environments without
+# commenting/uncommenting variables when switching environments.
+#
 # File Organization
 # ---------------
-# 1. Global settings (applicable to all environments)
-# 2. Production-specific settings (with staging/prod variants)
-# 3. Development/test specific settings
-# 4. Service-specific configurations
+# 1. Development Environment Configuration
+#    - Contains all settings specific to development/test
+# 2. Production Environment Configuration
+#    - Common settings for all production environments
+#    - 2a. Staging-specific configuration
+#    - 2b. Production-specific configuration
+# 3. Global Service Configurations (shared across environments)
 #
 # Adding New Services
 # -----------------
 # When integrating new services (APIs, databases, etc), follow this pattern:
 #
-# 1. For production environments:
-#    ```elixir
-#    if config_env() == :prod do
-#      case release_env do
-#        "staging" ->
-#          config :partners, Partners.Services.NewService,
-#            mode: :sandbox,
-#            api_key: System.fetch_env!("NEW_SERVICE_STAGING_API_KEY")
-#        "prod" ->
-#          config :partners, Partners.Services.NewService,
-#            mode: :live,
-#            api_key: System.fetch_env!("NEW_SERVICE_PRODUCTION_API_KEY")
-#      end
-#    end
+# 1. In .env file, add variables with environment-specific suffixes:
+#    ```
+#    export NEW_SERVICE_API_KEY_DEV="dev_sandbox_key"
+#    export NEW_SERVICE_API_KEY_STAGING="staging_sandbox_key"
+#    export NEW_SERVICE_API_KEY_PROD="production_live_key"
 #    ```
 #
-# 2. For development/test:
+# 2. In runtime.exs, add configuration in each environment section:
+#
+#    For Development:
 #    ```elixir
 #    if config_env() in [:dev, :test] do
 #      config :partners, Partners.Services.NewService,
 #        mode: :sandbox,
-#        api_key: System.get_env("NEW_SERVICE_API_KEY", "default_dev_key")
+#        api_key: System.fetch_env!("NEW_SERVICE_API_KEY_DEV")
+#    end
+#    ```
+#
+#    For Staging:
+#    ```elixir
+#    if config_env() == :prod && System.get_env("RELEASE_ENV") == "staging" do
+#      config :partners, Partners.Services.NewService,
+#        mode: :sandbox,
+#        api_key: System.fetch_env!("NEW_SERVICE_API_KEY_STAGING")
+#    end
+#    ```
+#
+#    For Production:
+#    ```elixir
+#    if config_env() == :prod && System.get_env("RELEASE_ENV") == "prod" do
+#      config :partners, Partners.Services.NewService,
+#        mode: :live,
+#        api_key: System.fetch_env!("NEW_SERVICE_API_KEY_PROD")
 #    end
 #    ```
 #
@@ -88,10 +112,31 @@ if System.get_env("PHX_SERVER") do
   config :partners, PartnersWeb.Endpoint, server: true
 end
 
+# 1. DEVELOPMENT ENVIRONMENT CONFIGURATION
+# ------------------------------------
+if config_env() in [:dev, :test] do
+  # Explicitly reference development environment variables
+
+  # Development host configuration
+  host = System.fetch_env!("PHX_HOST_DEV")
+
+  # PayPal development configuration
+  config :partners, Partners.Services.Paypal,
+    mode: :sandbox,
+    base_url: System.fetch_env!("PAYPAL_BASE_URL_DEV"),
+    webhook_id: System.fetch_env!("PAYPAL_WEBHOOK_ID_DEV"),
+    plan_id: System.fetch_env!("PAYPAL_PLAN_ID_AUD_DEV"),
+    product_id: System.fetch_env!("PAYPAL_PRODUCT_ID_DEV"),
+    webhook_url: "http://#{host}/webhooks/subscriptions/paypal",
+    return_url: System.fetch_env!("PAYPAL_RETURN_URL_DEV"),
+    cancel_url: System.fetch_env!("PAYPAL_CANCEL_URL_DEV")
+end
+
+# 2. PRODUCTION ENVIRONMENT CONFIGURATION
+# -------------------------------------
 if config_env() == :prod do
-  # Production Environment Configuration
-  # --------------------------------
-  #
+  # Common production settings (both staging and production)
+
   # Database configuration - Required for all production environments
   database_url =
     System.get_env("DATABASE_URL") ||
@@ -108,7 +153,7 @@ if config_env() == :prod do
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6
 
-  # Web endpoint configuration
+  # Web endpoint common configuration for production
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -116,69 +161,69 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.fetch_env!("PHX_HOST")
   port = String.to_integer(System.get_env("PORT") || "4000")
-  release_env = System.fetch_env!("RELEASE_ENV")
-
   config :partners, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
-  config :partners, PartnersWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
-    http: [
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
-      port: port
-    ],
-    secret_key_base: secret_key_base
+  # 2a. STAGING ENVIRONMENT CONFIGURATION
+  # ----------------------------------
+  if System.get_env("RELEASE_ENV") == "staging" do
+    # Explicitly reference staging environment variables
+    host = System.fetch_env!("PHX_HOST_STAGING")
 
-  # Service-specific Production Configurations
-  # -------------------------------------
-  # Using release_env to differentiate between staging and production settings.
-  # This pattern can be replicated for other services that need different
-  # configurations between environments.
-  case release_env do
-    "staging" ->
-      config :partners, Partners.Services.Paypal,
-        mode: :sandbox,
-        base_url: "https://api-m.sandbox.paypal.com",
-        webhook_id: System.fetch_env!("PAYPAL_SANDBOX_WEBHOOK_ID"),
-        plan_id: System.fetch_env!("PAYPAL_SANDBOX_PLAN_ID_AUD"),
-        product_id: System.fetch_env!("PAYPAL_SANDBOX_PRODUCT_ID"),
-        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
-        return_url: "https://#{host}/subscriptions/paypal/return",
-        cancel_url: "https://#{host}/subscriptions/paypal/cancel"
+    # Staging-specific endpoint configuration
+    config :partners, PartnersWeb.Endpoint,
+      url: [host: host, port: 443, scheme: "https"],
+      http: [
+        ip: {0, 0, 0, 0, 0, 0, 0, 0},
+        port: port
+      ],
+      secret_key_base: secret_key_base
 
-    "prod" ->
-      config :partners, Partners.Services.Paypal,
-        mode: :live,
-        base_url: "https://api-m.paypal.com",
-        webhook_id: System.fetch_env!("PAYPAL_PRODUCTION_WEBHOOK_ID"),
-        plan_id: System.fetch_env!("PAYPAL_PRODUCTION_PLAN_ID_AUD"),
-        product_id: System.fetch_env!("PAYPAL_PRODUCTION_PRODUCT_ID"),
-        webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
-        return_url: "https://#{host}/subscriptions/paypal/return",
-        cancel_url: "https://#{host}/subscriptions/paypal/cancel"
-
-    other ->
-      raise "Unknown RELEASE_ENV value: #{other}. Expected 'staging' or 'prod'"
+    # PayPal staging configuration
+    config :partners, Partners.Services.Paypal,
+      mode: :sandbox,
+      base_url: System.fetch_env!("PAYPAL_BASE_URL_STAGING"),
+      webhook_id: System.fetch_env!("PAYPAL_WEBHOOK_ID_STAGING"),
+      plan_id: System.fetch_env!("PAYPAL_PLAN_ID_AUD_STAGING"),
+      product_id: System.fetch_env!("PAYPAL_PRODUCT_ID_STAGING"),
+      webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
+      return_url: System.fetch_env!("PAYPAL_RETURN_URL_STAGING"),
+      cancel_url: System.fetch_env!("PAYPAL_CANCEL_URL_STAGING")
   end
-end
 
-# Development and Test Environment Configurations
-# -----------------------------------------
-# Service configurations for local development and testing.
-# Add new service configurations here for :dev and :test environments.
-if config_env() in [:dev, :test] do
-  host = System.get_env("PHX_HOST", "localhost:4000")
+  # 2b. PRODUCTION ENVIRONMENT CONFIGURATION
+  # -------------------------------------
+  if System.get_env("RELEASE_ENV") == "prod" do
+    # Explicitly reference production environment variables
+    host = System.fetch_env!("PHX_HOST_PROD")
 
-  config :partners, Partners.Services.Paypal,
-    mode: :sandbox,
-    base_url: "https://api-m.sandbox.paypal.com",
-    webhook_id: System.get_env("PAYPAL_SANDBOX_WEBHOOK_ID"),
-    plan_id: System.get_env("PAYPAL_SANDBOX_PLAN_ID_AUD"),
-    product_id: System.get_env("PAYPAL_SANDBOX_PRODUCT_ID"),
-    webhook_url: "http://#{host}/webhooks/subscriptions/paypal",
-    return_url: "http://#{host}/subscriptions/paypal/return",
-    cancel_url: "http://#{host}/subscriptions/paypal/cancel"
+    # Production-specific endpoint configuration
+    config :partners, PartnersWeb.Endpoint,
+      url: [host: host, port: 443, scheme: "https"],
+      http: [
+        ip: {0, 0, 0, 0, 0, 0, 0, 0},
+        port: port
+      ],
+      secret_key_base: secret_key_base
+
+    # PayPal production configuration
+    config :partners, Partners.Services.Paypal,
+      mode: :live,
+      base_url: System.fetch_env!("PAYPAL_BASE_URL_PROD"),
+      webhook_id: System.fetch_env!("PAYPAL_WEBHOOK_ID_PROD"),
+      plan_id: System.fetch_env!("PAYPAL_PLAN_ID_AUD_PROD"),
+      product_id: System.fetch_env!("PAYPAL_PRODUCT_ID_PROD"),
+      webhook_url: "https://#{host}/webhooks/subscriptions/paypal",
+      return_url: System.fetch_env!("PAYPAL_RETURN_URL_PROD"),
+      cancel_url: System.fetch_env!("PAYPAL_CANCEL_URL_PROD")
+  end
+
+  # Validate RELEASE_ENV if we're in production
+  release_env = System.get_env("RELEASE_ENV")
+
+  unless release_env in ["staging", "prod"] do
+    raise "Unknown RELEASE_ENV value: #{release_env}. Expected 'staging' or 'prod'"
+  end
 end
 
 # Global Service Configurations
