@@ -5,6 +5,10 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   attr :text, :string, default: "Loading", doc: "The text to display while loading"
 
+  slot :inner_block,
+    required: false,
+    doc: "Optional inner block for additional content or styling"
+
   def full_page_loader(assigns) do
     ~H"""
     <div
@@ -21,6 +25,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
         <div class="animate-bounce" aria-hidden="true">
           <Layout.company_logo />
         </div>
+        {render_slot(@inner_block)}
         <div class="flex justify-center items-end space-x-2">
           <Typography.p_xs class="gap-2" id="loading-status">
             {@text}

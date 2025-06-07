@@ -78,7 +78,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
           </button>
         </div>
       </.form>
-      <PartnersWeb.CustomComponents.Atoms.full_page_loader :if={@show_loader} text="Verifying email" />
+      <PartnersWeb.CustomComponents.Atoms.full_page_loader :if={true} text="Verifying email" />
     </div>
     """
   end
