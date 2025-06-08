@@ -81,6 +81,34 @@ defmodule PartnersWeb.CustomComponents.Atoms do
     """
   end
 
+  slot :inner_block,
+    required: false,
+    doc: "Optional inner block for additional content or styling"
+
+  def full_page_modal(assigns) do
+    ~H"""
+    <div
+      class="w-full h-full fixed top-0 left-0 bg-base-100 opacity-90 z-[100]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="loading-status"
+    >
+      <div
+        class="flex flex-col space-y-3 justify-center items-center h-full w-full"
+        role="status"
+        aria-live="polite"
+      >
+        <div>
+          <.company_logo />
+        </div>
+        {render_slot(@inner_block)}
+
+        <div class="sr-only">Please wait while content is loading</div>
+      </div>
+    </div>
+    """
+  end
+
   def company_logo(assigns) do
     ~H"""
     <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 1280 1016">

@@ -69,16 +69,17 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
           <%!-- We dispatch to the phx-change event and pattern match on the params --%>
           <button
             type="button"
-            name="online"
+            name="verify_email"
             phx-target={@myself}
             phx-click={JS.dispatch("change")}
+            disabled={!@form.source.valid?}
             class="btn btn-primary"
           >
             Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
           </button>
         </div>
       </.form>
-      <PartnersWeb.CustomComponents.Atoms.full_page_loader :if={true} text="Verifying email" />
+      <PartnersWeb.CustomComponents.Atoms.full_page_loader :if={@show_loader} text="Verifying email" />
     </div>
     """
   end
@@ -128,7 +129,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   @impl true
   def handle_event(
         "validate",
-        %{"_target" => ["online"], "email" => %{"email" => email_params}} = _params,
+        %{"_target" => ["verify_email"], "email" => %{"email" => email_params}} = _params,
         socket
       ) do
     send_update(self(), socket.assigns.myself, event: {:verify_email, email_params})

@@ -40,7 +40,7 @@ defmodule Partners.Services.EmailVerification do
   """
 
   require Logger
- 
+
 
   @doc """
   Fetches the email verification response from the API.
@@ -81,6 +81,7 @@ defmodule Partners.Services.EmailVerification do
 
     case response do
       %Req.Response{status: 200, body: body} ->
+        Logger.info("✅ Email verification successful for: #{email}")
         map = Partners.Utils.DataTransformers.key_to_atom(body)
         {:ok, map}
 
