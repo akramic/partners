@@ -115,7 +115,24 @@ defmodule Partners.Access.Profiles.Profile do
     end)
   end
 
-  defp validate_telephone(struct_or_changeset, country_code) do
+  # defp validate_telephone(struct_or_changeset, country_code) do
+  #   validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
+  #     with true <- ExPhoneNumber.is_possible_number?(telephone),
+  #          true <- ExPhoneNumber.is_valid_number?(telephone) do
+  #       case ExPhoneNumber.get_number_type(telephone) do
+  #         :mobile ->
+  #           []
+
+  #         _ ->
+  #           [telephone: "not a mobile phone number"]
+  #       end
+  #     else
+  #       _ -> [telephone: "invalid mobile phone number"]
+  #     end
+  #   end)
+  # end
+
+  defp verify_telephone(struct_or_changeset, country_code) do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
       with {:ok, phone_number} <- ExPhoneNumber.parse(telephone, country_code),
            true <- ExPhoneNumber.is_possible_number?(phone_number),
@@ -128,7 +145,7 @@ defmodule Partners.Access.Profiles.Profile do
             [telephone: "not a mobile phone number"]
         end
       else
-        _ -> [telephone: "invalid mobile phone number"]
+        _ -> [telephone: "invalid phone number"]
       end
     end)
   end
@@ -137,10 +154,11 @@ defmodule Partners.Access.Profiles.Profile do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
       with {:ok, phone_number_map} <- ExPhoneNumber.parse(telephone, country_code),
            formatted_telephone_number <- ExPhoneNumber.format(phone_number_map, :e164) do
-        case Partners.Repo.get_by(Partners.Profiles.Profile,
-               telephone: formatted_telephone_number
+        case Partners.Access.Profiles.ProfilesContext.manage(
+               %{telephone: formatted_telephone_number},
+               :get_profile_by_telephone
              ) do
-          nil -> []
+          {:error, :not_found} -> []
           _ -> [telephone: "user with this phone number already exists."]
         end
       else
@@ -327,8 +345,8 @@ defmodule Partners.Access.Profiles.Profile do
     |> cast(attrs, [:telephone])
     |> validate_required([:telephone])
     |> validate_length(:telephone, min: 5, max: 13, message: "must be between 5 and 13 digits")
-    |> validate_telephone(attrs["country_code"])
-    |> validate_telephone_unique(attrs["country_code"])
+    |> verify_telephone(attrs["country_code"] || "AU")
+    |> validate_telephone_unique(attrs["country_code"] || "AU")
   end
 
   def registration_otp_changeset(struct_or_changeset \\ new(), attrs) do

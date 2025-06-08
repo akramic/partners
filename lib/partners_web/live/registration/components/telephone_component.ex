@@ -82,21 +82,24 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
   end
 
   @impl true
-  def handle_event("validate", %{"telephone" => telephone_params} = _params, socket) do
-    socket =
-      socket
-      |> assign(messages: [])
-
-    # Add country code if not present (for Australian numbers)
-    params = Map.put_new(telephone_params, "country_code", "AU")
-    changeset = Profile.registration_telephone_changeset(params)
+  def handle_event(
+        "validate",
+        %{"telephone" => %{"country_code" => country_code, "telephone" => telephone}} = _params,
+        socket
+      ) do
+    telephone_params = %{country_code: country_code, telephone: telephone}
+    changeset = Profile.registration_telephone_changeset(telephone_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 
   @impl true
-  def handle_event("save", %{"telephone" => telephone_params} = _params, socket) do
+  def handle_event(
+        "save",
+        %{"telephone" => %{"country_code" => _country_code, "telephone" => telephone}} = _params,
+        socket
+      ) do
     # Add country code if not present (for Australian numbers)
-    params = Map.put_new(telephone_params, "country_code", "AU")
+    params = Map.put_new(telephone, "country_code", "AU")
 
     _changeset =
       Profile.registration_telephone_changeset(params)

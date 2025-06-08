@@ -303,6 +303,16 @@ defmodule Partners.Access.Profiles.ProfilesContext do
     @profile_access.load(%{username: username}, :profile)
   end
 
+
+  @impl Partners.Access.Behaviour.ContextBehaviour
+  def manage(attrs, :get_profile_by_telephone) do
+    %{telephone: telephone} = attrs
+
+    @profile_access.load(%{telephone: telephone}, :profile)
+  end
+
+
+
   @impl Partners.Access.Behaviour.ContextBehaviour
   # Deletes a profile.
   #
