@@ -1,4 +1,20 @@
 defmodule PartnersWeb.Registration.RegistrationComponents do
+  @moduledoc """
+  Orchestrates the multi-step registration process components.
+
+  This module serves as the central hub for the registration user interface,
+  coordinating the display and interaction between various step-specific components.
+  It handles:
+
+  * Rendering the appropriate component based on the current registration step
+  * Managing transitions between registration steps
+  * Providing a consistent layout and styling across all registration steps
+  * Passing common properties and state to child components
+
+  Each step of the registration process is implemented as a separate component,
+  which this module coordinates into a cohesive flow.
+  """
+
   use Phoenix.Component
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.{Typography}

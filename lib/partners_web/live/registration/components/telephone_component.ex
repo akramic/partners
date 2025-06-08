@@ -32,10 +32,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
               />
               <.input field={f[:country_code]} type="hidden" value="AU" />
             </div>
-            <div
-              :if={show_tick?(:telephone, @form)}
-              class="ml-4 text-success self-start mt-8"
-            >
+            <div :if={show_tick?(:telephone, @form)} class="ml-4 text-success self-start mt-8">
               <.icon name="hero-check-circle-solid" class="w-8 h-8" />
             </div>
           </div>
@@ -110,7 +107,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
           {:noreply, socket}
 
         {:error, changeset} ->
-          {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+          {:noreply, socket |> assign_form(changeset)}
       end
   end
 end

@@ -105,6 +105,16 @@ defmodule Partners.Access.Profiles.Profile do
     end)
   end
 
+  defp validate_accepted(changeset) do
+    validate_change(changeset, :terms, fn :terms, terms ->
+      if terms do
+        []
+      else
+        [terms: "need to accept terms of membership"]
+      end
+    end)
+  end
+
   defp validate_telephone(struct_or_changeset, country_code) do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
       with {:ok, phone_number} <- ExPhoneNumber.parse(telephone, country_code),
@@ -119,16 +129,6 @@ defmodule Partners.Access.Profiles.Profile do
         end
       else
         _ -> [telephone: "invalid mobile phone number"]
-      end
-    end)
-  end
-
-  defp validate_accepted(changeset) do
-    validate_change(changeset, :terms, fn :terms, terms ->
-      if terms do
-        []
-      else
-        [terms: "need to accept terms of membership"]
       end
     end)
   end
@@ -339,8 +339,6 @@ defmodule Partners.Access.Profiles.Profile do
     |> validate_format(:otp, ~r/^[0-9]+$/, message: "only digits are allowed")
     |> validate_otp(attrs["stored_otp"])
   end
-
- 
 
   # End Changesets for onboarding (registering) new users
 

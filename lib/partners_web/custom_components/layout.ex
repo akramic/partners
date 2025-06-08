@@ -14,7 +14,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
 
   use PartnersWeb, :html
 
-  alias PartnersWeb.CustomComponents.{Typography, Layout, Atoms}
+  alias PartnersWeb.CustomComponents.{Typography, Atoms}
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"

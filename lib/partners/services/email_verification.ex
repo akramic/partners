@@ -40,7 +40,7 @@ defmodule Partners.Services.EmailVerification do
   """
 
   require Logger
-  alias Partners.Utils.DataTransformers
+ 
 
   @doc """
   Fetches the email verification response from the API.

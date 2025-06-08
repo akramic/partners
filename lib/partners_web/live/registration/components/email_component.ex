@@ -128,7 +128,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   @impl true
   def handle_event(
         "validate",
-        %{"_target" => ["online"], "email" => %{"email" => email_params}} = params,
+        %{"_target" => ["online"], "email" => %{"email" => email_params}} = _params,
         socket
       ) do
     send_update(self(), socket.assigns.myself, event: {:verify_email, email_params})

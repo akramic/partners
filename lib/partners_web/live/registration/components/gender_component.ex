@@ -102,7 +102,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
           {:noreply, socket}
 
         {:error, changeset} ->
-          {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+          {:noreply, socket |> assign_form(changeset)}
       end
   end
 end
