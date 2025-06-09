@@ -182,6 +182,8 @@ defmodule PartnersWeb.CoreComponents do
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
+  attr :placeholder_position, :string, default: nil,
+    doc: "the placeholder position tailwindcss class"
 
   attr :type, :string,
     default: "text",
@@ -311,6 +313,7 @@ defmodule PartnersWeb.CoreComponents do
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
           class={[
             "w-full input text-[clamp(1rem,2vw,1.5rem)] px-2 md:px-4 py-4 md:py-6",
+            @placeholder_position && "placeholder:#{@placeholder_position} text-center",
             @errors != [] && "input-error"
           ]}
           {@rest}

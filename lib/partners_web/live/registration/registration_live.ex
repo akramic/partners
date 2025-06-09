@@ -19,26 +19,25 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.Step
   alias PartnersWeb.Registration.RegistrationFormAgent
 
-  @steps [
-    %Step{name: "start", prev: nil, next: "email", index: 0},
-    %Step{name: "email", prev: "start", next: "username", index: 1},
-    %Step{name: "username", prev: "email", next: "gender", index: 2},
-    %Step{name: "gender", prev: "username", next: "dob", index: 3},
-    %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
-    %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
-    %Step{name: "terms", prev: "telephone", next: nil, index: 6}
-  ]
-
-
-  #  @steps [
-  #   %Step{name: "telephone", prev: nil, next: "email", index: 0},
-  #   %Step{name: "email", prev: "telephone", next: "username", index: 1},
+  # @steps [
+  #   %Step{name: "start", prev: nil, next: "email", index: 0},
+  #   %Step{name: "email", prev: "start", next: "username", index: 1},
   #   %Step{name: "username", prev: "email", next: "gender", index: 2},
   #   %Step{name: "gender", prev: "username", next: "dob", index: 3},
   #   %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
   #   %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
   #   %Step{name: "terms", prev: "telephone", next: nil, index: 6}
   # ]
+
+  @steps [
+    %Step{name: "telephone", prev: nil, next: "email", index: 0},
+    %Step{name: "email", prev: "telephone", next: "username", index: 1},
+    %Step{name: "username", prev: "email", next: "gender", index: 2},
+    %Step{name: "gender", prev: "username", next: "dob", index: 3},
+    %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
+    %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
+    %Step{name: "terms", prev: "telephone", next: nil, index: 6}
+  ]
 
   @doc """
   Initializes the LiveView when it's first rendered.
@@ -338,7 +337,10 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
   If the changeset is valid, doesn't show error messages.
   If invalid, enables error display in the form.
+  The form is named after the current step to ensure
+  proper handling of form data across multiple steps in the registration flow.
   """
+
   def assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: socket.assigns.current_step)
 

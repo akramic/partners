@@ -18,7 +18,6 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
         :let={f}
         for={@form}
         id={"#{@current_step}-form"}
-        phx-submit="save"
         phx-change="validate"
         phx-target={@myself}
         class="w-full max-w-xl"
@@ -74,27 +73,38 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
           <Typography.p_xs>
             We have sent a one-time passcode (OTP) to your mobile phone number.
           </Typography.p_xs>
-          <form
-            phx-target={@myself}
+
+          <.form
+            :let={otp}
+            for={@otp_form}
+            id="otp-form"
+            phx-change="validate_otp"
             phx-submit="save"
-            class="w-full max-w-xl flex flex-col justify-center space-y-2"
+            phx-target={@myself}
+            class="w-full max-w-xl"
+            phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
           >
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend ">Enter your 6 digit passcode</legend>
-              <input
-                title="Passcode is 6 digits"
-                type="text"
-                pattern="^[0-9]{6,6}$"
-                maxlength="6"
-                minlength="6"
-                name="otp_code"
-                required
-                class="input w-full"
-                placeholder="Passcode.."
-              />
-            </fieldset>
-            <button type="submit" class="btn btn-primary">Verify Code</button>
-          </form>
+            <div class="mb-4 relative">
+              <div class="flex items-center">
+                <div class="flex-grow ">
+                  <.input
+                    field={otp[:otp]}
+                    label="One Time Passcode"
+                    placeholder="Enter your OTP"
+                    required
+                    type="text"
+                  />
+                </div>
+                <div :if={show_tick?(:telephone, @otp_form)} class="ml-4 text-success self-start mt-8">
+                  <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-center w-full max-w-xl">
+              <button type="submit" class="btn btn-primary">Verify Code</button>
+            </div>
+          </.form>
+
           <div class="flex flex-col justify-center items-center space-x-2">
             <button phx-click="request_otp_code" phx-target={@myself} class="btn btn-link">
               Request another code
@@ -117,6 +127,15 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
       </Atoms.full_page_modal>
     </div>
     """
+  end
+
+  @impl true
+  def update(%{event: {:otp, otp}}, socket) do
+    Logger.info("🔔 OTP received in update: #{otp}")
+
+    # updated_socket = verify_otp(%{"otp" => otp}, socket)
+
+    {:ok, socket}
   end
 
   @impl true
@@ -174,6 +193,8 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
     {:noreply, socket}
   end
 
+  # Called on the "validate" event when the user clicks the "Next" button
+  # We have a valid input, so we can proceed to send the OTP code
   @impl true
   def handle_event(
         "validate",
@@ -183,13 +204,22 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
         } = _params,
         socket
       ) do
-    # send_update(self(), socket.assigns.myself, event: {:verify_otp, telephone})
+    Logger.info(
+      "🔔 Clicked NEXT button Telephone number received in handle event validate: #{telephone}"
+    )
+
+    # send the OTP and save to socket
+    otp_changeset = Profile.registration_otp_changeset(%{"stored_otp" => "123456"})
 
     socket =
       socket
+      # Assign otp form with the changeset
+      |> assign_otp_form(otp_changeset)
       |> assign(show_modal: true)
 
-    {:noreply, socket}
+    telephone_params = %{country_code: country_code, telephone: telephone}
+    changeset = Profile.registration_telephone_changeset(telephone_params)
+    {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 
   @impl true
@@ -205,11 +235,37 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
 
   @impl true
   def handle_event(
-        "save",
-        %{"otp_code" => otp_code} = _params,
+        "validate_otp",
+        %{"otp" => %{"otp" => otp}} = otp_params,
         socket
       ) do
-    Logger.info("🔔 OTP Code received: #{otp_code}")
+    Logger.info("🔔 OTP Code received in handle event validate_otp: #{inspect(otp_params)}")
+    changeset = Profile.registration_otp_changeset(%{"stored_otp" => "123456", "otp" => otp})
+    {:noreply, assign_otp_form(socket, Map.put(changeset, :action, :validate))}
+  end
+
+  @impl true
+  def handle_event(
+        "save",
+        %{"otp" => %{"otp" => otp}} = _params,
+        socket
+      ) do
+    Logger.info("🔔 OTP Code received in handle event save: #{otp}")
+    IO.inspect(socket.assigns.form.params, label: "🔔 Socket Form State")
+    # Socket Form State: %{"country_code" => "AU", "telephone" => "0421774826"}
+    # Verify OTP code, the socket should contain the code sent - progress to next step or return form with errors
+
+    send_update(self(), socket.assigns.myself, event: {:verify_otp, otp})
     {:noreply, socket}
+  end
+
+  def assign_otp_form(socket, %Ecto.Changeset{} = changeset) do
+    otp_form = to_form(changeset, as: :otp)
+
+    if changeset.valid? do
+      assign(socket, otp_form: otp_form, check_errors: false)
+    else
+      assign(socket, otp_form: otp_form)
+    end
   end
 end

@@ -115,22 +115,6 @@ defmodule Partners.Access.Profiles.Profile do
     end)
   end
 
-  # defp validate_telephone(struct_or_changeset, country_code) do
-  #   validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
-  #     with true <- ExPhoneNumber.is_possible_number?(telephone),
-  #          true <- ExPhoneNumber.is_valid_number?(telephone) do
-  #       case ExPhoneNumber.get_number_type(telephone) do
-  #         :mobile ->
-  #           []
-
-  #         _ ->
-  #           [telephone: "not a mobile phone number"]
-  #       end
-  #     else
-  #       _ -> [telephone: "invalid mobile phone number"]
-  #     end
-  #   end)
-  # end
 
   defp verify_telephone(struct_or_changeset, country_code) do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
