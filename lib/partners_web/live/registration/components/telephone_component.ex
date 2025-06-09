@@ -48,9 +48,9 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-            class="btn btn-ghost"
+            class="btn btn-ghost font-light"
           >
-            back
+            <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
           </button>
           <%!-- We dispatch to the phx-change event and pattern match on the params --%>
           <button
@@ -81,7 +81,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
             phx-change="validate_otp"
             phx-submit="save"
             phx-target={@myself}
-            class="w-full max-w-xl"
+            class="w-full max-w-md"
             phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
           >
             <div class="mb-4 relative">

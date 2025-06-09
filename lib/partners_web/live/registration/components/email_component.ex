@@ -59,7 +59,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class={[
-              "btn btn-ghost",
+               "btn btn-ghost font-light",
               if(@current_step == "email", do: "invisible", else: "")
             ]}
           >

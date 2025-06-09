@@ -45,11 +45,11 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class={[
-              "btn btn-ghost",
+               "btn btn-ghost font-light",
               if(@current_step == "email", do: "invisible", else: "")
             ]}
           >
-            back
+            <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
           </button>
           <button type="submit" disabled={!@form.source.valid?} class="btn btn-primary">
             Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
