@@ -1,4 +1,4 @@
-defmodule Partners.Services.PaypalCertificateManager do
+defmodule Partners.Services.Paypal.PaypalCertificateManager do
   @moduledoc """
   Manages fetching and caching of PayPal's public certificate PEM strings.
   It retrieves certificates from given URLs and stores them in an Agent-based cache.

@@ -1,4 +1,4 @@
-defmodule Partners.Services.PaypalWebhookVerifier do
+defmodule Partners.Services.Paypal.PaypalWebhookVerifier do
   @moduledoc """
   Provides functions to verify the signature of incoming PayPal webhook notifications,
   ensuring their authenticity and integrity.
@@ -62,7 +62,7 @@ defmodule Partners.Services.PaypalWebhookVerifier do
   alias X509.Certificate
   alias Timex
   alias Partners.Services.Paypal
-  alias Partners.Services.PaypalCertificateManager
+  alias Partners.Services.Paypal.PaypalCertificateManager
 
   @doc """
   Validates the signature of an incoming PayPal webhook notification.

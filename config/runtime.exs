@@ -252,7 +252,35 @@ big_data_api_key =
     environment variable BIG_DATA_API_KEY is missing.
     """
 
+mobile_messaging_api_username =
+  System.get_env("MOBILE_MESSAGING_API_USERNAME") ||
+    raise """
+    environment variable MOBILE_MESSAGING_API_USERNAME is missing.
+    """
+
+mobile_messaging_api_password =
+  System.get_env("MOBILE_MESSAGING_API_PASSWORD") ||
+    raise """
+    environment variable MOBILE_MESSAGING_API_PASSWORD is missing.
+    """
+
+mobile_messaging_api_base_url =
+  System.get_env("MOBILE_MESSAGING_API_BASE_URL") ||
+    raise """
+    environment variable MOBILE_MESSAGING_API_BASE_URL is missing.
+    """
+
+mobile_messaging_api_sender_name =
+  System.get_env("MOBILE_MESSAGING_API_SENDER_NAME") ||
+    raise """
+    environment variable MOBILE_MESSAGING_API_SENDER_NAME is missing.
+    """
+
 config :partners,
   ip_registry_api_key: ip_registry_api_key,
   auth_socket_secret_key: auth_socket_secret_key,
-  big_data_api_key: big_data_api_key
+  big_data_api_key: big_data_api_key,
+  mobile_messaging_api_username: mobile_messaging_api_username,
+  mobile_messaging_api_password: mobile_messaging_api_password,
+  mobile_messaging_api_base_url: mobile_messaging_api_base_url,
+  mobile_messaging_api_sender_name: mobile_messaging_api_sender_name
