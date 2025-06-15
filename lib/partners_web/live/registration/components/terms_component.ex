@@ -14,7 +14,6 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
         :let={f}
         for={@form}
         id={"#{@current_step}-form"}
-        phx-submit="save"
         phx-change="validate"
         phx-target={@myself}
         class="w-full max-w-xl"
@@ -26,7 +25,7 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
               <.input
                 field={f[:terms]}
                 type="checkbox"
-                label="I agree to the Terms and Conditions"
+                label="Agree to the Terms and Conditions of Membership"
                 required
               />
               <div class="mt-2 text-sm text-gray-600">
@@ -48,12 +47,16 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-             class="btn btn-ghost font-light"
+            class={[
+              "btn btn-ghost font-light",
+              if(@current_step == "email", do: "invisible", else: "")
+            ]}
           >
             <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
           </button>
+
           <button type="submit" disabled={!@form.source.valid?} class="btn btn-primary">
-            Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+            Create Account <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
           </button>
         </div>
       </.form>
@@ -66,8 +69,9 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
     # Check if we have existing form params for terms acceptance
     params =
       if Map.has_key?(assigns, :form_params) && Map.has_key?(assigns.form_params, :terms) do
-        %{"terms" => assigns.form_params.terms}
+        %{"terms" => false}
       else
+        # Default to unchecked
         %{}
       end
 
@@ -83,10 +87,6 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
 
   @impl true
   def handle_event("validate", %{"terms" => terms_params} = _params, socket) do
-    socket =
-      socket
-      |> assign(messages: [])
-
     changeset = Profile.registration_terms_changeset(terms_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end

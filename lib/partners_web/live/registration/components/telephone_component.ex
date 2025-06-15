@@ -5,9 +5,8 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
 
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
-
+  alias Partners.Services.Sms
   alias PartnersWeb.CustomComponents.{Atoms, Typography}
-
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
   @impl true
@@ -89,13 +88,13 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
                 <div class="flex-grow ">
                   <.input
                     field={otp[:otp]}
-                    label="One Time Passcode"
+                    label="Enter Passcode"
                     placeholder="Enter your OTP"
                     required
                     type="text"
                   />
                 </div>
-                <div :if={show_tick?(:telephone, @otp_form)} class="ml-4 text-success self-start mt-8">
+                <div :if={show_tick?(:otp, @otp_form)} class="ml-4 text-success self-start mt-8">
                   <.icon name="hero-check-circle-solid" class="w-8 h-8" />
                 </div>
               </div>
@@ -209,11 +208,15 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
     )
 
     # send the OTP and save to socket
-    otp_changeset = Profile.registration_otp_changeset(%{"stored_otp" => "123456"})
+    otp_code = create_otp_code()
+    Sms.send_otp_code(telephone, otp_code)
+
+    otp_changeset = Profile.registration_otp_changeset(%{"stored_otp" => otp_code})
 
     socket =
       socket
       # Assign otp form with the changeset
+      |> assign(stored_otp: otp_code)
       |> assign_otp_form(otp_changeset)
       |> assign(show_modal: true)
 
@@ -240,26 +243,43 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
         socket
       ) do
     Logger.info("🔔 OTP Code received in handle event validate_otp: #{inspect(otp_params)}")
-    changeset = Profile.registration_otp_changeset(%{"stored_otp" => "123456", "otp" => otp})
+
+    changeset =
+      Profile.registration_otp_changeset(%{
+        "stored_otp" => socket.assigns.stored_otp,
+        "otp" => otp
+      })
+
     {:noreply, assign_otp_form(socket, Map.put(changeset, :action, :validate))}
   end
 
   @impl true
   def handle_event(
         "save",
-        %{"otp" => %{"otp" => otp}} = _params,
+        %{"otp" => %{"otp" => otp}} = _otp_params,
         socket
       ) do
-    Logger.info("🔔 OTP Code received in handle event save: #{otp}")
+    Logger.info("🔔 Validated OTP Code received in handle event save: #{otp}")
     IO.inspect(socket.assigns.form.params, label: "🔔 Socket Form State")
-    # Socket Form State: %{"country_code" => "AU", "telephone" => "0421774826"}
-    # Verify OTP code, the socket should contain the code sent - progress to next step or return form with errors
+    # socket.assigns.form.params are %{"country_code" => "AU", "telephone" => "0421774826"}
+    params =
+      socket.assigns.form.params
+      |> Map.put_new("otp", otp)
+      |> Map.put_new("stored_otp", socket.assigns.stored_otp)
+      |> IO.inspect(label: "🔔 Params to be sent")
 
-    send_update(self(), socket.assigns.myself, event: {:verify_otp, otp})
-    {:noreply, socket}
+    case verify_telephone_and_otp(params) do
+      {:ok, record} ->
+        # Handle successful verification
+        handle_successful_verification(socket, record)
+
+      {:error, changeset} ->
+        # Handle failed verification
+        handle_changeset_error(socket, changeset)
+    end
   end
 
-  def assign_otp_form(socket, %Ecto.Changeset{} = changeset) do
+  defp assign_otp_form(socket, %Ecto.Changeset{} = changeset) do
     otp_form = to_form(changeset, as: :otp)
 
     if changeset.valid? do
@@ -267,5 +287,29 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
     else
       assign(socket, otp_form: otp_form)
     end
+  end
+
+  defp create_otp_code do
+    Enum.random(100_000..999_999)
+    |> Integer.to_string()
+  end
+
+  defp verify_telephone_and_otp(params) do
+    params
+    |> Profile.registration_telephone_changeset()
+    |> Profile.registration_otp_changeset(params)
+    |> Ecto.Changeset.apply_action(:insert)
+  end
+
+  defp handle_successful_verification(socket, record) do
+    Logger.info("🔔 OTP verification successful: #{inspect(record)}")
+    send(self(), {:proceed, :telephone, record})
+    {:noreply, assign(socket, show_modal: false)}
+  end
+
+  defp handle_changeset_error(socket, changeset) do
+    Logger.error("❌ OTP verification failed: #{inspect(changeset)}")
+
+    {:noreply, assign_form(socket, changeset) |> assign(show_modal: false)}
   end
 end

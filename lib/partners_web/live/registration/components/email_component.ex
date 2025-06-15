@@ -59,7 +59,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class={[
-               "btn btn-ghost font-light",
+              "btn btn-ghost font-light",
               if(@current_step == "email", do: "invisible", else: "")
             ]}
           >
@@ -187,7 +187,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   ```
   """
   def verify_email(email_params, socket) do
-    # Receives %{"email" => email} as email_params
+    # Receives a validated %{"email" => email} as email_params
     # Create a base User.email_changeset with the email to be verified
     user_changeset =
       email_params

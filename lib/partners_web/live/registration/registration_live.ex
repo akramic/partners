@@ -19,25 +19,16 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.Step
   alias PartnersWeb.Registration.RegistrationFormAgent
 
-  # @steps [
-  #   %Step{name: "start", prev: nil, next: "email", index: 0},
-  #   %Step{name: "email", prev: "start", next: "username", index: 1},
-  #   %Step{name: "username", prev: "email", next: "gender", index: 2},
-  #   %Step{name: "gender", prev: "username", next: "dob", index: 3},
-  #   %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
-  #   %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
-  #   %Step{name: "terms", prev: "telephone", next: nil, index: 6}
-  # ]
-
   @steps [
-    %Step{name: "telephone", prev: nil, next: "email", index: 0},
-    %Step{name: "email", prev: "telephone", next: "username", index: 1},
+    %Step{name: "start", prev: nil, next: "email", index: 0},
+    %Step{name: "email", prev: "start", next: "username", index: 1},
     %Step{name: "username", prev: "email", next: "gender", index: 2},
     %Step{name: "gender", prev: "username", next: "dob", index: 3},
     %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
     %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
     %Step{name: "terms", prev: "telephone", next: nil, index: 6}
   ]
+
 
   @doc """
   Initializes the LiveView when it's first rendered.

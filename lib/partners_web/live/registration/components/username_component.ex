@@ -45,7 +45,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class={[
-               "btn btn-ghost font-light",
+              "btn btn-ghost font-light",
               if(@current_step == "email", do: "invisible", else: "")
             ]}
           >
@@ -82,10 +82,6 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
 
   @impl true
   def handle_event("validate", %{"username" => username_params} = _params, socket) do
-    socket =
-      socket
-      |> assign(messages: [])
-
     changeset = Profile.registration_username_changeset(username_params)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
@@ -103,7 +99,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
           {:noreply, socket}
 
         {:error, changeset} ->
-          {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+          {:noreply, socket |> assign_form(changeset)}
       end
   end
 end

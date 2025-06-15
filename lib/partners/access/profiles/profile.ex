@@ -105,16 +105,7 @@ defmodule Partners.Access.Profiles.Profile do
     end)
   end
 
-  defp validate_accepted(changeset) do
-    validate_change(changeset, :terms, fn :terms, terms ->
-      if terms do
-        []
-      else
-        [terms: "need to accept terms of membership"]
-      end
-    end)
-  end
-
+  # Custom validation functions can be added here
 
   defp verify_telephone(struct_or_changeset, country_code) do
     validate_change(struct_or_changeset, :telephone, fn :telephone, telephone ->
@@ -317,8 +308,7 @@ defmodule Partners.Access.Profiles.Profile do
   def registration_terms_changeset(struct_or_changeset \\ new(), attrs) do
     struct_or_changeset
     |> cast(attrs, [:terms])
-    |> validate_required([:terms])
-    |> validate_accepted()
+    |> validate_acceptance(:terms, message: "please accept the terms of membership")
   end
 
   def registration_telephone_changeset(
