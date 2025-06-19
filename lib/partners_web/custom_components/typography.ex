@@ -40,7 +40,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.875rem,1.75vw,1.25rem)] leading-[calc(clamp(0.875rem,1.75vw,1.25rem)*1.5)] tracking-[clamp(0.01em,0.015vw,0.015em)] font-light",
+        "text-[clamp(0.845rem,1.69vw,1.31rem)] leading-[calc(clamp(0.845rem,1.69vw,1.31rem)*1.6)] tracking-[clamp(0.01em,0.016vw,0.016em)] font-light",
         @class
       ]}
       {@rest}
@@ -58,7 +58,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] font-light",
+        "text-[clamp(0.985rem,1.97vw,1.53rem)] leading-[calc(clamp(0.985rem,1.97vw,1.53rem)*1.5)] tracking-[clamp(0.01em,0.017vw,0.017em)] font-light",
         @class
       ]}
       {@rest}
@@ -76,7 +76,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1.25rem,2.5vw,2rem)] leading-[calc(clamp(1.25rem,2.5vw,2rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
+        "text-[clamp(1.27rem,2.53vw,1.97rem)] leading-[calc(clamp(1.27rem,2.53vw,1.97rem)*1.4)] tracking-[clamp(0.005em,0.015vw,0.015em)]",
         @class
       ]}
       {@rest}

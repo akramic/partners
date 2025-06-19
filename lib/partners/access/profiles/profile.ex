@@ -333,8 +333,6 @@ defmodule Partners.Access.Profiles.Profile do
   end
 
   # End Changesets for onboarding (registering) new users
-
   ###################################################
-
   ###################################################
 end
