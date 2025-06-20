@@ -1,15 +1,33 @@
 defmodule PartnersWeb.CustomComponents.Typography do
   @moduledoc """
-    A collection of custom typography components.
-    In the liveview template, you can use these components like this:
+    A collection of custom responsive typography components aligned with Tailwind CSS v4 size ratios.
 
-    import PartnersWeb.CustomComponents.Typography, only: [p: 1]
+    The components use CSS clamp() function to create fluid typography that scales smoothly
+    between minimum and maximum sizes based on viewport width.
+
+    ## Size Relationships
+
+    All sizing follows Tailwind CSS v4 proportional relationships:
+    - p: Base font (equivalent to Tailwind's text-base)
+    - p_xs: 75% of base size (equivalent to Tailwind's text-xs)
+    - p_sm: 87.5% of base size (equivalent to Tailwind's text-sm)
+    - p_lg: 112.5% of base size (equivalent to Tailwind's text-lg)
+
+    Line height and letter spacing are adjusted for optimal readability at each size.
+
+    ## Usage Example
+
+    ```elixir
+    import PartnersWeb.CustomComponents.Typography, only: [p: 1, p_sm: 1, p_xs: 1, p_lg: 1]
 
     <.p>
-      This is a dynamic sized paragraph
+      This is a dynamic sized paragraph using the base font.
     </.p>
 
-
+    <.p_sm>
+      This is a smaller paragraph that still scales responsively.
+    </.p_sm>
+    ```
   """
 
   use PartnersWeb, :html

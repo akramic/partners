@@ -29,7 +29,6 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     %Step{name: "terms", prev: "telephone", next: nil, index: 6}
   ]
 
-
   @doc """
   Initializes the LiveView when it's first rendered.
 
@@ -244,26 +243,32 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   """
   def progress_indicator(assigns) do
     ~H"""
-    <nav aria-label="Progress" class="flex items-center justify-center w-full my-10">
-      <ol role="list" class="flex items-center">
-        <li :for={step <- @steps} class={["relative", step.name !== "terms" && "pr-8 sm:pr-20"]}>
-          <div class="absolute inset-0 flex items-center" aria-hidden="true">
-            <%!-- The edge color between nodes --%>
-            <div class={[
-              "h-0.5 w-full",
-              (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
-            ]}>
+    <nav aria-label="Progress" class="flex items-center justify-center w-full my-10 px-4">
+      <ol role="list" class="flex items-center w-full max-w-xl">
+        <li :for={step <- @steps} class="relative flex flex-col items-center flex-1">
+          <%!-- The connecting line element --%>
+          <%= if step.name !== "terms" do %>
+            <div class="absolute left-1/2 top-[clamp(0.75rem,2.5vw,1rem)] w-full h-[clamp(0.5px,0.1vw,1px)] z-0">
+              <div class={[
+                "h-full w-full",
+                (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
+              ]}>
+              </div>
             </div>
-          </div>
+          <% end %>
 
-          <div class="relative flex flex-col items-center">
+          <%!-- Node container --%>
+          <div class="flex justify-center w-full z-10">
+            <%!-- Completed step --%>
             <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
               <a
                 href="#"
-                class="relative flex size-8 items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
+                class="relative flex items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
+                style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
               >
                 <svg
-                  class="size-4 text-primary-content"
+                  style="width: clamp(0.75rem, 2.5vw, 1rem); height: clamp(0.75rem, 2.5vw, 1rem);"
+                  class="text-primary-content"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   aria-hidden="true"
@@ -279,24 +284,17 @@ defmodule PartnersWeb.Registration.RegistrationLive do
               </a>
             <% end %>
 
+            <%!-- Current step --%>
             <%= if step.name == @current_step do %>
               <a
                 href="#"
-                class="relative flex size-8 items-center justify-center rounded-full border-2 border-primary bg-base-100"
+                class="relative flex items-center justify-center rounded-full border-2 border-primary bg-base-100"
+                style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
                 aria-current="step"
               >
-                <span class="size-2.5 rounded-full bg-primary" aria-hidden="true"></span>
-                <span class="sr-only">{step.name}</span>
-              </a>
-            <% end %>
-
-            <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
-              <a
-                href="#"
-                class="group relative flex size-8 items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
-              >
                 <span
-                  class="size-2.5 rounded-full bg-transparent group-hover:bg-base-300"
+                  class="rounded-full bg-primary"
+                  style="width: clamp(0.5rem, 1.7vw, 0.625rem); height: clamp(0.5rem, 1.7vw, 0.625rem);"
                   aria-hidden="true"
                 >
                 </span>
@@ -304,7 +302,30 @@ defmodule PartnersWeb.Registration.RegistrationLive do
               </a>
             <% end %>
 
-            <p class="absolute top-full mt-2 text-[10px] text-center text-base-content/70 whitespace-nowrap uppercase">
+            <%!-- Future step --%>
+            <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
+              <a
+                href="#"
+                class="group relative flex items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
+                style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
+              >
+                <span
+                  class="rounded-full bg-transparent group-hover:bg-base-300"
+                  style="width: clamp(0.5rem, 1.7vw, 0.625rem); height: clamp(0.5rem, 1.7vw, 0.625rem);"
+                  aria-hidden="true"
+                >
+                </span>
+                <span class="sr-only">{step.name}</span>
+              </a>
+            <% end %>
+          </div>
+
+          <%!-- Step label --%>
+          <div class="text-center w-full mt-[clamp(0.25rem,0.8vw,0.5rem)]">
+            <p
+              class="text-base-content/70 uppercase inline-block"
+              style="font-size: clamp(0.5625rem, 1.2vw, 0.625rem);"
+            >
               {step.name}
             </p>
           </div>
