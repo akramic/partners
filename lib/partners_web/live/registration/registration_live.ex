@@ -262,7 +262,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           <%= if step.name !== "terms" do %>
             <div class="absolute left-1/2 top-[clamp(0.75rem,2.5vw,1rem)] w-full z-0">
               <div class={[
-                "h-[2px] w-full",
+                "h-[1.5px] w-full",
                 (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-content/30"
               ]}>
               </div>
@@ -300,7 +300,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
             <%= if step.name == @current_step do %>
               <a
                 href="#"
-                class="relative flex items-center justify-center rounded-full border-2 border-primary bg-base-100"
+                class="relative flex items-center justify-center rounded-full border-[1.5px] border-primary bg-base-100"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
                 aria-current="step"
               >
@@ -318,7 +318,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
             <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
               <a
                 href="#"
-                class="group relative flex items-center justify-center rounded-full border-2 border-base-content/30 bg-base-100 hover:border-base-content/50"
+                class="group relative flex items-center justify-center rounded-full border-[1.5px] border-base-content/30 bg-base-100 hover:border-base-content/50"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
               >
                 <span
