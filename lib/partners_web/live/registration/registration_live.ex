@@ -5,7 +5,19 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   This module manages the entire user registration process, including:
   - Tracking progress through multiple registration steps
   - Persisting form data between steps
-  - Restoring form state after page refreshes
+  - Restoring fo          <%!-- Step label --%>
+          <div class="text-center w-full mt-[clamp(0.25rem,0.8vw,0.5rem)]">
+            <p
+              class={[
+                "uppercase inline-block",
+                (step.name == @current_step || is_completed_step?(step, @form_params)) && "text-base-content/70",
+                !(step.name == @current_step || is_completed_step?(step, @form_params)) && "text-base-content/50"
+              ]}
+              style="font-size: clamp(0.5625rem, 1.2vw, 0.625rem);"
+            >
+              {step.name}
+            </p>
+          </div>after page refreshes
   - Managing transitions between steps
   - Rendering appropriate form components for each step
 
@@ -248,10 +260,10 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         <li :for={step <- @steps} class="relative flex flex-col items-center flex-1">
           <%!-- The connecting line element --%>
           <%= if step.name !== "terms" do %>
-            <div class="absolute left-1/2 top-[clamp(0.75rem,2.5vw,1rem)] w-full h-[clamp(0.5px,0.1vw,1px)] z-0">
+            <div class="absolute left-1/2 top-[clamp(0.75rem,2.5vw,1rem)] w-full z-0">
               <div class={[
-                "h-full w-full",
-                (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-300"
+                "h-[2px] w-full",
+                (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-content/30"
               ]}>
               </div>
             </div>
@@ -306,11 +318,11 @@ defmodule PartnersWeb.Registration.RegistrationLive do
             <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
               <a
                 href="#"
-                class="group relative flex items-center justify-center rounded-full border-2 border-base-300 bg-base-100 hover:border-base-content/50"
+                class="group relative flex items-center justify-center rounded-full border-2 border-base-content/30 bg-base-100 hover:border-base-content/50"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
               >
                 <span
-                  class="rounded-full bg-transparent group-hover:bg-base-300"
+                  class="rounded-full bg-base-content/10 group-hover:bg-base-content/20"
                   style="width: clamp(0.5rem, 1.7vw, 0.625rem); height: clamp(0.5rem, 1.7vw, 0.625rem);"
                   aria-hidden="true"
                 >
