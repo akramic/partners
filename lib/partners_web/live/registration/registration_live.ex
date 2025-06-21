@@ -32,7 +32,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.RegistrationFormAgent
 
   @steps [
-    %Step{name: "terms", prev: nil, next: "email", index: 0},
+    %Step{name: "start", prev: nil, next: "email", index: 0},
     %Step{name: "email", prev: "start", next: "username", index: 1},
     %Step{name: "username", prev: "email", next: "gender", index: 2},
     %Step{name: "gender", prev: "username", next: "dob", index: 3},
@@ -152,6 +152,31 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     {:noreply, socket}
   end
 
+  # Handle the event from client to get the IP registry api_key
+  @impl true
+  def handle_event("get_api_key", %{}, socket) do
+    # Send the API key to the client
+    {:noreply,
+     push_event(socket, "get_api_key", %{
+       api_key: get_api_key()
+     })}
+  end
+
+  # Handle the event when the API call for IP data is successful and IP data received
+  @impl true
+  def handle_event(
+        "ip_registry_data",
+        %{"result" => ip_data},
+        socket
+      ) do
+    # Create the updated form_params with the IP data
+    updated_form_params = Map.merge(socket.assigns.form_params, %{ip_data: ip_data})
+    # Update the form data in the agent
+    RegistrationFormAgent.update_form_data(socket.assigns.session_id, updated_form_params)
+
+    {:noreply, assign(socket, form_params: updated_form_params)}
+  end
+
   @doc """
   Handles LiveView client events.
 
@@ -237,6 +262,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           form_params={@form_params}
           steps={@steps}
         />
+
         <PartnersWeb.Registration.RegistrationComponents.render {assigns} />
       </div>
     </PartnersWeb.Layouts.app>
@@ -455,6 +481,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   defp get_agent_data(session_id) do
     RegistrationFormAgent.get_form_data(session_id)
   end
+
+  defp get_api_key(), do: Application.get_env(:partners, :ip_registry_api_key)
 
   @doc """
   Callback that runs when the LiveView process is terminating.

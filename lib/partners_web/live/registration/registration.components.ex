@@ -16,6 +16,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
   """
 
   use Phoenix.Component
+  alias Partners.Services.Paypal
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.{Typography}
 
@@ -44,13 +45,15 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       id="welcome"
       class="hero min-h-screen"
       style="background-image: url(/images/couple2.jpg);"
+      phx-hook="IPRegistryHook"
     >
       <div class="hero-overlay"></div>
       <div class="hero-content text-neutral-content text-center">
         <div class="max-w-4xl space-y-6">
           <Typography.h3>Let's get your free trial underway</Typography.h3>,
           <Typography.p class="mb-5">
-            We just need a few details to create your account.
+            First, we just need a few details to create your account.<br />
+            Then we'll transfer you to Paypal to start your free subscription.
           </Typography.p>,
           <button
             type="button"
