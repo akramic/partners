@@ -182,7 +182,9 @@ defmodule PartnersWeb.CoreComponents do
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
-  attr :placeholder_position, :string, default: nil,
+
+  attr :placeholder_position, :string,
+    default: nil,
     doc: "the placeholder position tailwindcss class"
 
   attr :type, :string,
@@ -231,7 +233,7 @@ defmodule PartnersWeb.CoreComponents do
             name={@name}
             value="true"
             checked={@checked}
-            class="checkbox checkbox-sm text-[clamp(1rem,2vw,1.5rem)]"
+            class="checkbox checkbox-sm text-[clamp(1rem,2vw,1.5rem)] mr-3"
             {@rest}
           />{@label}
         </span>

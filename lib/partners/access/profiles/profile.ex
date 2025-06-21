@@ -20,11 +20,11 @@ defmodule Partners.Access.Profiles.Profile do
     field :gender, Ecto.Enum, values: [:Male, :Female]
     field :marital_status, Ecto.Enum, values: [:Single, :Separated, :Divorced, :Widowed]
     field :terms, :boolean, default: false
-    field :video_path, :string
-    field :image_path, :string
-    # Required in changeset
     field :ip_data, :map
     field :telephone, :string
+    field :video_path, :string
+    field :image_path, :string
+
     field :otp, :string, virtual: true
     field :stored_otp, :string, virtual: true
 
@@ -332,7 +332,8 @@ defmodule Partners.Access.Profiles.Profile do
     |> validate_otp(attrs["stored_otp"])
   end
 
-  # End Changesets for onboarding (registering) new users
+  # End Changesets for onboarding (registering) new
+  
   ###################################################
   ###################################################
 end

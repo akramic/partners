@@ -19,7 +19,7 @@ defmodule Partners.Utils.DataTransformers do
   }
 
   """
-
+  @spec key_to_atom(map) :: map
   def key_to_atom(map) do
     Enum.reduce(map, %{}, fn
       # String.to_existing_atom saves us from overloading the VM by

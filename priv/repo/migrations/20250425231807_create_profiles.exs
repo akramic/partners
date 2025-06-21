@@ -7,7 +7,7 @@ defmodule Partners.Repo.Migrations.CreateProfiles do
       add :username, :string, null: false
       add :dob, :date, null: false
       add :gender, :string, null: false
-      add :marital_status, :string, null: false
+      add :marital_status, :string, default: nil
       add :terms, :boolean, default: false, null: false
       add :ip_data, :map, null: false
       add :telephone, :string, null: false

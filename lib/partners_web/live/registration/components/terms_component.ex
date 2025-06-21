@@ -6,6 +6,17 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
 
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
+  @doc """
+  Renders the terms acceptance component with a centered checkbox layout.
+
+  This component has a different layout from other registration components:
+  - Checkbox and label are horizontally centered
+  - Agreement text is displayed beneath the checkbox
+  - Success checkmark appears to the right of the checkbox when terms are accepted
+
+  This intentional layout difference emphasizes the importance of terms acceptance
+  and places focus on the agreement text.
+  """
   @impl true
   def render(assigns) do
     ~H"""
@@ -16,26 +27,28 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
         id={"#{@current_step}-form"}
         phx-change="validate"
         phx-target={@myself}
-        class="w-full max-w-xl"
+        class="w-full max-w-xl text-center"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
         <div class="mb-4 relative">
-          <div class="flex items-center">
-            <div class="flex-grow">
-              <.input
-                field={f[:terms]}
-                type="checkbox"
-                label="Agree to the Terms and Conditions of Membership"
-                required
-              />
-              <div class="mt-2 text-sm text-gray-600">
-                By checking this box, you agree to our
-                <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a>
-                and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
+          <div class="flex flex-col items-center">
+            <div class="flex items-center justify-center w-full">
+              <div class="flex-shrink">
+                <.input
+                  field={f[:terms]}
+                  type="checkbox"
+                  label="I agree to terms of membership"
+                  required
+                />
+              </div>
+              <div :if={show_tick?(:terms, @form)} class="text-success ml-2">
+                <.icon name="hero-check-circle-solid" class="w-8 h-8" />
               </div>
             </div>
-            <div :if={show_tick?(:terms, @form)} class="ml-4 text-success self-start">
-              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            <div class="mt-2 text-sm text-gray-600 text-center">
+              By checking this box, you agree to our
+              <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a>
+              and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
             </div>
           </div>
         </div>
