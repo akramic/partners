@@ -116,8 +116,8 @@ defmodule PartnersWeb.Router do
       live "/users/log-in/:token", UserLive.Confirmation, :new
 
       # Subscription routes - part of new user registration flow
-      # New route for starting a trial
-      live "/subscriptions/start_trial/:user", SubscriptionLive, :start_trial
+      # New route for starting a trial (with explicit user_id parameter)
+      live "/subscriptions/start_trial/:user_id", SubscriptionLive, :start_trial
       live "/subscriptions/start_trial/", SubscriptionLive, :start_trial
       live "/subscriptions/paypal/return", SubscriptionLive, :paypal_return
 

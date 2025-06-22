@@ -51,7 +51,6 @@ defmodule Partners.Access.Profiles.Profile do
       :username,
       :dob,
       :gender,
-      :marital_status,
       :terms,
       :ip_data,
       :telephone
@@ -60,7 +59,6 @@ defmodule Partners.Access.Profiles.Profile do
       :username,
       :dob,
       :gender,
-      :marital_status,
       :terms,
       :ip_data,
       :telephone
@@ -333,7 +331,7 @@ defmodule Partners.Access.Profiles.Profile do
   end
 
   # End Changesets for onboarding (registering) new
-  
+
   ###################################################
   ###################################################
 end

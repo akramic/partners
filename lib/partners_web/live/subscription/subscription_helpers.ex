@@ -366,7 +366,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
                   "Sorry, we did not receive any confirmation from PayPal. Please try again."
                 )
                 |> assign(:subscription_status, nil)
-                |> push_patch(to: ~p"/subscriptions/start_trial/#{socket.assigns.user}")
+                |> push_patch(to: ~p"/subscriptions/start_trial/#{socket.assigns.user.id}")
             end
 
           {:noreply, socket}

@@ -26,6 +26,7 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
         for={@form}
         id={"#{@current_step}-form"}
         phx-change="validate"
+        phx-submit="save"
         phx-target={@myself}
         class="w-full max-w-xl text-center"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}

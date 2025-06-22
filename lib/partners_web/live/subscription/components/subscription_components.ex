@@ -221,7 +221,7 @@ defmodule PartnersWeb.Subscription.Components.SubscriptionComponents do
       <h1 class="text-4xl font-bold text-red-500">404</h1>
       <Typography.p class="text-xl">Page not found</Typography.p>
       <Typography.p>The page you're looking for doesn't exist or has been moved.</Typography.p>
-      <.link navigate={~p"/subscriptions/start_trial/#{@user}"} class="btn btn-primary mt-4">
+      <.link navigate={~p"/subscriptions/start_trial/#{@user.id}"} class="btn btn-primary mt-4">
         Start trial subscription
       </.link>
     </div>

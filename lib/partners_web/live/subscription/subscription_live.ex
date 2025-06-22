@@ -138,13 +138,13 @@ defmodule PartnersWeb.SubscriptionLive do
   - When no user is provided, it immediately redirects to the home page with an error message
   """
   @impl true
-  def mount(%{"user" => user}, _session, socket) do
+  def mount(%{"user_id" => user_id}, _session, socket) do
     # Use the real user from the current scope
     Logger.info("Mounting Subscription LiveView live_action: #{socket.assigns.live_action}")
-    Logger.info("Subscription LiveView mounted with user: #{inspect(user)}")
+    Logger.info("Subscription LiveView mounted with user_id: #{inspect(user_id)}")
     Logger.info("Live action: #{socket.assigns.live_action}")
 
-    maybe_redirect_if_user_not_found(user, socket)
+    maybe_redirect_if_user_not_found(user_id, socket)
   end
 
   def mount(_params, _session, socket) do
@@ -228,9 +228,8 @@ defmodule PartnersWeb.SubscriptionLive do
     {:noreply, socket}
   end
 
-  defp maybe_redirect_if_user_not_found(user, socket) do
-    with true <- is_map(user) and Map.has_key?(user, :id),
-         user_id = user.id,
+  defp maybe_redirect_if_user_not_found(user_id, socket) do
+    with true <- is_binary(user_id),
          found_user when not is_nil(found_user) <- Partners.Accounts.get_user(user_id) do
       # Subscribe to the PayPal subscription topic if the socket is connected
       if connected?(socket) do
@@ -255,7 +254,7 @@ defmodule PartnersWeb.SubscriptionLive do
        |> assign(user: found_user)}
     else
       false ->
-        Logger.error("Invalid user object provided: #{inspect(user)}")
+        Logger.error("Invalid user ID provided: #{inspect(user_id)}")
 
         {:ok,
          socket
@@ -263,7 +262,7 @@ defmodule PartnersWeb.SubscriptionLive do
          |> push_navigate(to: ~p"/")}
 
       nil ->
-        Logger.error("User #{inspect(user)} not found, redirecting to home page")
+        Logger.error("User with ID #{inspect(user_id)} not found, redirecting to home page")
 
         {:ok,
          socket

@@ -244,18 +244,32 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   defp save(socket) do
     Logger.info("🔔 Registration completed with params: #{inspect(socket.assigns.form_params)}")
 
-    case Partners.Accounts.register_user(socket.assigns.form_params) do
+    case Partners.Accounts.register_user(modify_params_for_cast_assoc(socket.assigns.form_params)) do
       {:ok, user} ->
         IO.inspect("🔔 Registration successful for user: #{inspect(user)}")
         # Registration successful, redirect to the next step or dashboard
         socket
         |> put_flash(:info, "Registration successful! Welcome, #{user.email}.")
-        |> push_navigate(to: ~p"/subscriptions/start_trial/#{user}")
+        |> push_navigate(to: ~p"/subscriptions/start_trial/#{user.id}")
 
       {:error, changeset} ->
         # Handle registration error
+        IO.inspect(changeset, label: "🔔 Registration error")
         assign_form(socket, changeset)
     end
+  end
+
+  # Normalises params for cast_assoc. The profile params are embedded in the params map
+  # We need to have key of profile giving profile => %{}
+  # so we get user_params as a map with the following structure :
+  #  %{ email => email, password => password, profile => %{}}
+
+  defp modify_params_for_cast_assoc(form_params) do
+    {user_params, profile_params} =
+      form_params |> Map.split([:email])
+
+    user_params
+    |> Map.put(:profile, profile_params)
   end
 
   @doc """
