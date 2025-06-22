@@ -254,8 +254,21 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
       {:error, changeset} ->
         # Handle registration error
+        # Log the error changeset
         IO.inspect(changeset, label: "🔔 Registration error")
-        assign_form(socket, changeset)
+
+        # Determine which step has errors and find that step
+        error_step = determine_error_step(changeset)
+        error_step_map = Enum.find(@steps, &(&1.name == error_step))
+
+        # Navigate to the error step and assign the form with errors
+        socket
+        |> put_flash(:error, "Sorry, we found an error.")
+        |> assign(:step, error_step_map.index + 1)
+        |> assign(:current_step, error_step_map.name)
+        |> assign(:progress, error_step_map)
+
+        # No need to assign a form from the changeset
     end
   end
 
@@ -270,6 +283,25 @@ defmodule PartnersWeb.Registration.RegistrationLive do
 
     user_params
     |> Map.put(:profile, profile_params)
+  end
+
+  # Determine which step a user should be redirected to based on profile errors
+  defp determine_error_step(%Ecto.Changeset{} = changeset) do
+    # Get error fields from the profile changeset
+    profile_changeset = changeset.changes[:profile]
+    error_fields = if profile_changeset, do: Keyword.keys(profile_changeset.errors), else: []
+
+    # Map error field to registration step
+    cond do
+      # Check each field and return the corresponding step
+      Enum.member?(error_fields, :username) -> "username"
+      Enum.member?(error_fields, :gender) -> "gender"
+      Enum.member?(error_fields, :dob) -> "dob"
+      Enum.member?(error_fields, :telephone) -> "telephone"
+      Enum.member?(error_fields, :terms) -> "terms"
+      # User-level errors (like email) or fallback
+      true -> "email"
+    end
   end
 
   @doc """
@@ -526,3 +558,137 @@ defmodule PartnersWeb.Registration.RegistrationLive do
     :ok
   end
 end
+
+# Registration error: #Ecto.Changeset<
+#   action: :insert,
+#   changes: %{
+#     profile: #Ecto.Changeset<
+#       action: :insert,
+#       changes: %{
+#         username: "akramic",
+#         ip_data: %{
+#           "carrier" => %{"mcc" => nil, "mnc" => nil, "name" => nil},
+#           "company" => %{
+#             "domain" => "aussiebb.com.au",
+#             "name" => "Aussie Broadband",
+#             "type" => "isp"
+#           },
+#           "connection" => %{
+#             "asn" => 4764,
+#             "domain" => "wideband.net.au",
+#             "organization" => "Wideband Networks Pty LTD",
+#             "route" => "117.20.68.0/22",
+#             "type" => "isp"
+#           },
+#           "currency" => %{
+#             "code" => "AUD",
+#             "format" => %{
+#               "decimal_separator" => ".",
+#               "group_separator" => ",",
+#               "negative" => %{"prefix" => "-$", "suffix" => ""},
+#               "positive" => %{"prefix" => "$", "suffix" => ""}
+#             },
+#             "name" => "Australian Dollar",
+#             "name_native" => "Australian Dollar",
+#             "plural" => "Australian dollars",
+#             "plural_native" => "Australian dollars",
+#             "symbol" => "A$",
+#             "symbol_native" => "$"
+#           },
+#           "hostname" => nil,
+#           "ip" => "117.20.68.135",
+#           "location" => %{
+#             "city" => "Grange",
+#             "continent" => %{"code" => "OC", "name" => "Oceania"},
+#             "country" => %{
+#               "area" => 7686850,
+#               "borders" => [],
+#               "calling_code" => "61",
+#               "capital" => "Canberra",
+#               "code" => "AU",
+#               "flag" => %{
+#                 "emoji" => "🇦🇺",
+#                 "emoji_unicode" => "U+1F1E6 U+1F1FA",
+#                 "emojitwo" => "https://cdn.ipregistry.co/flags/emojitwo/au.svg",
+#                 "noto" => "https://cdn.ipregistry.co/flags/noto/au.png",
+#                 "twemoji" => "https://cdn.ipregistry.co/flags/twemoji/au.svg",
+#                 "wikimedia" => "https://cdn.ipregistry.co/flags/wikimedia/au.svg"
+#               },
+#               "languages" => [
+#                 %{"code" => "en", "name" => "English", "native" => "English"}
+#               ],
+#               "name" => "Australia",
+#               "population" => 26658948,
+#               "population_density" => 3.47,
+#               "tld" => ".au"
+#             },
+#             "in_eu" => false,
+#             "language" => %{
+#               "code" => "en",
+#               "name" => "English",
+#               "native" => "English"
+#             },
+#             "latitude" => -27.42317,
+#             "longitude" => 153.01906,
+#             "postal" => "4051",
+#             "region" => %{"code" => "AU-QLD", "name" => "Queensland"}
+#           },
+#           "security" => %{
+#             "is_abuser" => false,
+#             "is_anonymous" => false,
+#             "is_attacker" => false,
+#             "is_bogon" => false,
+#             "is_cloud_provider" => false,
+#             "is_proxy" => false,
+#             "is_relay" => false,
+#             "is_threat" => false,
+#             "is_tor" => false,
+#             "is_tor_exit" => false,
+#             "is_vpn" => false
+#           },
+#           "time_zone" => %{
+#             "abbreviation" => "AEST",
+#             "current_time" => "2025-06-08T09:54:15+10:00",
+#             "id" => "Australia/Brisbane",
+#             "in_daylight_saving" => false,
+#             "name" => "Australian Eastern Standard Time",
+#             "offset" => 36000
+#           },
+#           "type" => "IPv4",
+#           "user_agent" => %{
+#             "device" => %{
+#               "brand" => nil,
+#               "name" => "Linux Desktop",
+#               "type" => "desktop"
+#             },
+#             "engine" => %{
+#               "name" => "Blink",
+#               "type" => "browser",
+#               "version" => "137",
+#               "version_major" => "137"
+#             },
+#             "header" => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+#             "name" => "Chrome",
+#             "os" => %{"name" => "Linux", "type" => "desktop", "version" => nil},
+#             "type" => "browser",
+#             "version" => "137",
+#             "version_major" => "137"
+#           }
+#         },
+#         gender: :Male,
+#         dob: ~D[1961-09-15],
+#         telephone: "0421774826",
+#         terms: true
+#       },
+#       errors: [some_value: {"can't be blank", [validation: :required]}],
+#       data: #Partners.Access.Profiles.Profile<>,
+#       valid?: false,
+#       ...
+#     >,
+#     email: "michael.akram@gmail.com"
+#   },
+#   errors: [],
+#   data: #Partners.Accounts.User<>,
+#   valid?: false,
+#   ...
+# >

@@ -130,12 +130,12 @@ defmodule PartnersWeb.SubscriptionLive do
   and initializes default socket assigns.
 
   This mount function handles two scenarios:
-  - When a user parameter is provided, it calls `maybe_redirect_if_user_not_found/2` which:
-    * Validates the user map contains an ID field
-    * Looks up the user in the database to ensure it exists
+  - When a user_id parameter is provided, it calls `maybe_redirect_if_user_not_found/2` which:
+    * Validates the user_id is a valid string
+    * Looks up the user in the database using the ID to ensure it exists
     * If user is found, subscribes to PayPal event notifications for this user via PubSub
-    * If user validation fails or user is not found in the database, redirects to home page with error message
-  - When no user is provided, it immediately redirects to the home page with an error message
+    * If user_id validation fails or user is not found in the database, redirects to home page with error message
+  - When no user_id is provided, it immediately redirects to the home page with an error message
   """
   @impl true
   def mount(%{"user_id" => user_id}, _session, socket) do
@@ -228,6 +228,15 @@ defmodule PartnersWeb.SubscriptionLive do
     {:noreply, socket}
   end
 
+  @doc """
+  Helper function that validates a user_id and fetches the corresponding user.
+
+  This function:
+  1. Validates that the user_id is a valid string
+  2. Attempts to fetch the user from the database using Partners.Accounts.get_user/1
+  3. If successful, sets up PubSub subscription for PayPal events and assigns the user to the socket
+  4. If validation fails or user is not found, redirects to the home page with an error message
+  """
   defp maybe_redirect_if_user_not_found(user_id, socket) do
     with true <- is_binary(user_id),
          found_user when not is_nil(found_user) <- Partners.Accounts.get_user(user_id) do
