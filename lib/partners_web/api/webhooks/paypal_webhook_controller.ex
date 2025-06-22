@@ -90,7 +90,7 @@ defmodule PartnersWeb.Api.Webhooks.PaypalWebhookController do
   use PartnersWeb, :controller
   require Logger
 
-  alias Partners.Services.PaypalWebhookVerifier
+  alias Partners.Services.Paypal.PaypalWebhookVerifier
   alias Phoenix.PubSub
 
   def paypal(conn, params) do

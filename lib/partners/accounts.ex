@@ -60,6 +60,23 @@ defmodule Partners.Accounts do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  @doc """
+  Gets a single user.
+
+  Returns nil if the User does not exist.
+
+  ## Examples
+
+      iex> get_user(123)
+      %User{}
+
+      iex> get_user(456)
+      nil
+
+  """
+
+  def get_user(id), do: Repo.get(User, id)
+
   ## User registration
 
   @doc """
@@ -74,9 +91,15 @@ defmodule Partners.Accounts do
       {:error, %Ecto.Changeset{}}
 
   """
+
+  # def register_user(attrs) do
+  #   %User{}
+  #   |> User.email_changeset(attrs)
+  #   |> Repo.insert()
+  # end
+
   def register_user(attrs) do
-    %User{}
-    |> User.email_changeset(attrs)
+    User.registration_changeset(attrs)
     |> Repo.insert()
   end
 

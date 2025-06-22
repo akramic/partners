@@ -106,16 +106,17 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
 
   @impl true
   def handle_event("save", %{"terms" => terms_params} = _params, socket) do
-    _changeset =
+    result =
       Profile.registration_terms_changeset(terms_params)
       |> Ecto.Changeset.apply_action(:insert)
-      |> case do
-        {:ok, record} ->
-          send(self(), {:proceed, :terms, record})
-          {:noreply, socket}
 
-        {:error, changeset} ->
-          {:noreply, socket |> assign_form(changeset)}
-      end
+    case result do
+      {:ok, record} ->
+        send(self(), {:proceed, :terms, record})
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, socket |> assign_form(changeset)}
+    end
   end
 end

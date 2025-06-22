@@ -129,37 +129,30 @@ defmodule PartnersWeb.SubscriptionLive do
   Mounts the LiveView, subscribes to user-specific PayPal PubSub events,
   and initializes default socket assigns.
 
+  This mount function handles two scenarios:
+  - When a user parameter is provided, it calls `maybe_redirect_if_user_not_found/2` which:
+    * Validates the user map contains an ID field
+    * Looks up the user in the database to ensure it exists
+    * If user is found, subscribes to PayPal event notifications for this user via PubSub
+    * If user validation fails or user is not found in the database, redirects to home page with error message
+  - When no user is provided, it immediately redirects to the home page with an error message
   """
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(%{"user" => user}, _session, socket) do
     # Use the real user from the current scope
     Logger.info("Mounting Subscription LiveView live_action: #{socket.assigns.live_action}")
-    # user = socket.assigns.current_scope.user
-    # Placeholder for actual user - to be fetched from socket
-    user = %{id: 123, name: "Test User"}
-    user_id = user.id
-
-    Logger.info("Subscription LiveView mounted with user_id: #{user_id}")
+    Logger.info("Subscription LiveView mounted with user: #{inspect(user)}")
     Logger.info("Live action: #{socket.assigns.live_action}")
 
-    if connected?(socket) do
-      subscription_topic = "paypal_subscription:#{user_id}"
-      Logger.info("Subscribing to PayPal subscription topic: #{subscription_topic}")
-      :ok = Phoenix.PubSub.subscribe(Partners.PubSub, subscription_topic)
-      Logger.info("Successfully subscribed to PayPal subscription topic")
-    else
-      Logger.info("Socket not connected yet, skipping PubSub subscription")
-    end
+    maybe_redirect_if_user_not_found(user, socket)
+  end
 
-    {:ok,
-     socket
-     |> assign(:page_title, "Subscription setup")
-     |> assign(:subscription_status, nil)
-     |> assign(:error_message, nil)
-     |> assign(:approval_url, nil)
-     |> assign(:subscription_id, nil)
-     |> assign(:transferring_to_paypal, false)
-     |> assign(:retry, false)}
+  def mount(_params, _session, socket) do
+    socket =
+      socket
+      |> put_flash(:error, "No user provided")
+
+    {:ok, push_navigate(socket, to: ~p"/")}
   end
 
   @impl true
@@ -221,7 +214,7 @@ defmodule PartnersWeb.SubscriptionLive do
 
   @impl true
   def handle_event("request_paypal_approval_url", %{"retry" => "true"}, socket) do
-    Logger.info("🔔 User #{socket.assigns.current_scope.user.id} retrying subscription setup")
+    Logger.info("🔔 User #{socket.assigns.user.id} retrying subscription setup")
     send(self(), :request_paypal_approval_url)
     socket = assign(socket, transferring_to_paypal: true, retry: true)
 
@@ -233,6 +226,50 @@ defmodule PartnersWeb.SubscriptionLive do
     send(self(), :request_paypal_approval_url)
     socket = assign(socket, transferring_to_paypal: true, retry: false)
     {:noreply, socket}
+  end
+
+  defp maybe_redirect_if_user_not_found(user, socket) do
+    with true <- is_map(user) and Map.has_key?(user, :id),
+         user_id = user.id,
+         found_user when not is_nil(found_user) <- Partners.Accounts.get_user(user_id) do
+      # Subscribe to the PayPal subscription topic if the socket is connected
+      if connected?(socket) do
+        subscription_topic = "paypal_subscription:#{user_id}"
+        Logger.info("Subscribing to PayPal subscription topic: #{subscription_topic}")
+        :ok = Phoenix.PubSub.subscribe(Partners.PubSub, subscription_topic)
+        Logger.info("Successfully subscribed to PayPal subscription topic")
+      else
+        Logger.info("Socket not connected yet, skipping PubSub subscription")
+      end
+
+      # Return the socket with all the necessary assigns
+      {:ok,
+       socket
+       |> assign(:page_title, "Subscription setup")
+       |> assign(:subscription_status, nil)
+       |> assign(:error_message, nil)
+       |> assign(:approval_url, nil)
+       |> assign(:subscription_id, nil)
+       |> assign(:transferring_to_paypal, false)
+       |> assign(:retry, false)
+       |> assign(user: found_user)}
+    else
+      false ->
+        Logger.error("Invalid user object provided: #{inspect(user)}")
+
+        {:ok,
+         socket
+         |> put_flash(:error, "Invalid user data")
+         |> push_navigate(to: ~p"/")}
+
+      nil ->
+        Logger.error("User #{inspect(user)} not found, redirecting to home page")
+
+        {:ok,
+         socket
+         |> put_flash(:error, "User not found")
+         |> push_navigate(to: ~p"/")}
+    end
   end
 
   @impl true

@@ -242,7 +242,20 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   # unchanged, but would typically create the user account and handle
   # the completed registration.
   defp save(socket) do
-    socket
+    Logger.info("🔔 Registration completed with params: #{inspect(socket.assigns.form_params)}")
+
+    case Partners.Accounts.register_user(socket.assigns.form_params) do
+      {:ok, user} ->
+        IO.inspect("🔔 Registration successful for user: #{inspect(user)}")
+        # Registration successful, redirect to the next step or dashboard
+        socket
+        |> put_flash(:info, "Registration successful! Welcome, #{user.email}.")
+        |> push_navigate(to: ~p"/subscriptions/start_trial/#{user}")
+
+      {:error, changeset} ->
+        # Handle registration error
+        assign_form(socket, changeset)
+    end
   end
 
   @doc """

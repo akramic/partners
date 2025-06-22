@@ -117,7 +117,8 @@ defmodule PartnersWeb.Router do
 
       # Subscription routes - part of new user registration flow
       # New route for starting a trial
-      live "/subscriptions/start_trial", SubscriptionLive, :start_trial
+      live "/subscriptions/start_trial/:user", SubscriptionLive, :start_trial
+      live "/subscriptions/start_trial/", SubscriptionLive, :start_trial
       live "/subscriptions/paypal/return", SubscriptionLive, :paypal_return
 
       # Route if user decides to cancel on paypal's site and decides not to proceed with completing the subscription

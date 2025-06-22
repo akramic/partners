@@ -31,10 +31,9 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
   require Logger
 
   def request_paypal_approval_url(socket) do
-    user = socket.assigns.current_scope.user
+    user = socket.assigns.user
     trial_plan_id = Partners.Services.Paypal.plan_id()
     user_id = user.id
-
     Logger.info("🔔 LiveView: Processing PayPal trial creation for user #{user_id}")
 
     with {:ok, subscription_data} <-
@@ -98,7 +97,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
 
   def process_subscription_action(params, %{assigns: %{live_action: :paypal_cancel}} = socket) do
     # Log cancel params for debugging
-    user_id = socket.assigns.current_scope.user.id
+    user_id = socket.assigns.user.id
     Logger.info("🔔 PayPal cancel for user #{user_id}: #{inspect(params)}")
 
     # Extract any relevant parameters
@@ -121,7 +120,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
     ba_token = Map.get(params, "ba_token")
 
     # Log the return for debugging/auditing
-    user_id = socket.assigns.current_scope.user.id
+    user_id = socket.assigns.user.id
 
     Logger.info("""
     🔔 PayPal return for user #{user_id}:
@@ -157,7 +156,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
         %{assigns: %{live_action: :subscription_activated}} = socket
       ) do
     # Log activation details for debugging/auditing
-    user_id = socket.assigns.current_scope.user.id
+    user_id = socket.assigns.user.id
     subscription_id = socket.assigns[:subscription_id]
 
     Logger.info("""
@@ -181,7 +180,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
         %{assigns: %{live_action: :subscription_rejected}} = socket
       ) do
     # Log rejection details for debugging/auditing
-    user_id = socket.assigns.current_scope.user.id
+    user_id = socket.assigns.user.id
     subscription_id = socket.assigns[:subscription_id]
     failure_reason = socket.assigns[:failure_reason] || "Unknown"
 
@@ -367,7 +366,7 @@ defmodule PartnersWeb.Subscription.SubscriptionHelpers do
                   "Sorry, we did not receive any confirmation from PayPal. Please try again."
                 )
                 |> assign(:subscription_status, nil)
-                |> push_patch(to: ~p"/subscriptions/start_trial")
+                |> push_patch(to: ~p"/subscriptions/start_trial/#{socket.assigns.user}")
             end
 
           {:noreply, socket}

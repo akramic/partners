@@ -16,7 +16,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
   """
 
   use Phoenix.Component
-  alias Partners.Services.Paypal
+  
   use PartnersWeb, :html
   alias PartnersWeb.CustomComponents.{Typography}
 
