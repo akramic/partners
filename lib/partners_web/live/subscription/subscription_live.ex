@@ -228,15 +228,14 @@ defmodule PartnersWeb.SubscriptionLive do
     {:noreply, socket}
   end
 
-  @doc """
-  Helper function that validates a user_id and fetches the corresponding user.
+  # Helper function that validates a user_id and fetches the corresponding user.
 
-  This function:
-  1. Validates that the user_id is a valid string
-  2. Attempts to fetch the user from the database using Partners.Accounts.get_user/1
-  3. If successful, sets up PubSub subscription for PayPal events and assigns the user to the socket
-  4. If validation fails or user is not found, redirects to the home page with an error message
-  """
+  # This function:
+  # 1. Validates that the user_id is a valid string
+  # 2. Attempts to fetch the user from the database using Partners.Accounts.get_user/1
+  # 3. If successful, sets up PubSub subscription for PayPal events and assigns the user to the socket
+  # 4. If validation fails or user is not found, redirects to the home page with an error message
+
   defp maybe_redirect_if_user_not_found(user_id, socket) do
     with true <- is_binary(user_id),
          found_user when not is_nil(found_user) <- Partners.Accounts.get_user(user_id) do

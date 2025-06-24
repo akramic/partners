@@ -19,6 +19,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Accounts.User
   alias Partners.Services.EmailVerification
+  alias PartnersWeb.CustomComponents.Atoms
 
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
@@ -26,6 +27,16 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   def render(assigns) do
     ~H"""
     <div id="email_component" class="flex flex-col items-center justify-center w-full px-4 h-full">
+      <div class="flex items-center gap-2 my-8">
+        <div class="chat chat-end">
+          <div class="chat-bubble rounded-tl-[1rem] rounded-tr-none rounded-br-[1rem] rounded-bl-[1rem] relative before:absolute before:top-0 before:bottom-auto before:[transform:rotateX(180deg)]">
+            This is a message from the sender.
+          </div>
+        </div>
+        <div class="w-18">
+          <Atoms.company_logo />
+        </div>
+      </div>
       <.form
         :let={f}
         for={@form}
