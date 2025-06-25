@@ -58,7 +58,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.845rem,1.69vw,1.31rem)] leading-[calc(clamp(0.845rem,1.69vw,1.31rem)*1.6)] tracking-[clamp(0.01em,0.016vw,0.016em)] font-light",
+        "text-[clamp(0.845rem,1.69vw,1.31rem)] leading-[calc(clamp(0.845rem,1.69vw,1.31rem)*1.6)] tracking-[clamp(0.01em,0.016vw,0.016em)]",
         @class
       ]}
       {@rest}

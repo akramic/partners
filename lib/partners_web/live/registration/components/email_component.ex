@@ -19,7 +19,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Accounts.User
   alias Partners.Services.EmailVerification
-  alias PartnersWeb.CustomComponents.Atoms
+  alias PartnersWeb.CustomComponents.{Atoms, Typography}
 
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
@@ -27,30 +27,11 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   def render(assigns) do
     ~H"""
     <div id="email_component" class="flex flex-col items-center justify-center w-full px-4 h-full">
-      <div class="flex items-center gap-2 my-8">
-        <div class="chat chat-end">
-          <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative before:hidden overflow-visible">
-            This is a message with tail at top right.
-            <div class="absolute w-0 h-0 border-[8px] border-transparent border-l-info border-b-info bottom-auto right-[-8px] top-0 rotate-[-45deg]">
-            </div>
-          </div>
-        </div>
-        <div class="w-18">
-          <Atoms.company_logo />
-        </div>
-      </div>
-      <div class="flex items-start gap-2 my-8 w-full max-w-lg">
-        <div class="flex-none w-18">
-          <Atoms.company_logo />
-        </div>
-        <div class="chat chat-start">
-          <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative shadow-md before:hidden overflow-visible">
-            This is a message with tail at top left. This is a message with tail at top left. This is a message with tail at top left.
-            <div class="absolute w-0 h-0 border-[8px] border-transparent border-r-info border-b-info bottom-auto left-[-8px] top-0 rotate-[45deg]">
-            </div>
-          </div>
-        </div>
-      </div>
+      <Atoms.kangaroo_speech_bubble_top_left_tail>
+        <Typography.p_xs>
+          Your email address always remains confidential.
+        </Typography.p_xs>
+      </Atoms.kangaroo_speech_bubble_top_left_tail>
       <.form
         :let={f}
         for={@form}
@@ -66,8 +47,8 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
               <.input
                 field={f[:email]}
                 type="email"
-                label="Email"
-                placeholder="Enter your email"
+                label="What's your email address?"
+                placeholder="you@example.com"
                 required
               />
             </div>

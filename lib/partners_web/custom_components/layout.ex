@@ -390,7 +390,9 @@ defmodule PartnersWeb.CustomComponents.Layout do
       </nav>
       <aside>
         <%!-- Company logo of kangaroo --%>
-        <Atoms.company_logo />
+       <div class="w-12">
+          <Atoms.company_logo />
+        </div>
 
         <p class="text-sm font-semibold opacity-60">
           Really Useful Software Pty Limited.
