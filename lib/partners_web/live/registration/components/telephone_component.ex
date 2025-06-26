@@ -47,7 +47,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-            class="btn btn-ghost font-light"
+            class="btn btn-ghost "
           >
             <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
           </button>

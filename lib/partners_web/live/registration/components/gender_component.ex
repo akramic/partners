@@ -32,10 +32,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
                 required
               />
             </div>
-            <div
-              :if={show_tick?(:gender, @form)}
-              class="ml-4 text-success self-start mt-8"
-            >
+            <div :if={show_tick?(:gender, @form)} class="ml-4 text-success self-start mt-8">
               <.icon name="hero-check-circle-solid" class="w-8 h-8" />
             </div>
           </div>
@@ -48,7 +45,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-            class="btn btn-ghost font-light"
+            class="btn btn-ghost "
           >
             <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
           </button>
