@@ -17,7 +17,7 @@ defmodule PartnersWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main class="flex flex-col min-h-screen">
+    <main class="flex flex-col h-svh">
       <PartnersWeb.CustomComponents.Layout.site_header current_scope={@current_scope} />
       {render_slot(@inner_block)}
     </main>

@@ -1,7 +1,7 @@
 <!-- Container for entire page with min-height to push footer down -->
 <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
   <section
-    class="relative mx-auto flex min-h-screen w-full flex-grow flex-col overflow-hidden"
+    class="relative mx-auto flex h-full w-full flex-grow flex-col overflow-hidden"
     aria-labelledby="hero-title"
   >
     <div
@@ -25,24 +25,15 @@
     <!-- Overlay for better text visibility -->
     <header class="bg-black/5 absolute inset-0 flex items-end ">
       <div class="absolute inset-0 h-4/5 flex flex-col items-center justify-between">
-        <article>
-          <h1
-            phx-mounted={
-              JS.transition({"ease-in duration-[1s]", "opacity-0", "opacity-100"}, time: 1000)
-            }
-            class="text-[clamp(3.25rem,10vw,10rem)] leading-[calc(clamp(3.25rem,10vw,10rem)*1.2)] mt-4 text-center font-extrabold tracking-tight text-white"
-            id="hero-title"
-          >
-            Re-ignite your passion for life
-          </h1>
-        </article>
+        <%!-- Empty element required for layout --%>
+        <article></article>
         <%!-- Feed --%>
 
         <ul
           id="feed"
           phx-hook="IPRegistryHook"
           phx-update="stream"
-          class="flex flex-col items-end h-30 w-full overflow-hidden"
+          class="flex flex-col items-end h-30 w-full overflow-hidden mr-8"
           aria-label="Recent user activity feed"
         >
           <li
@@ -53,7 +44,7 @@
             id={id}
           >
             <p class="text-[10px]">{feed.action}</p>
-            <p class="max-w-28 overflow-hidden text-ellipsis">{feed.username}</p>
+            <p class="max-w-36 overflow-hidden text-ellipsis">{feed.username}</p>
             <img src={feed.flag_url} class="my-1 h-9 w-18" />
             <p class="text-[10px]">{feed.region_name}</p>
             <p class="text-[10px]">{feed.time_zone}</p>
@@ -64,6 +55,16 @@
 
         <footer>
           <div>
+            <Typography.h1
+              phx-mounted={
+                JS.transition({"ease-in duration-[1s]", "opacity-0", "opacity-100"}, time: 1000)
+              }
+              class="text-[clamp(3.25rem,10vw,10rem)] leading-[calc(clamp(3.25rem,10vw,10rem)*1.2)] mt-4 text-center font-extrabold tracking-tight text-white"
+              id="hero-title"
+            >
+              Re-ignite your passion
+            </Typography.h1>
+
             <article
               class="flex flex-col items-center px-2"
               phx-mounted={
@@ -78,8 +79,8 @@
               }
             >
               <hgroup class="relative flex items-center justify-center py-10 text-center">
-                <Typography.h3 class="text-white">
-                  The site for grown-ups <br /> Serious Aussie singles only
+                <Typography.h3 class="text-white font-bold">
+                  For Aussie grown-ups
                 </Typography.h3>
               </hgroup>
             </article>
@@ -109,13 +110,10 @@
               type="button"
               phx-click="start_trial"
               aria-label="Start your free 7-day trial"
-              class="transition duration-400 ease-in-out hover:-translate-y-1 hover:scale-110  btn btn-xl btn-info rounded-full px-6 py-2.5 uppercase"
+              class="btn btn-xl btn-info rounded-xl uppercase py-6"
             >
-              <.link
-                navigate={~p"/users/registration/1"}
-                class="text-[clamp(1.25rem,4vw,2rem)] leading-[calc(clamp(1.25rem,4vw,2rem)*1.2)]  text-white"
-              >
-                Start 7-Day Free Trial
+              <.link navigate={~p"/users/registration/1"} class=" text-white">
+                <Typography.p class=" text-white">Start 7-Day Free Trial</Typography.p>
               </.link>
             </button>
           </nav>
