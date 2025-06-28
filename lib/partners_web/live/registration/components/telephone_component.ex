@@ -209,7 +209,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
 
     # send the OTP and save to socket
     otp_code = create_otp_code()
-    Sms.send_otp_code(telephone, otp_code)
+    # Sms.send_otp_code(telephone, otp_code)
 
     otp_changeset = Profile.registration_otp_changeset(%{"stored_otp" => otp_code})
 

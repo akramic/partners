@@ -46,7 +46,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
     """
   end
 
-   slot :inner_block,
+  slot :inner_block,
     required: true,
     doc: "Inner block for text"
 
@@ -67,7 +67,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
     """
   end
 
-   def kangaroo_speech_bubble_top_right_tail(assigns) do
+  def kangaroo_speech_bubble_top_right_tail(assigns) do
     ~H"""
     <div class="flex items-start gap-2 my-8 w-full max-w-lg">
       <div class="flex-none w-18">
@@ -83,11 +83,6 @@ defmodule PartnersWeb.CustomComponents.Atoms do
     </div>
     """
   end
-
-
-
-
-
 
   attr :text, :string, default: "Loading", doc: "The text to display while loading"
 
@@ -119,6 +114,23 @@ defmodule PartnersWeb.CustomComponents.Atoms do
           <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
         </div>
         <div class="sr-only">Please wait while content is loading</div>
+      </div>
+    </div>
+    """
+  end
+
+  slot :inner_block,
+    required: false,
+    doc: "Optional inner block for additional content or styling"
+
+  def full_page_modal(assigns) do
+    ~H"""
+    <div class="w-full h-full fixed top-0 left-0 bg-base-100 opacity-90 z-[100]">
+      <div class="flex flex-col space-y-3 justify-center items-center h-full w-full">
+        <div>
+          <.company_logo />
+        </div>
+        {render_slot(@inner_block)}
       </div>
     </div>
     """

@@ -1,0 +1,580 @@
+<!-- Container for entire page with min-height to push footer down -->
+<PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
+  <section
+    class="relative mx-auto flex min-h-screen w-full flex-grow flex-col overflow-hidden"
+    aria-labelledby="hero-title"
+  >
+    <div
+      class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
+      style="background-image: url('/images/passion.jpg');"
+    >
+      <div aria-label="Background image shows couple passionately kissing."></div>
+    </div>
+
+    <video
+      id="hero_video"
+      class={["absolute h-full w-full max-w-none object-cover object-center opacity-50"]}
+      src={~p"/videos/fire.mp4"}
+      playsinline
+      autoplay
+      muted
+      video_type="video/mp4"
+      aria-label="Background video of fire igniting, symbolising the re-ignition of passion in life"
+      role="presentation"
+    />
+    <!-- Overlay for better text visibility -->
+    <header class="bg-black/5 absolute inset-0 flex items-end ">
+      <div class="absolute inset-0 h-4/5 flex flex-col items-center justify-between">
+        <article>
+          <h1
+            phx-mounted={
+              JS.transition({"ease-in duration-[1s]", "opacity-0", "opacity-100"}, time: 1000)
+            }
+            class="text-[clamp(3.25rem,10vw,10rem)] leading-[calc(clamp(3.25rem,10vw,10rem)*1.2)] mt-4 text-center font-extrabold tracking-tight text-white"
+            id="hero-title"
+          >
+            Re-ignite your passion for life
+          </h1>
+        </article>
+        <%!-- Feed --%>
+
+        <ul
+          id="feed"
+          phx-hook="IPRegistryHook"
+          phx-update="stream"
+          class="flex flex-col items-end h-30 w-full overflow-hidden"
+          aria-label="Recent user activity feed"
+        >
+          <li
+            :for={{id, feed} <- @streams.feed}
+            class={[
+              "feed mx-2 bg-gray-800/30 text-white flex flex-col items-center justify-center p-4 rounded text-xs transition transform duration-1000 linear"
+            ]}
+            id={id}
+          >
+            <p class="text-[10px]">{feed.action}</p>
+            <p class="max-w-28 overflow-hidden text-ellipsis">{feed.username}</p>
+            <img src={feed.flag_url} class="my-1 h-9 w-18" />
+            <p class="text-[10px]">{feed.region_name}</p>
+            <p class="text-[10px]">{feed.time_zone}</p>
+          </li>
+        </ul>
+
+        <%!-- End Feed --%>
+
+        <footer>
+          <div>
+            <article
+              class="flex flex-col items-center px-2"
+              phx-mounted={
+                JS.transition(
+                  {
+                    "ease-in duration-[1.2s]",
+                    "opacity-0",
+                    "opacity-100"
+                  },
+                  time: 1200
+                )
+              }
+            >
+              <hgroup class="relative flex items-center justify-center py-10 text-center">
+                <Typography.h3 class="text-white">
+                  The site for grown-ups <br /> Serious Aussie singles only
+                </Typography.h3>
+              </hgroup>
+            </article>
+          </div>
+          <nav
+            phx-mounted={
+              JS.transition(
+                {
+                  "ease-in duration-[1.5s]",
+                  "opacity-0",
+                  "opacity-100"
+                },
+                time: 1500
+              )
+            }
+            class="relative flex flex-col items-center justify-center mt-8 space-y-8"
+            aria-label="Main call to action"
+          >
+            <.link href="#hero" class="" aria-label="Learn more about our features">
+              <figure class="flex flex-col items-center justify-center">
+                <Typography.p class=" text-white">Learn more</Typography.p>
+                <.icon name="hero-chevron-down" class="mt-4 text-white" />
+              </figure>
+            </.link>
+            <div class="text-gray-50">OR</div>
+            <button
+              type="button"
+              phx-click="start_trial"
+              aria-label="Start your free 7-day trial"
+              class="transition duration-400 ease-in-out hover:-translate-y-1 hover:scale-110  btn btn-xl btn-info rounded-full px-6 py-2.5 uppercase"
+            >
+              <.link
+                navigate={~p"/users/registration/1"}
+                class="text-[clamp(1.25rem,4vw,2rem)] leading-[calc(clamp(1.25rem,4vw,2rem)*1.2)]  text-white"
+              >
+                Start 7-Day Free Trial
+              </.link>
+            </button>
+          </nav>
+        </footer>
+      </div>
+    </header>
+  </section>
+
+  <Layout.section_container class="relative" id="hero">
+    <Layout.hero_section>
+      <:header>
+        I'm OK. You're OK.
+      </:header>
+      <:content>
+        <Typography.p>
+          You're ready to meet someone special.
+        </Typography.p>
+        <Typography.p>
+          You've matured. You've had your fill of frivolous dates and are comfortable with commitment - with the right person, of-course.
+        </Typography.p>
+
+        <Typography.p>
+          You're in the right place. This is a site for the emotionally grown-up.
+        </Typography.p>
+        <Typography.h5>
+          This is for you.
+        </Typography.h5>
+      </:content>
+    </Layout.hero_section>
+    <div class="divider " role="separator"></div>
+    <Layout.hero_section>
+      <:header>
+        Safe and Secure
+      </:header>
+
+      <:content>
+        <article class="">
+          <section aria-labelledby="safe-features-heading" class="relative">
+            <img
+              src={~p"/images/holding-hands.jpg"}
+              alt="Aussie couple holding hands."
+              class="aspect-3/2 w-full object-cover sm:aspect-5/2 lg:aspect-auto lg:absolute lg:h-full lg:w-1/2 lg:pr-4 xl:pr-16"
+              loading="lazy"
+            />
+
+            <div class="mx-auto max-w-2xl px-4 pt-16 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:pt-32">
+              <div class="lg:col-start-2">
+                <Typography.p class=" ">
+                  Our innovative approach is designed to filter out potential scammers, fakes, and bots.
+                </Typography.p>
+                <Typography.h4 class="my-10 ">
+                  🔒 How We Protect Aussie Singles
+                </Typography.h4>
+                <Typography.p class="mt-4">
+                  We've obsessed over every detail and pain-point to develop a platform that filters out scammers and bots.
+                </Typography.p>
+
+                <dl
+                  class="mt-10 grid grid-cols-1 gap-x-8 gap-y-10 text-sm sm:grid-cols-2"
+                  aria-label="Safety features"
+                >
+                  <div>
+                    <dt class=" ">Live Video Profiles</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        All video profiles are recorded in-app so we see the <em>real</em>
+                        you. See real smiles, hear real voices. No more catfishing.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Live Photo Checks</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        No uploaded pics. Snap your profile photo in-app. We make sure you're you.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Verification by email and SMS</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        We verify all profiles by email and SMS to ensure you're a real person.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">No tolerance for bad behaviour</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        We don't tolerate bad behaviour. Report any inappropriate behaviour and we will take action.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </section>
+        </article>
+      </:content>
+    </Layout.hero_section>
+    <div class="divider" role="separator"></div>
+
+    <Layout.section_quote
+      class="rounded-md"
+      author="Maya Angelou"
+      bio="American memoirist, poet, and civil rights activist"
+      quote="Have enough courage to trust love one more time and always one more time."
+      image_url="/images/couple.jpg"
+      alt_text="passionate couple"
+    />
+    <div class="divider " role="separator"></div>
+    <Layout.hero_section id="features">
+      <:header>
+        Unleash your &#128293;
+      </:header>
+
+      <:content>
+        <article class="">
+          <section aria-labelledby="features-heading" class="relative">
+            <img
+              src={~p"/images/couple2.jpg"}
+              loading="lazy"
+              alt="Australian womans face being kissed."
+              class="aspect-3/2 w-full object-cover sm:aspect-5/2 lg:aspect-auto lg:absolute lg:h-full lg:w-1/2 lg:pr-4 xl:pr-16"
+            />
+
+            <div class="mx-auto max-w-2xl px-4 pt-16 pb-16 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8 lg:pt-32">
+              <div class="lg:col-start-2">
+                <Typography.p class=" ">
+                  Re-discover the unbridled joy of a new love.
+                </Typography.p>
+                <Typography.h4 class="my-10 ">
+                  Make genuine connections with genuine people.
+                </Typography.h4>
+                <Typography.p class="mt-4 ">
+                  Wave good-bye to the endless swiping and say hello to real, authentic connections.
+                </Typography.p>
+
+                <dl
+                  class="mt-10 grid grid-cols-1 gap-x-8 gap-y-10 text-sm sm:grid-cols-2"
+                  aria-label="App features"
+                >
+                  <div>
+                    <dt class=" ">Live Video Chat</dt>
+                    <dd class="mt-2">
+                      <Typography.p class="">
+                        Really get to know your match with video chat. See their engaging smile, hear their voice. No more catfishing.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Chat Lounge</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        Relax and meet new people in our Lounge. No pressure, just good vibes.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Live Private Chat</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        Connect with your match in private chat. Share your thoughts, dreams, and more. No interruptions. Arrange a video call when you're ready.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">In-app Voice Messaging</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        See a profile you like? Send a voice message to introduce yourself.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Advanced Search</dt>
+                    <dd class="mt-2 ">
+                      <Typography.p class="">
+                        Connect with singles in your city or suburb. Search for your perfect match by location.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class=" ">Personal Dashboard</dt>
+                    <dd class="mt-2 t">
+                      <Typography.p class="">
+                        Your personal dashboard keeps track of your matches, messages, and more.
+                      </Typography.p>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </section>
+        </article>
+      </:content>
+    </Layout.hero_section>
+    <div class="divider " role="separator"></div>
+    <Layout.hero_section id="testimonials">
+      <:header>
+        Loved by Singles Across Australia
+      </:header>
+      <:content>
+        <Typography.p class="">
+          Sure to be loved by you. <span class="text-3xl" aria-hidden="true">&#128149;</span>
+        </Typography.p>
+        <section class="grid gap-8 md:grid-cols-2" aria-label="User testimonials">
+          <blockquote class="bg-base-300 border-1 border-border-muted rounded-lg p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+            <Typography.p class="text-base-content">
+              Finally an app where I don't waste time on scammers!
+            </Typography.p>
+            <footer class="mt-4 flex justify-center gap-3">
+              <.icon name="hero-map-pin" class="text-primary h-5 w-5" />
+              <cite class="">
+                Sarah, 32 - <span class="text-base-content-muted">Bondi</span>
+              </cite>
+            </footer>
+          </blockquote>
+          <blockquote class="bg-base-300 border-1 border-border-muted rounded-lg p-6 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+            <Typography.p class="text-base-content">
+              Met my partner here - actual video profiles make all the difference
+            </Typography.p>
+            <footer class="mt-4 flex justify-center gap-3">
+              <.icon name="hero-map-pin" class="text-primary h-5 w-5" />
+              <cite class="">
+                James, 38 - <span class="text-base-content-muted">South Yarra</span>
+              </cite>
+            </footer>
+          </blockquote>
+        </section>
+      </:content>
+    </Layout.hero_section>
+    <div class="divider " role="separator"></div>
+    <section id="pricing" class="fade pb-24 sm:pb-32" aria-labelledby="pricing-heading">
+      <div class="py-24 sm:py-32">
+        <div class="mx-auto max-w-7xl px-6 lg:px-8">
+          <header class="mx-auto max-w-4xl text-center">
+            <Typography.h2
+              id="pricing-heading"
+              class="text-pretty mb-6  tracking-tight sm:text-balance "
+            >
+              Dive in and test the water
+            </Typography.h2>
+
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body items-center text-center">
+                <Typography.p class="text-pretty text-center  text-lg mb-6">
+                  Pay nothing now.<br />
+                  <span class="text-base-content-muted">
+                    Get started for free!
+                  </span>
+                </Typography.p>
+                <Typography.p class="text-pretty mx-auto mt-6 inline-flex max-w-2xl px-6 py-3 text-lg  sm:text-xl/8">
+                  Let's find your perfect match.
+                </Typography.p>
+                <div class="card-actions">
+                  <.link
+                    class="btn btn-accent m-4 rounded-full uppercase border-1 border-border-muted shadow-md hover:shadow-lg transition-shadow duration-300"
+                    navigate={~p"/users/registration/1"}
+                  >
+                    Start 7-Day Free trial
+                  </.link>
+                </div>
+              </div>
+            </div>
+          </header>
+          <div class="mx-auto mt-12 max-w-2xl rounded-3xl sm:mt-20 lg:mx-0 lg:flex lg:max-w-none">
+            <div class="p-8 sm:p-10 lg:flex-auto">
+              <h3 class="text-3xl  tracking-tight ">
+                Simple affordable pricing
+              </h3>
+
+              <Typography.p class="mt-6">
+                We believe in honest, transparent pricing. No hidden fees, no surprises.
+              </Typography.p>
+              <div class="mt-10 flex items-center gap-x-4">
+                <h4 class="text-sm/6 flex-none ">
+                  What's included
+                </h4>
+                <div class="h-[2px] flex-auto bg-border" aria-hidden="true"></div>
+              </div>
+              <ul
+                role="list"
+                class="text-sm/6 mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6"
+                aria-label="Features included in subscription"
+              >
+                <li class="flex gap-x-3 items-center">
+                  <svg
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <Typography.p>
+                    Unlimited Private chat access
+                  </Typography.p>
+                </li>
+                <li class="flex gap-x-3 items-center">
+                  <svg
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <Typography.p>
+                    Unlimited Lounge chat access
+                  </Typography.p>
+                </li>
+                <li class="flex gap-x-3 items-center">
+                  <svg
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <Typography.p>
+                    Unlimited Voice Messaging
+                  </Typography.p>
+                </li>
+                <li class="flex gap-x-3 items-center">
+                  <svg
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <Typography.p>
+                    Unlimited Search and Matches
+                  </Typography.p>
+                </li>
+                <li class="flex gap-x-3 items-center">
+                  <svg
+                    class="fill-lime-500 h-8 w-8 sm:h-10 sm:w-10 flex-none"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <Typography.p>
+                    <span class="">1000 minutes of Videocalls.</span>
+                    <br />
+                    <span class="text-base-content-muted">
+                      You can always add more minutes if you need them.
+                    </span>
+                  </Typography.p>
+                </li>
+              </ul>
+            </div>
+
+            <div class="card bg-base-100  shadow-sm">
+              <div class="card-body items-center text-center">
+                <Typography.h4>
+                  Free Trial Subscription
+                </Typography.h4>
+                <div class="mx-auto px-8 relative">
+                  <Typography.p_sm>
+                    Enjoy all the features of our app with a 7 day free trial subscription.
+                  </Typography.p_sm>
+
+                  <p class="mt-6 flex items-baseline justify-center gap-x-2">
+                    <span class="text-7xl  tracking-tight">$19</span>
+                    <span class="text-sm/6 tracking-wide text-base-content-muted">AUD</span>
+                  </p>
+                  <p class="text-base ">Monthly</p>
+                  <p class="mt-4 text-sm text-base-content-muted">
+                    Charged only after your trial ends. Pay nothing if you cancel before the trial ends.
+                  </p>
+
+                  <.link
+                    class="btn btn-secondary m-4 rounded-full uppercase border-1 border-border-muted shadow-md hover:shadow-lg transition-shadow duration-300"
+                    navigate={~p"/users/registration/1"}
+                  >
+                    Start 7-Day Free trial
+                  </.link>
+
+                  <p class="text-base/5  mt-6">
+                    Pay no money now.
+                    <span class="text-sm/5 block mt-2 text-base-content-muted">
+                      Your subscription only begins after your free trial ends. <br />
+                      Cancel your subscription at anytime.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <%!-- <aside class="-mt-2 lg:mt-0 lg:w-full lg:max-w-md lg:shrink-0 self-center h-full">
+              <div class="overflow-hidden bg-base-300 rounded-2xl py-8 text-center border-1 border-border-muted lg:flex lg:flex-col lg:justify-center lg:py-16 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="mx-auto max-w-xs px-8 relative">
+                  <h3 class="text-2xl ">
+                    Free Trial Subscription
+                  </h3>
+                  <p class="mt-4 text-sm text-base-content-muted">
+                    Enjoy all the features of our app with a 7 day free trial subscription.
+                  </p>
+
+                  <p class="mt-6 flex items-baseline justify-center gap-x-2">
+                    <span class="text-7xl  tracking-tight">$19</span>
+                    <span class="text-sm/6 tracking-wide text-base-content-muted">AUD</span>
+                  </p>
+                  <p class="text-base ">Monthly</p>
+                  <p class="mt-4 text-sm text-base-content-muted">
+                    Charged only after your trial ends. Pay nothing if you cancel before the trial ends.
+                  </p>
+
+                  <.link
+                    class="btn btn-secondary m-4 rounded-full uppercase border-1 border-border-muted shadow-md hover:shadow-lg transition-shadow duration-300"
+                    navigate={~p"/users/registration/1"}
+                  >
+                    Start 7-Day Free trial
+                  </.link>
+
+                  <p class="text-base/5  mt-6">
+                    Pay no money now.
+                    <span class="text-sm/5 block mt-2 text-base-content-muted">
+                      Your subscription only begins after your free trial ends. <br />
+                      Cancel your subscription at anytime.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </aside> --%>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="hidden" aria-hidden="true">
+      Dating for grown-ups. Find your soulmate in Sydney, Melbourne, Brisbane, Perth and countless other cities. Verified Australian profiles only.
+      Safe dating with video verification. Meet real people in your suburb.
+    </div>
+  </Layout.section_container>
+</PartnersWeb.Layouts.app>

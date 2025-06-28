@@ -132,7 +132,10 @@ defmodule Partners.Access.Profiles.Profile do
                :get_profile_by_telephone
              ) do
           {:error, :not_found} -> []
-          _ -> [telephone: "user with this phone number already exists."]
+          {:ok, profile} ->
+            IO.inspect(profile, label: "🔔 Profile found")
+
+            [telephone: "user with this phone number already exists."]
         end
       else
         _ -> [telephone: "invalid phone number."]

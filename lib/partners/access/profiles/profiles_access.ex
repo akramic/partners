@@ -289,6 +289,9 @@ defmodule Partners.Access.Profiles.ProfilesAccess do
         {:user_id, user_id}, query ->
           from [profile: p] in query, where: p.user_id == ^user_id
 
+        {:telephone, telephone}, query ->
+          from [profile: p] in query, where: p.telephone == ^telephone
+
         {:includes, includes}, query ->
           from [profile: p] in query, preload: ^includes
 
