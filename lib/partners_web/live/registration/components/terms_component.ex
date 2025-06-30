@@ -40,6 +40,7 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
                   type="checkbox"
                   label="I agree to terms of membership"
                   required
+                  autofocus
                 />
               </div>
               <div :if={show_tick?(:terms, @form)} class="text-success ml-2">

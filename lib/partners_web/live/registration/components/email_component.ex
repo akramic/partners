@@ -50,6 +50,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
                 label="What's your email address?"
                 placeholder="you@example.com"
                 required
+                autofocus
               />
             </div>
             <div :if={show_tick?(:email, @form)} class="ml-4 text-success self-start mt-8">

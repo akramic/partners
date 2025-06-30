@@ -31,6 +31,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
                 label="Mobile Phone Number"
                 placeholder="Enter your Australian mobile number"
                 required
+                autofocus
               />
               <.input field={f[:country_code]} type="hidden" value="AU" />
             </div>
@@ -129,15 +130,6 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
   end
 
   @impl true
-  def update(%{event: {:otp, otp}}, socket) do
-    Logger.info("🔔 OTP received in update: #{otp}")
-
-    # updated_socket = verify_otp(%{"otp" => otp}, socket)
-
-    {:ok, socket}
-  end
-
-  @impl true
   def update(%{event: {:hide_code_sent, value}}, socket) do
     IO.inspect(value, label: "🔔 UPDATE RECEIVED")
 
@@ -209,7 +201,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
 
     # send the OTP and save to socket
     otp_code = create_otp_code()
-    # Sms.send_otp_code(telephone, otp_code)
+    Sms.send_otp_code(telephone, otp_code)
 
     otp_changeset = Profile.registration_otp_changeset(%{"stored_otp" => otp_code})
 
@@ -262,11 +254,8 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
     Logger.info("🔔 Validated OTP Code received in handle event save: #{otp}")
     IO.inspect(socket.assigns.form.params, label: "🔔 Socket Form State")
     # socket.assigns.form.params are %{"country_code" => "AU", "telephone" => "0421774826"}
-    params =
-      socket.assigns.form.params
-      |> Map.put_new("otp", otp)
-      |> Map.put_new("stored_otp", socket.assigns.stored_otp)
-      |> IO.inspect(label: "🔔 Params to be sent")
+
+    params = update_params(socket.assigns.form.params, otp, socket.assigns.stored_otp)
 
     case verify_telephone_and_otp(params) do
       {:ok, record} ->
@@ -311,5 +300,48 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
     Logger.error("❌ OTP verification failed: #{inspect(changeset)}")
 
     {:noreply, assign_form(socket, changeset) |> assign(show_modal: false)}
+  end
+
+  # This function formats the telephone number to E.164 format using ExPhoneNumber,
+  # adds the OTP code entered by the user and the stored OTP code for verification,
+  # then logs the complete parameter map that will be used for validation
+  defp update_params(form_params, otp, stored_otp) do
+    formatted_telephone_params(form_params)
+    |> Map.put_new("otp", otp)
+    |> Map.put_new("stored_otp", stored_otp)
+    |> IO.inspect(label: "🔔 Params to be sent")
+  end
+
+  defp formatted_telephone_params(params) do
+    with {:ok, phone_number_map} <-
+           ExPhoneNumber.parse(
+             Map.get(params, "telephone", ""),
+             Map.get(params, "country_code", "AU")
+           ),
+         formatted_telephone_number when not is_nil(formatted_telephone_number) <-
+           ExPhoneNumber.format(phone_number_map, :e164) do
+      %{
+        "telephone" => formatted_telephone_number,
+        "country_code" => Map.get(params, "country_code", "AU")
+      }
+    else
+      {:error, reason} ->
+        Logger.error(
+          "❌ Failed to parse telephone number: #{inspect(reason)}, params: #{inspect(params)}"
+        )
+
+        %{
+          "telephone" => Map.get(params, "telephone", ""),
+          "country_code" => Map.get(params, "country_code", "AU")
+        }
+
+      _ ->
+        Logger.error("❌ Failed to format telephone number to E.164: #{inspect(params)}")
+
+        %{
+          "telephone" => Map.get(params, "telephone", ""),
+          "country_code" => Map.get(params, "country_code", "AU")
+        }
+    end
   end
 end

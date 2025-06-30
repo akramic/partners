@@ -29,6 +29,7 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
                 label="Date of Birth"
                 placeholder="Select your date of birth"
                 required
+                autofocus
               />
             </div>
             <div :if={show_tick?(:dob, @form)} class="ml-4 text-success self-start mt-8">

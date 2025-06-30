@@ -29,6 +29,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
                 label="Username"
                 placeholder="Enter your username"
                 required
+                autofocus
               />
             </div>
             <div :if={show_tick?(:username, @form)} class="ml-4 text-success self-start mt-8">

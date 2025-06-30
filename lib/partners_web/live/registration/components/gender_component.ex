@@ -30,6 +30,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
                 options={[Male: "Male", Female: "Female"]}
                 prompt="Select your gender"
                 required
+                autofocus
               />
             </div>
             <div :if={show_tick?(:gender, @form)} class="ml-4 text-success self-start mt-8">
