@@ -148,22 +148,28 @@ defmodule PartnersWeb.CustomComponents.Layout do
         <div class="flex items-center gap-4">
           <nav>
             <ul
-              class="bg-base-100 rounded-full text-sm text-base-content flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end"
+              class="text-base-content flex items-center gap-4 justify-end"
               role="menu"
               aria-label="User account navigation"
             >
               <%= if @current_scope do %>
-                <li>
-                  <.link navigate={~p"/users/settings"}>Settings</.link>
+                <li class=" rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                  <.link navigate={~p"/users/settings"}>
+                    Settings
+                  </.link>
                 </li>
-                <li>
-                  <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+                <li class=" rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                  <.link href={~p"/users/log-out"} method="delete">
+                    Log out
+                  </.link>
                 </li>
               <% else %>
-                <li>
-                  <.link navigate={~p"/users/register"}>Register</.link>
+                <li class="  rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                  <.link navigate={~p"/users/registration/1"}>
+                    Free Trial
+                  </.link>
                 </li>
-                <li>
+                <li class="hover:text-red-500 rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
                   <.link navigate={~p"/users/log-in"}>Log in</.link>
                 </li>
               <% end %>
@@ -390,7 +396,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
       </nav>
       <aside>
         <%!-- Company logo of kangaroo --%>
-       <div class="w-12">
+        <div class="w-12">
           <Atoms.company_logo />
         </div>
 

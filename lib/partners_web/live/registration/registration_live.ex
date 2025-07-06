@@ -355,7 +355,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           <% end %>
 
           <%!-- Node container --%>
-          <div class="flex justify-center w-full z-10">
+          <div class="flex justify-center w-full z-0">
             <%!-- Completed step --%>
             <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
               <a
