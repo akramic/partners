@@ -34,6 +34,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   use PartnersWeb, :html
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -41,7 +42,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1.125rem,2.25vw,1.75rem)] leading-[calc(clamp(1.125rem,2.25vw,1.75rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
+        "text-[clamp(1.125rem,2.25vw,1.75rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.125rem,2.25vw,1.75rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
         @class
       ]}
       {@rest}
@@ -52,6 +54,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -59,7 +62,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.703rem,1.41vw,1.09rem)] leading-[calc(clamp(0.703rem,1.41vw,1.09rem)*1.7)] tracking-[clamp(0.01em,0.018vw,0.018em)]",
+        "text-[clamp(0.703rem,1.41vw,1.09rem)]/#{@opacity}",
+        "leading-[calc(clamp(0.703rem,1.41vw,1.09rem)*1.7)] tracking-[clamp(0.01em,0.018vw,0.018em)]",
         @class
       ]}
       {@rest}
@@ -70,6 +74,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -77,7 +82,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.845rem,1.69vw,1.31rem)] leading-[calc(clamp(0.845rem,1.69vw,1.31rem)*1.6)] tracking-[clamp(0.01em,0.016vw,0.016em)]",
+        "text-[clamp(0.845rem,1.69vw,1.31rem)]/#{@opacity}",
+        "leading-[calc(clamp(0.845rem,1.69vw,1.31rem)*1.6)] tracking-[clamp(0.01em,0.016vw,0.016em)]",
         @class
       ]}
       {@rest}
@@ -88,6 +94,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -95,7 +102,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(0.985rem,1.97vw,1.53rem)] leading-[calc(clamp(0.985rem,1.97vw,1.53rem)*1.5)] tracking-[clamp(0.01em,0.017vw,0.017em)]",
+        "text-[clamp(0.985rem,1.97vw,1.53rem)]/#{@opacity}",
+        "leading-[calc(clamp(0.985rem,1.97vw,1.53rem)*1.5)] tracking-[clamp(0.01em,0.017vw,0.017em)]",
         @class
       ]}
       {@rest}
@@ -106,6 +114,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -113,7 +122,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <p
       class={[
-        "text-[clamp(1.27rem,2.53vw,1.97rem)] leading-[calc(clamp(1.27rem,2.53vw,1.97rem)*1.4)] tracking-[clamp(0.005em,0.015vw,0.015em)]",
+        "text-[clamp(1.27rem,2.53vw,1.97rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.27rem,2.53vw,1.97rem)*1.4)] tracking-[clamp(0.005em,0.015vw,0.015em)]",
         @class
       ]}
       {@rest}
@@ -124,6 +134,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -131,7 +142,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h1
       class={[
-        "text-[clamp(2.5rem,6vw,4rem)] leading-[calc(clamp(2.5rem,6vw,4rem)*1.1)] font-extrabold tracking-[clamp(-0.02em,-0.01vw,-0.01em)]",
+        "text-[clamp(2.5rem,6vw,4rem)]/#{@opacity}",
+        "leading-[calc(clamp(2.5rem,6vw,4rem)*1.1)] font-extrabold tracking-[clamp(-0.02em,-0.01vw,-0.01em)]",
         @class
       ]}
       {@rest}
@@ -142,6 +154,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -149,7 +162,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h2
       class={[
-        "text-[clamp(2.25rem,5.5vw,3.5rem)] leading-[calc(clamp(2.25rem,5.5vw,3.5rem)*1.1)] font-bold tracking-[clamp(-0.015em,-0.01vw,-0.01em)]",
+        "text-[clamp(2.25rem,5.5vw,3.5rem)]/#{@opacity}",
+        "leading-[calc(clamp(2.25rem,5.5vw,3.5rem)*1.1)] font-bold tracking-[clamp(-0.015em,-0.01vw,-0.01em)]",
         @class
       ]}
       {@rest}
@@ -160,6 +174,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -167,7 +182,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h3
       class={[
-        "text-[clamp(2rem,5vw,3rem)] leading-[calc(clamp(2rem,5vw,3rem)*1.1)]  tracking-[clamp(-0.01em,-0.005vw,-0.005em)]",
+        "text-[clamp(2rem,5vw,3rem)]/#{@opacity}",
+        "leading-[calc(clamp(2rem,5vw,3rem)*1.1)]  tracking-[clamp(-0.01em,-0.005vw,-0.005em)]",
         @class
       ]}
       {@rest}
@@ -178,6 +194,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -185,7 +202,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h4
       class={[
-        "text-[clamp(1.75rem,4.5vw,2.5rem)] leading-[calc(clamp(1.75rem,4.5vw,2.5rem)*1.1)]  tracking-[clamp(-0.005em,0em,0em)]",
+        "text-[clamp(1.75rem,4.5vw,2.5rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.75rem,4.5vw,2.5rem)*1.1)]  tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
       {@rest}
@@ -196,6 +214,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -203,7 +222,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.5rem,4vw,2.25rem)] leading-[calc(clamp(1.5rem,4vw,2.25rem)*1.15)]  tracking-[clamp(-0.005em,0em,0em)]",
+        "text-[clamp(1.5rem,4vw,2.25rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.5rem,4vw,2.25rem)*1.15)]  tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
       {@rest}
@@ -214,6 +234,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -221,7 +242,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h6
       class={[
-        "text-[clamp(1.25rem,3.5vw,2rem)] leading-[calc(clamp(1.25rem,3.5vw,2rem)*1.15)]  tracking-[clamp(0em,0.01vw,0.01em)]",
+        "text-[clamp(1.25rem,3.5vw,2rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.25rem,3.5vw,2rem)*1.15)]  tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}
       {@rest}
@@ -232,6 +254,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :opacity, :string, default: "100", doc: "the opacity of the text (0-100)"
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -239,7 +262,8 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.25rem,2.5vw,1.75rem)] leading-[calc(clamp(1.25rem,2.5vw,1.75rem)*1.4)]  tracking-[clamp(0em,0.01vw,0.01em)]",
+        "text-[clamp(1.25rem,2.5vw,1.75rem)]/#{@opacity}",
+        "leading-[calc(clamp(1.25rem,2.5vw,1.75rem)*1.4)]  tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}
       {@rest}

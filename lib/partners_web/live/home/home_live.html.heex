@@ -55,15 +55,15 @@
 
         <footer>
           <div>
-            <Typography.h1
+            <p
               phx-mounted={
                 JS.transition({"ease-in duration-[1s]", "opacity-0", "opacity-100"}, time: 1000)
               }
-              class="text-[clamp(3.25rem,10vw,10rem)] leading-[calc(clamp(3.25rem,10vw,10rem)*1.2)] mt-4 text-center font-extrabold tracking-tight text-white"
+              class="text-balance text-[clamp(5rem,10vw,10rem)] leading-[calc(clamp(3.25rem,10vw,10rem)*1.2)] mt-4 text-center font-extrabold tracking-tight text-white"
               id="hero-title"
             >
               Re-ignite your passion
-            </Typography.h1>
+            </p>
 
             <article
               class="flex flex-col items-center px-2"
@@ -79,8 +79,8 @@
               }
             >
               <hgroup class="relative flex items-center justify-center py-10 text-center">
-                <Typography.h3 class="text-white font-bold">
-                  For Aussie grown-ups
+                <Typography.h3 class="text-gray-300 font-bold">
+                  For grown-up Aussies
                 </Typography.h3>
               </hgroup>
             </article>
