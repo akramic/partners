@@ -153,30 +153,31 @@ defmodule PartnersWeb.CustomComponents.Layout do
               aria-label="User account navigation"
             >
               <%= if @current_scope do %>
-                <li class=" rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link navigate={~p"/users/settings"}>
                     Settings
                   </.link>
                 </li>
-                <li class=" rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link href={~p"/users/log-out"} method="delete">
                     Log out
                   </.link>
                 </li>
               <% else %>
-                <li class="  rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link navigate={~p"/users/registration/1"}>
                     Free Trial
                   </.link>
                 </li>
-                <li class="hover:text-red-500 rounded-full bg-base-100 py-1.5 px-4 hover:bg-base-200">
+                <li class="rounded-full bg-base-100 py-1 px-3  hover:bg-base-300">
                   <.link navigate={~p"/users/log-in"}>Log in</.link>
                 </li>
               <% end %>
             </ul>
           </nav>
           <nav class="relative" aria-label="Main menu navigation">
-            <label
+            <button
+              type="button"
               phx-click={
                 %JS{}
                 |> JS.toggle(
@@ -185,42 +186,42 @@ defmodule PartnersWeb.CustomComponents.Layout do
                   out: {"ease-in-out duration-300 ", "translate-x-0 ", "-translate-x-full "},
                   time: 200
                 )
+                |> JS.toggle(to: "#hamburger-icon")
+                |> JS.toggle(to: "#close-icon")
               }
-              class="z-20 btn btn-circle swap swap-rotate"
+              class="z-50 btn btn-circle relative"
               aria-haspopup="true"
               aria-controls="side-bar"
               aria-expanded="false"
               aria-label="Toggle main menu"
             >
-              <!-- this hidden checkbox controls the state -->
-              <input type="checkbox" aria-hidden="true" />
-
-    <!-- hamburger icon -->
+              <!-- hamburger icon -->
               <svg
-                class="swap-off fill-current"
+                id="hamburger-icon"
                 xmlns="http://www.w3.org/2000/svg"
-                width="32"
-                height="32"
-                viewBox="0 0 512 512"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
                 aria-hidden="true"
                 focusable="false"
+                class="fill-current absolute inset-0 m-auto"
               >
-                <path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z" />
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
               </svg>
-
-    <!-- close icon -->
+              <!-- close icon - initially hidden -->
               <svg
-                class="swap-on fill-current"
+                id="close-icon"
                 xmlns="http://www.w3.org/2000/svg"
-                width="32"
-                height="32"
-                viewBox="0 0 512 512"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
                 aria-hidden="true"
                 focusable="false"
+                class="fill-current hidden absolute inset-0 m-auto"
               >
-                <polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49" />
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
               </svg>
-            </label>
+            </button>
 
             <%!--  --%>
           </nav>
@@ -230,7 +231,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
       <%!-- This is the overlay with menu--%>
       <dialog
         id="backdrop"
-        class="backdrop-blur-[2px] h-dvh w-full max-w-[1980px] mx-auto z-10 absolute top-0 hidden bg-base-100/0"
+        class="backdrop-blur-[2px] h-dvh w-full max-w-[1980px] mx-auto z-40 absolute top-0 hidden bg-base-100/0"
         role="dialog"
         aria-modal="true"
         aria-labelledby="menu-heading"

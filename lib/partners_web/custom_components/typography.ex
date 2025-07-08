@@ -9,6 +9,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
 
     All sizing follows Tailwind CSS v4 proportional relationships:
     - p: Base font (equivalent to Tailwind's text-base)
+    - p_xxs: 62.5% of base size (smaller than Tailwind's text-xs)
     - p_xs: 75% of base size (equivalent to Tailwind's text-xs)
     - p_sm: 87.5% of base size (equivalent to Tailwind's text-sm)
     - p_lg: 112.5% of base size (equivalent to Tailwind's text-lg)
@@ -18,15 +19,15 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ## Usage Example
 
     ```elixir
-    import PartnersWeb.CustomComponents.Typography, only: [p: 1, p_sm: 1, p_xs: 1, p_lg: 1]
+    import PartnersWeb.CustomComponents.Typography, only: [p: 1, p_sm: 1, p_xs: 1, p_xxs: 1, p_lg: 1]
 
     <.p>
       This is a dynamic sized paragraph using the base font.
     </.p>
 
-    <.p_sm>
-      This is a smaller paragraph that still scales responsively.
-    </.p_sm>
+    <.p_xxs>
+      This is an extra small paragraph that still scales responsively.
+    </.p_xxs>
     ```
   """
 
@@ -41,6 +42,24 @@ defmodule PartnersWeb.CustomComponents.Typography do
     <p
       class={[
         "text-[clamp(1.125rem,2.25vw,1.75rem)] leading-[calc(clamp(1.125rem,2.25vw,1.75rem)*1.5)] tracking-[clamp(0.01em,0.02vw,0.02em)]",
+        @class
+      ]}
+      {@rest}
+    >
+      {render_slot(@inner_block)}
+    </p>
+    """
+  end
+
+  attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
+  slot :inner_block, doc: "the optional inner block that renders the text"
+
+  def p_xxs(assigns) do
+    ~H"""
+    <p
+      class={[
+        "text-[clamp(0.703rem,1.41vw,1.09rem)] leading-[calc(clamp(0.703rem,1.41vw,1.09rem)*1.7)] tracking-[clamp(0.01em,0.018vw,0.018em)]",
         @class
       ]}
       {@rest}
