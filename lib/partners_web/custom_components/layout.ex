@@ -323,9 +323,14 @@ defmodule PartnersWeb.CustomComponents.Layout do
     """
   end
 
+  defp modifier(value) do
+    "/#{value}"
+  end
+
   def site_footer(assigns) do
     ~H"""
     <footer class="w-full max-w-[1980px] mx-auto border-t border-zinc-500/50 footer footer-horizontal footer-center bg-base-300 text-base-content p-4">
+
       <p class="text-lg">Share and get 100 video call minutes on us!</p>
       <nav class="w-full max-w-2xl p-4 rounded-full bg-base-100" aria-label="Social media links">
         <div class="w-full max-w-lg flex justify-around items-center">
@@ -335,7 +340,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
               width="24"
               height="24"
               viewBox="0 0 24 24"
-              class="fill-current"
+              class={[
+                "fill-current transition-colors duration-200",
+                "hover:fill-base-content#{modifier(60)}"
+              ]}
               aria-hidden="true"
               focusable="false"
             >
@@ -349,7 +357,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
               width="24"
               height="24"
               viewBox="0 0 24 24"
-              class="fill-current"
+              class={[
+                "fill-current transition-colors duration-200",
+                "hover:fill-base-content#{modifier(60)}"
+              ]}
               aria-hidden="true"
               focusable="false"
             >
@@ -362,7 +373,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
               width="24"
               height="24"
               viewBox="0 0 24 24"
-              class="fill-current"
+              class={[
+                "fill-current transition-colors duration-200",
+                "hover:fill-base-content#{modifier(60)}"
+              ]}
               aria-hidden="true"
               focusable="false"
             >
@@ -375,7 +389,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
               width="24"
               height="24"
               viewBox="0 0 24 24"
-              class="fill-current"
+              class={[
+                "fill-current transition-colors duration-200",
+                "hover:fill-base-content#{modifier(60)}"
+              ]}
               aria-hidden="true"
               focusable="false"
             >
@@ -388,7 +405,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
               width="30"
               height="30"
               viewBox="0 0 24 24"
-              class="fill-current"
+              class={[
+                "fill-current transition-colors duration-200",
+                "hover:fill-base-content#{modifier(60)}"
+              ]}
               aria-hidden="true"
               focusable="false"
             >

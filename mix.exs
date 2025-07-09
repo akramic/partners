@@ -60,6 +60,7 @@ defmodule Partners.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       # Added dependencies
+      {:tailwind_formatter, "~> 0.4.2", only: [:dev, :test], runtime: false},
       {:geo_postgis, "~> 3.7"},
       {:csv, "~> 3.2"},
       {:req, "~> 0.5.0"},
