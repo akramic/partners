@@ -155,22 +155,24 @@ defmodule PartnersWeb.CustomComponents.Layout do
               <%= if @current_scope do %>
                 <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link navigate={~p"/users/settings"}>
-                    Settings
+                    <Typography.p_xxs>Settings</Typography.p_xxs>
                   </.link>
                 </li>
                 <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link href={~p"/users/log-out"} method="delete">
-                    Log out
+                    <Typography.p_xxs>Log out</Typography.p_xxs>
                   </.link>
                 </li>
               <% else %>
                 <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
                   <.link navigate={~p"/users/registration/1"}>
-                    Free Trial
+                    <Typography.p_xxs>Register</Typography.p_xxs>
                   </.link>
                 </li>
                 <li class="rounded-full bg-base-100 py-1 px-3  hover:bg-base-300">
-                  <.link navigate={~p"/users/log-in"}>Log in</.link>
+                  <.link navigate={~p"/users/log-in"}>
+                    <Typography.p_xxs>Log in</Typography.p_xxs>
+                  </.link>
                 </li>
               <% end %>
             </ul>

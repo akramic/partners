@@ -50,8 +50,8 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       <div class="hero-overlay"></div>
       <div class="hero-content text-neutral-content text-center">
         <div class="max-w-4xl space-y-6">
-          <Typography.h1 class="font-semibold">Let's get your free trial underway</Typography.h1>
-          <Typography.p_lg class="mb-5">
+          <Typography.h1 class="font-semibold text-balance">Let's get your free trial underway</Typography.h1>
+          <Typography.p_lg class="mb-5 text-balance">
             First, we just need a few details to create your account.<br />
             Then we'll transfer you to Paypal to start your free subscription.
           </Typography.p_lg>,
