@@ -1,82 +1,34 @@
 defmodule PartnersWeb.CustomComponents.Typography do
   @moduledoc """
-    A collection of custom responsive typography components aligned with Tailwind CSS v4 size ratios.
+  A collection of custom responsive typography components aligned with Tailwind CSS v4 size ratios.
 
-    The components use CSS clamp() func  attr :class, :string, default: ""  attr :class, :string, default: ""  attr :class, :string, default: "", doc: "the CSS classes to add to the component"
-  attr :opacity, :integer,
-    default: 100,
-    doc: "the opacity to apply (default is 100 for 100% opacity)"
-  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
-  slot :inner_block, doc: "the optional inner block that renders the text"
+  The components use CSS clamp() function to create fluid typography that scales smoothly
+  between minimum and maximum sizes based on viewport width.
 
-  def h6(assigns) do
-    ~H\"""
-    <h6
-      class={[
-        "text-[clamp(0.875rem,1.6vw,0.975rem)] opacity-#{@opacity}",
-        "leading-[calc(clamp(0.875rem,1.6vw,0.975rem)*1.15)] font-bold",
-        @class
-      ]}
-      {@rest}
-    >S classes to add to the component"
-  attr :opacity, :integer,
-    default: 100,
-    doc: "the opacity to apply (default is 100 for 100% opacity)"
-  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
-  slot :inner_block, doc: "the optional inner block that renders the text"
+  ## Size Relationships
 
-  def h5(assigns) do
-    ~H\"""
-    <h5
-      class={[
-        "text-[clamp(1rem,1.9vw,1.1rem)] opacity-#{@opacity}",
-        "leading-[calc(clamp(1rem,1.9vw,1.1rem)*1.15)] font-bold",
-        @class
-      ]}
-      {@rest}
-    >S classes to add to the component"
-  attr :opacity, :integer,
-    default: 100,
-    doc: "the opacity to apply (default is 100 for 100% opacity)"
-  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
-  slot :inner_block, doc: "the optional inner block that renders the text"
+  All sizing follows Tailwind CSS v4 proportional relationships:
+  - p: Base font (equivalent to Tailwind's text-base)
+  - p_xxs: 62.5% of base size (smaller than Tailwind's text-xs)
+  - p_xs: 75% of base size (equivalent to Tailwind's text-xs)
+  - p_sm: 87.5% of base size (equivalent to Tailwind's text-sm)
+  - p_lg: 112.5% of base size (equivalent to Tailwind's text-lg)
 
-  def h4(assigns) do
-    ~H\"""
-    <h4
-      class={[
-        "text-[clamp(1.15rem,2.5vw,1.35rem)] opacity-#{@opacity}",
-        "leading-[calc(clamp(1.15rem,2.5vw,1.35rem)*1.1)] font-bold",
-        @class
-      ]}
-      {@rest}
-    > fluid typography that scales smoothly
-    between minimum and maximum sizes based on viewport width.
+  Line height and letter spacing are adjusted for optimal readability at each size.
 
-    ## Size Relationships
+  ## Usage Example
 
-    All sizing follows Tailwind CSS v4 proportional relationships:
-    - p: Base font (equivalent to Tailwind's text-base)
-    - p_xxs: 62.5% of base size (smaller than Tailwind's text-xs)
-    - p_xs: 75% of base size (equivalent to Tailwind's text-xs)
-    - p_sm: 87.5% of base size (equivalent to Tailwind's text-sm)
-    - p_lg: 112.5% of base size (equivalent to Tailwind's text-lg)
+  ```elixir
+  import PartnersWeb.CustomComponents.Typography, only: [p: 1, p_sm: 1, p_xs: 1, p_xxs: 1, p_lg: 1]
 
-    Line height and letter spacing are adjusted for optimal readability at each size.
+  <.p>
+    This is a dynamic sized paragraph using the base font.
+  </.p>
 
-    ## Usage Example
-
-    ```elixir
-    import PartnersWeb.CustomComponents.Typography, only: [p: 1, p_sm: 1, p_xs: 1, p_xxs: 1, p_lg: 1]
-
-    <.p>
-      This is a dynamic sized paragraph using the base font.
-    </.p>
-
-    <.p_xxs>
-      This is an extra small paragraph that still scales responsively.
-    </.p_xxs>
-    ```
+  <.p_xxs>
+    This is an extra small paragraph that still scales responsively.
+  </.p_xxs>
+  ```
   """
 
   use PartnersWeb, :html
@@ -274,6 +226,11 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+
+  attr :opacity, :integer,
+    default: 100,
+    doc: "the opacity to apply (default is 100 for 100% opacity)"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -281,7 +238,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h4
       class={[
-        "text-[clamp(1.75rem,4.5vw,2.5rem)]",
+        "text-[clamp(1.75rem,4.5vw,2.5rem)] opacity-#{@opacity}",
         "leading-[calc(clamp(1.75rem,4.5vw,2.5rem)*1.1)]  tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
@@ -293,6 +250,11 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+
+  attr :opacity, :integer,
+    default: 100,
+    doc: "the opacity to apply (default is 100 for 100% opacity)"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -300,7 +262,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.5rem,4vw,2.25rem)]",
+        "text-[clamp(1.5rem,4vw,2.25rem)] opacity-#{@opacity}",
         "leading-[calc(clamp(1.5rem,4vw,2.25rem)*1.15)]  tracking-[clamp(-0.005em,0em,0em)]",
         @class
       ]}
@@ -312,6 +274,11 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+
+  attr :opacity, :integer,
+    default: 100,
+    doc: "the opacity to apply (default is 100 for 100% opacity)"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -319,7 +286,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h6
       class={[
-        "text-[clamp(1.25rem,3.5vw,2rem)]",
+        "text-[clamp(1.25rem,3.5vw,2rem)] opacity-#{@opacity}",
         "leading-[calc(clamp(1.25rem,3.5vw,2rem)*1.15)]  tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}
@@ -331,6 +298,11 @@ defmodule PartnersWeb.CustomComponents.Typography do
   end
 
   attr :class, :string, default: "", doc: "the CSS classes to add to the component"
+
+  attr :opacity, :integer,
+    default: 100,
+    doc: "the opacity to apply (default is 100 for 100% opacity)"
+
   attr :rest, :global, doc: "the arbitrary HTML attributes to add to the component"
   slot :inner_block, doc: "the optional inner block that renders the text"
 
@@ -338,7 +310,7 @@ defmodule PartnersWeb.CustomComponents.Typography do
     ~H"""
     <h5
       class={[
-        "text-[clamp(1.25rem,2.5vw,1.75rem)]",
+        "text-[clamp(1.25rem,2.5vw,1.75rem)] opacity-#{@opacity}",
         "leading-[calc(clamp(1.25rem,2.5vw,1.75rem)*1.4)]  tracking-[clamp(0em,0.01vw,0.01em)]",
         @class
       ]}

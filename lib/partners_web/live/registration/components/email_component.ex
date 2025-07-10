@@ -27,11 +27,11 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   def render(assigns) do
     ~H"""
     <div id="email_component" class="flex flex-col items-center justify-center w-full px-4 h-full">
-      <Atoms.kangaroo_speech_bubble_top_left_tail>
+      <Atoms.kangaroo_dialogue_left>
         <Typography.p_xs>
           Your email address always remains confidential.
         </Typography.p_xs>
-      </Atoms.kangaroo_speech_bubble_top_left_tail>
+      </Atoms.kangaroo_dialogue_left>
       <.form
         :let={f}
         for={@form}
