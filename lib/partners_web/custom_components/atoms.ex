@@ -16,7 +16,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
   def menu_item(%{nav_method: :href} = assigns) do
     ~H"""
     <li role="menuitem">
-      <.link href={@url} method={@method} class="flex justify-between items-center">
+      <.link href={@url} method={@method} class="flex items-center justify-between">
         <PartnersWeb.CoreComponents.icon name={@hero_icon_name} class="h-6 w-6" />
         {@menu_label}
       </.link>
@@ -27,7 +27,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
   def menu_item(%{nav_method: :patch} = assigns) do
     ~H"""
     <li role="menuitem">
-      <.link patch={@url} method={@method} class="flex justify-between items-center">
+      <.link patch={@url} method={@method} class="flex items-center justify-between">
         <PartnersWeb.CoreComponents.icon name={@hero_icon_name} class="h-6 w-6" />
         {@menu_label}
       </.link>
@@ -38,7 +38,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
   def menu_item(assigns) do
     ~H"""
     <li role="menuitem">
-      <.link navigate={@url} method={@method} class="flex justify-between items-center">
+      <.link navigate={@url} method={@method} class="flex items-center justify-between">
         <PartnersWeb.CoreComponents.icon name={@hero_icon_name} class="h-6 w-6" />
         {@menu_label}
       </.link>
@@ -56,10 +56,10 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def speech_bubble_left(assigns) do
     ~H"""
-    <div class="chat chat-start">
-      <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative shadow-md before:hidden overflow-visible">
+    <div class="chat chat-start ">
+      <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative overflow-visible shadow-md before:hidden">
         {render_slot(@inner_block)}
-        <div class="absolute w-0 h-0 border-[8px] border-transparent border-r-info border-b-info bottom-auto left-[-8px] top-0 rotate-[45deg]">
+        <div class="border-[8px] border-r-info border-b-info left-[-8px] rotate-[45deg] absolute top-0 bottom-auto h-0 w-0 border-transparent">
         </div>
       </div>
     </div>
@@ -76,10 +76,10 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def speech_bubble_right(assigns) do
     ~H"""
-    <div class="chat chat-end">
-      <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative shadow-md before:hidden overflow-visible">
+    <div class="chat chat-end ">
+      <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative overflow-visible shadow-md before:hidden">
         {render_slot(@inner_block)}
-        <div class="absolute w-0 h-0 border-[8px] border-transparent border-l-info border-b-info bottom-auto right-[-8px] top-0 rotate-[315deg]">
+        <div class="border-[8px] border-l-info border-b-info right-[-8px] rotate-[315deg] absolute top-0 bottom-auto h-0 w-0 border-transparent">
         </div>
       </div>
     </div>
@@ -96,8 +96,8 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def kangaroo_dialogue_left(assigns) do
     ~H"""
-    <div class="flex items-start justify-center gap-2 my-4 w-full max-w-lg">
-      <div class="flex-none w-18">
+    <div class="my-4 flex w-full max-w-lg items-start justify-center gap-2">
+      <div class="w-18 flex-none">
         <.company_logo />
       </div>
       <.speech_bubble_left>
@@ -117,11 +117,11 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def kangaroo_dialogue_right(assigns) do
     ~H"""
-    <div class="flex items-start gap-2 my-4 w-full max-w-lg">
+    <div class="my-4 flex w-full max-w-lg items-start gap-2">
       <.speech_bubble_right>
         {render_slot(@inner_block)}
       </.speech_bubble_right>
-      <div class="flex-none w-18">
+      <div class="w-18 flex-none">
         <.company_logo_mirror />
       </div>
     </div>
@@ -141,13 +141,13 @@ defmodule PartnersWeb.CustomComponents.Atoms do
   def full_page_loader(assigns) do
     ~H"""
     <div
-      class="w-full h-full fixed top-0 left-0 bg-base-100 opacity-90 z-[100]"
+      class="bg-base-100 z-[100] fixed top-0 left-0 h-full w-full opacity-90"
       role="dialog"
       aria-modal="true"
       aria-labelledby="loading-status"
     >
       <div
-        class="flex flex-col space-y-3 justify-center items-center h-full w-full"
+        class="flex h-full w-full flex-col items-center justify-center space-y-3"
         role="status"
         aria-live="polite"
       >
@@ -155,7 +155,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
           <.company_logo />
         </div>
         {render_slot(@inner_block)}
-        <div class="flex justify-center items-center space-x-2">
+        <div class="flex items-center justify-center space-x-2">
           <Typography.p_xs class="gap-2" id="loading-status">
             {@text}
           </Typography.p_xs>
@@ -177,8 +177,8 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def full_page_modal(assigns) do
     ~H"""
-    <div class="w-full h-full fixed top-0 left-0 bg-base-100 opacity-90 z-[100]">
-      <div class="flex flex-col space-y-3 justify-center items-center h-full w-full">
+    <div class="bg-base-100 z-[100] fixed top-0 left-0 h-full w-full opacity-90">
+      <div class="flex h-full w-full flex-col items-center justify-center space-y-3">
         <div>
           <.company_logo />
         </div>

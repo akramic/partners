@@ -26,12 +26,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="email_component" class="flex flex-col items-center justify-center w-full px-4 h-full">
-      <Atoms.kangaroo_dialogue_left>
-        <Typography.p_xs>
-          Your email address always remains confidential.
-        </Typography.p_xs>
-      </Atoms.kangaroo_dialogue_left>
+    <div id="email_component" class="flex h-full w-full flex-col items-center justify-center px-4">
       <.form
         :let={f}
         for={@form}
@@ -41,7 +36,12 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4 relative">
+        <Atoms.kangaroo_dialogue_left>
+          <Typography.p_xs class="text-balance">
+            Your email address always remains confidential.
+          </Typography.p_xs>
+        </Atoms.kangaroo_dialogue_left>
+        <div class="relative mb-4">
           <div class="flex items-center">
             <div class="flex-grow">
               <.input
@@ -53,22 +53,19 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
                 autofocus
               />
             </div>
-            <div :if={show_tick?(:email, @form)} class="ml-4 text-success self-start mt-8">
-              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            <div :if={show_tick?(:email, @form)} class="text-success mt-8 ml-4 self-start">
+              <.icon name="hero-check-circle-solid" class="h-8 w-8" />
             </div>
           </div>
         </div>
         <div
           phx-mounted={RegistrationLive.button_container_transition()}
-          class="flex items-center justify-between w-full max-w-xl"
+          class="flex w-full max-w-xl items-center justify-between"
         >
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
-            class={[
-              "btn btn-ghost ",
-              if(@current_step == "email", do: "invisible", else: "")
-            ]}
+            class={["btn btn-ghost ", if(@current_step == "email", do: "invisible", else: "")]}
           >
             back
           </button>
@@ -82,7 +79,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
             disabled={!@form.source.valid?}
             class="btn btn-primary"
           >
-            Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+            Next <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
           </button>
         </div>
       </.form>
@@ -96,6 +93,9 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
     # Important: We need to get the updated socket from verify_email
     # and use that in our return value
     updated_socket = verify_email(%{"email" => email}, socket)
+
+    # Add a fixed delay to ensure loader is visible long enough for smooth transition
+    :timer.sleep(500)
 
     {:ok, updated_socket}
   end

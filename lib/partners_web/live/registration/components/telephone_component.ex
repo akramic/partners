@@ -12,7 +12,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="telephone_component" class="flex flex-col items-center justify-center w-full px-4 h-full">
+    <div id="telephone_component" class="flex h-full w-full flex-col items-center justify-center px-4">
       <.form
         :let={f}
         for={@form}
@@ -22,7 +22,12 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
-        <div class="mb-4 relative">
+        <Atoms.kangaroo_dialogue_left>
+          <Typography.p_xs class="text-balance">
+            Your mobile phone number is used for account verification and security.
+          </Typography.p_xs>
+        </Atoms.kangaroo_dialogue_left>
+        <div class="relative mb-4">
           <div class="flex items-center">
             <div class="flex-grow">
               <.input
@@ -35,22 +40,22 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
               />
               <.input field={f[:country_code]} type="hidden" value="AU" />
             </div>
-            <div :if={show_tick?(:telephone, @form)} class="ml-4 text-success self-start mt-8">
-              <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+            <div :if={show_tick?(:telephone, @form)} class="text-success mt-8 ml-4 self-start">
+              <.icon name="hero-check-circle-solid" class="h-8 w-8" />
             </div>
           </div>
         </div>
 
         <div
           phx-mounted={RegistrationLive.button_container_transition()}
-          class="flex items-center justify-between w-full max-w-xl"
+          class="flex w-full max-w-xl items-center justify-between"
         >
           <button
             type="button"
             phx-click={RegistrationLive.back_button_transition_push(@current_step)}
             class="btn btn-ghost "
           >
-            <.icon name="hero-arrow-left" class="w-4 h-4 mr-2" /> back
+            <.icon name="hero-arrow-left" class="mr-2 h-4 w-4" /> back
           </button>
           <%!-- We dispatch to the phx-change event and pattern match on the params --%>
           <button
@@ -61,12 +66,12 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
             disabled={!@form.source.valid?}
             class="btn btn-primary"
           >
-            Next <.icon name="hero-arrow-right" class="w-4 h-4 ml-2" />
+            Next <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
           </button>
         </div>
       </.form>
       <Atoms.full_page_modal :if={@show_modal}>
-        <div class="space-y-6 flex flex-col items-center justify-center w-full px-4 ">
+        <div class="flex w-full flex-col items-center justify-center space-y-6 px-4 ">
           <Typography.p>
             Verify One Time Passcode
           </Typography.p>
@@ -84,7 +89,7 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
             class="w-full max-w-md"
             phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
           >
-            <div class="mb-4 relative">
+            <div class="relative mb-4">
               <div class="flex items-center">
                 <div class="flex-grow ">
                   <.input
@@ -98,17 +103,17 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
                     title="Please enter a valid 6-digit OTP code"
                   />
                 </div>
-                <div :if={show_tick?(:otp, @otp_form)} class="ml-4 text-success self-start mt-8">
-                  <.icon name="hero-check-circle-solid" class="w-8 h-8" />
+                <div :if={show_tick?(:otp, @otp_form)} class="text-success mt-8 ml-4 self-start">
+                  <.icon name="hero-check-circle-solid" class="h-8 w-8" />
                 </div>
               </div>
             </div>
-            <div class="flex items-center justify-center w-full max-w-xl">
+            <div class="flex w-full max-w-xl items-center justify-center">
               <button type="submit" class="btn btn-primary">Verify Code</button>
             </div>
           </.form>
 
-          <div class="flex flex-col justify-center items-center space-x-2">
+          <div class="flex flex-col items-center justify-center space-x-2">
             <button phx-click="request_otp_code" phx-target={@myself} class="btn btn-link">
               Request another code
             </button>
@@ -121,8 +126,8 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
                 !@code_sent && "opacity-0"
               ]}
             >
-              <span class="flex justify-center items-end">
-                New OTP sent <.icon name="hero-check" class="w-4 h-4 self-baseline ml-2" />
+              <span class="flex items-end justify-center">
+                New OTP sent <.icon name="hero-check" class="ml-2 h-4 w-4 self-baseline" />
               </span>
             </span>
           </div>

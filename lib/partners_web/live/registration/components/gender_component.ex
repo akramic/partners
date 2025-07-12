@@ -3,6 +3,7 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
 
   alias PartnersWeb.Registration.RegistrationLive
   alias Partners.Access.Profiles.Profile
+  alias PartnersWeb.CustomComponents.{Atoms, Typography}
 
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
@@ -20,6 +21,11 @@ defmodule PartnersWeb.Registration.Components.GenderComponent do
         class="w-full max-w-xl"
         phx-mounted={RegistrationLive.form_mounted_transition(@transition_direction)}
       >
+        <Atoms.kangaroo_dialogue_left>
+          <Typography.p_xs class="text-balance">
+            This is your birth gender.
+          </Typography.p_xs>
+        </Atoms.kangaroo_dialogue_left>
         <div class="relative mb-4">
           <div class="flex items-center">
             <div class="flex-grow">
