@@ -7,6 +7,8 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
 
   import PartnersWeb.Registration.RegistrationLive, only: [assign_form: 2, show_tick?: 2]
 
+  @min_age 21
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -34,6 +36,7 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
                 type="date"
                 label="Date of Birth"
                 placeholder="Select your date of birth"
+                max={max_date()}
                 required
                 autofocus
               />
@@ -107,5 +110,13 @@ defmodule PartnersWeb.Registration.Components.DobComponent do
         {:error, changeset} ->
           {:noreply, socket |> assign_form(changeset)}
       end
+  end
+
+  defp max_date do
+    # Set the maximum date to @min_age years ago from today
+    # This ensures users must be at least @min_age years old
+    Timex.now()
+    |> Timex.shift(years: -@min_age)
+    |> Timex.format!("{YYYY}-{0M}-{0D}")
   end
 end
