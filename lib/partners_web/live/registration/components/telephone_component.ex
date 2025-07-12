@@ -93,6 +93,9 @@ defmodule PartnersWeb.Registration.Components.TelephoneComponent do
                     placeholder="Enter your OTP"
                     required
                     type="text"
+                    autofocus
+                    pattern="\d{6}"
+                    title="Please enter a valid 6-digit OTP code"
                   />
                 </div>
                 <div :if={show_tick?(:otp, @otp_form)} class="ml-4 text-success self-start mt-8">

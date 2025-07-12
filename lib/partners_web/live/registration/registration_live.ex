@@ -340,7 +340,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   """
   def progress_indicator(assigns) do
     ~H"""
-    <nav aria-label="Progress" class="flex items-center justify-center w-full my-10 px-4">
+    <nav aria-label="Progress" class="flex items-center justify-center w-full my-6 px-4">
       <ol role="list" class="flex items-center w-full max-w-xl">
         <li :for={step <- @steps} class="relative flex flex-col items-center flex-1">
           <%!-- The connecting line element --%>

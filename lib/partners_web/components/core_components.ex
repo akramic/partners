@@ -83,7 +83,7 @@ defmodule PartnersWeb.CoreComponents do
       {@rest}
     >
       <div class={[
-        "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
+        "alert max-w-80 text-wrap w-80 sm:max-w-96 sm:w-96",
         @kind == :info && "alert-info",
         @kind == :warning && "alert-warning",
         @kind == :error && "alert-error",
@@ -96,7 +96,7 @@ defmodule PartnersWeb.CoreComponents do
         <div>
           <p
             :if={@title}
-            class="font-semibold text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(-0.005em,0em,0em)]"
+            class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(-0.005em,0em,0em)] font-semibold"
           >
             {@title}
           </p>
@@ -105,7 +105,7 @@ defmodule PartnersWeb.CoreComponents do
           </p>
         </div>
         <div class="flex-1" />
-        <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
+        <button type="button" class="group cursor-pointer self-start" aria-label={gettext("close")}>
           <.icon name="hero-x-mark-solid" class="size-5 opacity-40 group-hover:opacity-70" />
         </button>
       </div>
@@ -257,13 +257,15 @@ defmodule PartnersWeb.CoreComponents do
           id={@id}
           name={@name}
           class={[
-            "w-full select select-md text-[clamp(1rem,2vw,1.5rem)]",
+            "select text-[clamp(1rem,2vw,1.5rem)] h-fit w-full px-2 py-2 md:px-4 ",
+            "leading-tight md:leading-snug",
+            "align-middle",
             @errors != [] && "select-error"
           ]}
           multiple={@multiple}
           {@rest}
         >
-          <option :if={@prompt} value="">{@prompt}</option>
+          <option disabled selected>{@prompt}</option>
           {Phoenix.HTML.Form.options_for_select(@options, @value)}
         </select>
       </label>
@@ -286,7 +288,7 @@ defmodule PartnersWeb.CoreComponents do
           id={@id}
           name={@name}
           class={[
-            "w-full textarea text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] px-3 md:px-5 py-5 md:py-8",
+            "textarea text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] w-full px-3 py-5 md:px-5 md:py-8",
             @errors != [] && "textarea-error"
           ]}
           {@rest}
@@ -304,7 +306,7 @@ defmodule PartnersWeb.CoreComponents do
       <label>
         <span
           :if={@label}
-          class="fieldset-label text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)]  mb-1"
+          class="fieldset-label text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] mb-1"
         >
           {@label}
         </span>
@@ -314,8 +316,8 @@ defmodule PartnersWeb.CoreComponents do
           id={@id}
           value={Phoenix.HTML.Form.normalize_value(@type, @value)}
           class={[
-            "w-full input text-[clamp(1rem,2vw,1.5rem)] px-2 md:px-4 py-4 md:py-6",
-            @placeholder_position && "placeholder:#{@placeholder_position} text-center",
+            "input text-[clamp(1rem,2vw,1.5rem)] w-full px-2 py-4 md:px-4 md:py-6",
+            @placeholder_position && "text-center placeholder:#{@placeholder_position}",
             @errors != [] && "input-error"
           ]}
           {@rest}
@@ -329,7 +331,7 @@ defmodule PartnersWeb.CoreComponents do
   # Helper used by inputs to generate form errors
   defp error(assigns) do
     ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-[clamp(0.875rem,1.75vw,1.25rem)] leading-[calc(clamp(0.875rem,1.75vw,1.25rem)*1.5)] tracking-[clamp(0.01em,0.015vw,0.015em)] text-error">
+    <p class="text-[clamp(0.875rem,1.75vw,1.25rem)] leading-[calc(clamp(0.875rem,1.75vw,1.25rem)*1.5)] tracking-[clamp(0.01em,0.015vw,0.015em)] text-error mt-1.5 flex items-center gap-2">
       <.icon name="hero-exclamation-circle-mini" class="size-[clamp(1.1rem,2.2vw,1.65rem)] shrink-0" />
       {render_slot(@inner_block)}
     </p>
@@ -349,7 +351,7 @@ defmodule PartnersWeb.CoreComponents do
     ~H"""
     <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4", @class]}>
       <div>
-        <h1 class="text-[clamp(1.5rem,3vw,2.25rem)] leading-[calc(clamp(1.5rem,3vw,2.25rem)*1.15)] font-semibold tracking-[clamp(-0.005em,0em,0em)]">
+        <h1 class="text-[clamp(1.5rem,3vw,2.25rem)] leading-[calc(clamp(1.5rem,3vw,2.25rem)*1.15)] tracking-[clamp(-0.005em,0em,0em)] font-semibold">
           {render_slot(@inner_block)}
         </h1>
         <p
@@ -396,16 +398,16 @@ defmodule PartnersWeb.CoreComponents do
       end
 
     ~H"""
-    <table class="table table-zebra">
+    <table class="table-zebra table">
       <thead>
         <tr>
           <th
             :for={col <- @col}
-            class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] font-semibold px-3 md:px-5 py-5 md:py-8"
+            class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] px-3 py-5 font-semibold md:px-5 md:py-8"
           >
             {col[:label]}
           </th>
-          <th :if={@action != []} class="px-3 md:px-5 py-5 md:py-8">
+          <th :if={@action != []} class="px-3 py-5 md:px-5 md:py-8">
             <span class="sr-only">{gettext("Actions")}</span>
           </th>
         </tr>
@@ -417,14 +419,14 @@ defmodule PartnersWeb.CoreComponents do
             phx-click={@row_click && @row_click.(row)}
             class={[
               @row_click && "hover:cursor-pointer",
-              "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] px-3 md:px-5 py-5 md:py-8"
+              "text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] px-3 py-5 md:px-5 md:py-8"
             ]}
           >
             {render_slot(col, @row_item.(row))}
           </td>
           <td
             :if={@action != []}
-            class="w-0 font-semibold text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] px-3 md:px-5 py-5 md:py-8"
+            class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)] w-0 px-3 py-5 font-semibold md:px-5 md:py-8"
           >
             <div class="flex gap-4">
               <%= for action <- @action do %>
@@ -457,7 +459,7 @@ defmodule PartnersWeb.CoreComponents do
     <ul class="list">
       <li :for={item <- @item} class="list-row">
         <div>
-          <div class="font-bold text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.005em,0.01vw,0.01em)]">
+          <div class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.005em,0.01vw,0.01em)] font-bold">
             {item.title}
           </div>
           <div class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)]">

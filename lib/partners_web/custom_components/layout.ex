@@ -117,7 +117,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
             <img class="rounded-xl lg:rounded-3xl" src={@image_url} alt={@alt_text} loading="lazy" />
           </figure>
           <figcaption class="text-base lg:col-start-1 lg:row-start-3">
-            <cite class="font-semibold block" id={"quote-author-#{@author}"}>{@author}</cite>
+            <cite class="block font-semibold" id={"quote-author-#{@author}"}>{@author}</cite>
             <span class="mt-1 block">
               {@bio}
             </span>
@@ -131,45 +131,45 @@ defmodule PartnersWeb.CustomComponents.Layout do
   def site_header(assigns) do
     ~H"""
     <header role="banner">
-      <div class="flex justify-between items-center px-4 w-full py-2 bg-transparent z-10">
-        <div class="flex items-center gap-4">
+      <div class="z-10 flex w-full items-center justify-between bg-transparent px-4 py-2">
+        <div class="flex items-center gap-2">
           <h1>
             <.link href={~p"/"}>
               <img
                 src={~p"/images/heart.svg"}
                 alt="Logo"
-                class="transition transform ease-in duration-300 hover:-rotate-360 h-6 w-6"
+                class="h-6 w-6 transform transition duration-300 ease-in hover:-rotate-360"
               />
             </.link>
           </h1>
 
           <PartnersWeb.Layouts.theme_toggle />
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
           <nav>
             <ul
-              class="text-base-content flex items-center gap-4 justify-end"
+              class="text-base-content flex items-center justify-end gap-1"
               role="menu"
               aria-label="User account navigation"
             >
               <%= if @current_scope do %>
-                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
+                <li class="bg-base-100 rounded-full px-3 py-1 hover:bg-base-300">
                   <.link navigate={~p"/users/settings"}>
                     <Typography.p_xxs>Settings</Typography.p_xxs>
                   </.link>
                 </li>
-                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
+                <li class="bg-base-100 rounded-full px-3 py-1 hover:bg-base-300">
                   <.link href={~p"/users/log-out"} method="delete">
                     <Typography.p_xxs>Log out</Typography.p_xxs>
                   </.link>
                 </li>
               <% else %>
-                <li class="rounded-full bg-base-100 py-1 px-3 hover:bg-base-300">
+                <li class="bg-base-100 rounded-full px-3 py-1 hover:bg-base-300">
                   <.link navigate={~p"/users/registration/1"}>
                     <Typography.p_xxs>Register</Typography.p_xxs>
                   </.link>
                 </li>
-                <li class="rounded-full bg-base-100 py-1 px-3  hover:bg-base-300">
+                <li class="bg-base-100 rounded-full px-3 py-1 hover:bg-base-300">
                   <.link navigate={~p"/users/log-in"}>
                     <Typography.p_xxs>Log in</Typography.p_xxs>
                   </.link>
@@ -191,7 +191,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
                 |> JS.toggle(to: "#hamburger-icon")
                 |> JS.toggle(to: "#close-icon")
               }
-              class="z-50 btn btn-circle relative"
+              class="btn btn-circle relative z-50"
               aria-haspopup="true"
               aria-controls="side-bar"
               aria-expanded="false"
@@ -206,7 +206,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
                 viewBox="0 0 24 24"
                 aria-hidden="true"
                 focusable="false"
-                class="fill-current absolute inset-0 m-auto"
+                class="absolute inset-0 m-auto fill-current"
               >
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
               </svg>
@@ -219,7 +219,7 @@ defmodule PartnersWeb.CustomComponents.Layout do
                 viewBox="0 0 24 24"
                 aria-hidden="true"
                 focusable="false"
-                class="fill-current hidden absolute inset-0 m-auto"
+                class="absolute inset-0 m-auto hidden fill-current"
               >
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
               </svg>
@@ -233,25 +233,25 @@ defmodule PartnersWeb.CustomComponents.Layout do
       <%!-- This is the overlay with menu--%>
       <dialog
         id="backdrop"
-        class="backdrop-blur-[2px] h-dvh w-full max-w-[1980px] mx-auto z-40 absolute top-0 hidden bg-base-100/0"
+        class="backdrop-blur-[2px] h-dvh max-w-[1980px] bg-base-100/0 absolute top-0 z-40 mx-auto hidden w-full"
         role="dialog"
         aria-modal="true"
         aria-labelledby="menu-heading"
       >
         <%!-- This is the element for both the menu and any backdrop content --%>
-        <section class="flex flex-row h-full w-full justify-start">
+        <section class="flex h-full w-full flex-row justify-start">
           <%!-- Menu sidebar --%>
           <aside
             id="side-bar"
-            class="w-full p-4 md-p-8 basis-2/3 bg-base-100 h-full flex flex-col"
+            class="md-p-8 bg-base-100 flex h-full w-full basis-2/3 flex-col p-4"
             role="navigation"
             aria-labelledby="menu-heading"
           >
             <nav
-              class="space-y-6 flex flex-col items-center justify-between h-full w-full"
+              class="flex h-full w-full flex-col items-center justify-between space-y-6"
               aria-label="Main navigation "
             >
-              <div class="space-y-6 w-full">
+              <div class="w-full space-y-6">
                 <h2 class="text-center" id="menu-heading" tabindex="-1">Where to?</h2>
 
                 <%!-- Menu items for logged in users --%>
@@ -310,10 +310,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
           </aside>
 
           <section
-            class="flex h-full w-full basis-1/3 justify-center items-center"
+            class="flex h-full w-full basis-1/3 items-center justify-center"
             role="presentation"
           >
-            <p class="bg-base-200 invisible md:visible p-4 rounded-xl" aria-hidden="true">
+            <p class="bg-base-200 invisible rounded-xl p-4 md:visible" aria-hidden="true">
               Choose your poison
             </p>
           </section>
@@ -329,11 +329,10 @@ defmodule PartnersWeb.CustomComponents.Layout do
 
   def site_footer(assigns) do
     ~H"""
-    <footer class="w-full max-w-[1980px] mx-auto border-t border-zinc-500/50 footer footer-horizontal footer-center bg-base-300 text-base-content p-4">
-
+    <footer class="max-w-[1980px] border-zinc-500/50 footer footer-horizontal footer-center bg-base-300 text-base-content mx-auto w-full border-t p-4">
       <p class="text-lg">Share and get 100 video call minutes on us!</p>
-      <nav class="w-full max-w-2xl p-4 rounded-full bg-base-100" aria-label="Social media links">
-        <div class="w-full max-w-lg flex justify-around items-center">
+      <nav class="bg-base-100 w-full max-w-2xl rounded-full p-4" aria-label="Social media links">
+        <div class="flex w-full max-w-lg items-center justify-around">
           <a href="#" aria-label="Share on Facebook">
             <svg
               xmlns="http://www.w3.org/2000/svg"

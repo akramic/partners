@@ -96,7 +96,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def kangaroo_dialogue_left(assigns) do
     ~H"""
-    <div class="flex items-start justify-center gap-2 my-8 w-full max-w-lg">
+    <div class="flex items-start justify-center gap-2 my-4 w-full max-w-lg">
       <div class="flex-none w-18">
         <.company_logo />
       </div>
@@ -117,7 +117,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
 
   def kangaroo_dialogue_right(assigns) do
     ~H"""
-    <div class="flex items-start gap-2 my-8 w-full max-w-lg">
+    <div class="flex items-start gap-2 my-4 w-full max-w-lg">
       <.speech_bubble_right>
         {render_slot(@inner_block)}
       </.speech_bubble_right>
