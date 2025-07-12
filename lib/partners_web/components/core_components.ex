@@ -40,6 +40,7 @@ defmodule PartnersWeb.CoreComponents do
   use Gettext, backend: PartnersWeb.Gettext
 
   alias Phoenix.LiveView.JS
+  alias PartnersWeb.CustomComponents.{Typography}
 
   @doc """
   Renders flash notices.
@@ -89,20 +90,33 @@ defmodule PartnersWeb.CoreComponents do
         @kind == :error && "alert-error",
         @kind == :success && "alert-success"
       ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle-mini" class="size-5 shrink-0" />
-        <.icon :if={@kind == :warning} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="size-5 shrink-0" />
-        <.icon :if={@kind == :success} name="hero-check-circle-mini" class="size-5 shrink-0" />
+        <.icon
+          :if={@kind == :info}
+          name="hero-information-circle-mini"
+          class="size-4 shrink-0 sm:size-5"
+        />
+        <.icon
+          :if={@kind == :warning}
+          name="hero-exclamation-circle-mini"
+          class="size-4 shrink-0 sm:size-5"
+        />
+        <.icon
+          :if={@kind == :error}
+          name="hero-exclamation-circle-mini"
+          class="size-4 shrink-0 sm:size-5"
+        />
+        <.icon
+          :if={@kind == :success}
+          name="hero-check-circle-mini"
+          class="size-4 shrink-0 sm:size-5"
+        />
         <div>
-          <p
-            :if={@title}
-            class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(-0.005em,0em,0em)] font-semibold"
-          >
+          <Typography.p_xs :if={@title} class="font-semibold">
             {@title}
-          </p>
-          <p class="text-[clamp(1rem,2vw,1.5rem)] leading-[calc(clamp(1rem,2vw,1.5rem)*1.5)] tracking-[clamp(0.01em,0.018vw,0.018em)]">
+          </Typography.p_xs>
+          <Typography.p_xxs>
             {msg}
-          </p>
+          </Typography.p_xxs>
         </div>
         <div class="flex-1" />
         <button type="button" class="group cursor-pointer self-start" aria-label={gettext("close")}>
