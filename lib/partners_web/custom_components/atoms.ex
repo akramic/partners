@@ -57,7 +57,7 @@ defmodule PartnersWeb.CustomComponents.Atoms do
   def speech_bubble_left(assigns) do
     ~H"""
     <div class="chat chat-start ">
-      <div class="chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative overflow-visible shadow-md before:hidden">
+      <div class="text-white font-medium chat-bubble chat-bubble-info !rounded-tl-[0.5rem] !rounded-tr-[0.5rem] !rounded-br-[0.5rem] !rounded-bl-[0.5rem] relative overflow-visible shadow-md before:hidden">
         {render_slot(@inner_block)}
         <div class="border-[8px] border-r-info border-b-info left-[-8px] rotate-[45deg] absolute top-0 bottom-auto h-0 w-0 border-transparent">
         </div>

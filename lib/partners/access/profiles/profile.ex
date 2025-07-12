@@ -71,6 +71,7 @@ defmodule Partners.Access.Profiles.Profile do
 
   defp validate_username(struct_or_changeset) do
     struct_or_changeset
+    |> validate_required(:username)
     |> validate_length(:username, min: 6, max: 72)
     |> validate_format(:username, ~r/^[a-zA-Z-_0-9]+$/,
       message: "only letters, numbers, - and _ allowed"
@@ -131,7 +132,9 @@ defmodule Partners.Access.Profiles.Profile do
                %{telephone: formatted_telephone_number},
                :get_profile_by_telephone
              ) do
-          {:error, :not_found} -> []
+          {:error, :not_found} ->
+            []
+
           {:ok, profile} ->
             IO.inspect(profile, label: "🔔 Profile found")
 

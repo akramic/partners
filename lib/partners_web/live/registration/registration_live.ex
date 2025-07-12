@@ -32,7 +32,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.RegistrationFormAgent
 
   @steps [
-    %Step{name: "dob", prev: nil, next: "email", index: 0},
+    %Step{name: "start", prev: nil, next: "email", index: 0},
     %Step{name: "email", prev: "start", next: "username", index: 1},
     %Step{name: "username", prev: "email", next: "gender", index: 2},
     %Step{name: "gender", prev: "username", next: "dob", index: 3},
