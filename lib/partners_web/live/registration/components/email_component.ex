@@ -77,7 +77,7 @@ defmodule PartnersWeb.Registration.Components.EmailComponent do
             phx-target={@myself}
             phx-click={JS.dispatch("change")}
             disabled={!@form.source.valid?}
-            class="btn btn-neutral"
+            class="btn btn-info text-white"
           >
             Next <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
           </button>

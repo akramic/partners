@@ -55,7 +55,7 @@ defmodule PartnersWeb.Registration.Components.UsernameComponent do
           >
             <.icon name="hero-arrow-left" class="mr-2 h-4 w-4" /> back
           </button>
-          <button type="submit" disabled={!@form.source.valid?} class="btn btn-success">
+          <button type="submit" disabled={!@form.source.valid?} class="btn btn-info text-white">
             Next <.icon name="hero-arrow-right" class="ml-2 h-4 w-4" />
           </button>
         </div>

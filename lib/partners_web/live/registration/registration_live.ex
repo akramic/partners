@@ -32,13 +32,13 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   alias PartnersWeb.Registration.RegistrationFormAgent
 
   @steps [
-    %Step{name: "start", prev: nil, next: "email", index: 0},
-    %Step{name: "email", prev: "start", next: "username", index: 1},
-    %Step{name: "username", prev: "email", next: "gender", index: 2},
-    %Step{name: "gender", prev: "username", next: "dob", index: 3},
-    %Step{name: "dob", prev: "gender", next: "telephone", index: 4},
-    %Step{name: "telephone", prev: "dob", next: "terms", index: 5},
-    %Step{name: "terms", prev: "telephone", next: nil, index: 6}
+    %Step{name: "start", prev: nil, next: "email", index: 1},
+    %Step{name: "email", prev: "start", next: "username", index: 2},
+    %Step{name: "username", prev: "email", next: "gender", index: 3},
+    %Step{name: "gender", prev: "username", next: "dob", index: 4},
+    %Step{name: "dob", prev: "gender", next: "telephone", index: 5},
+    %Step{name: "telephone", prev: "dob", next: "terms", index: 6},
+    %Step{name: "terms", prev: "telephone", next: nil, index: 7}
   ]
 
   @doc """
@@ -61,8 +61,8 @@ defmodule PartnersWeb.Registration.RegistrationLive do
       socket
       |> assign(
         steps: tl(@steps),
-        # +1 for 1-indexed UI display
-        step: current_step.index + 1,
+        # Using 1-based indexing throughout
+        step: current_step.index,
         current_step: current_step.name,
         total_steps: length(@steps),
         progress: current_step,
@@ -104,12 +104,105 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   @doc """
   Handles URL parameters when the page loads or parameters change.
 
-  Currently passes through without modifications as parameter handling
-  is not implemented for this LiveView.
+  When given a 'current_step' parameter, validates that the user can access the requested step
+  by checking if all previous steps have been completed. If not, redirects to the appropriate
+  step based on completion status and shows an explanatory flash message.
+
+  This enables direct navigation to specific registration steps via URLs like
+  '/users/registration/email' while preventing users from skipping required steps.
   """
   @impl true
-  def handle_params(_unsigned_params, _uri, socket) do
+  def handle_params(%{"requested_step" => requested_step_param}, _uri, socket) do
+    # Get completed steps from form_params
+    completed_step_names =
+      socket.assigns.form_params
+      |> Map.keys()
+      |> Enum.map(&Atom.to_string/1)
+      |> MapSet.new()
+
+    # Convert the requested step parameter to an integer if it's a number
+    requested_step_index =
+      case Integer.parse(requested_step_param) do
+        {index, ""} -> index
+        _ -> nil
+      end
+
+    # Find the step data - first try by index, then by name
+    requested_step_data =
+      cond do
+        # Try to find by numeric index (now 1-indexed consistently)
+        is_integer(requested_step_index) && requested_step_index > 0 &&
+            requested_step_index <= length(@steps) ->
+          Enum.find(@steps, fn step -> step.index == requested_step_index end)
+
+        # Then try by name
+        true ->
+          Enum.find(@steps, fn step -> step.name == requested_step_param end)
+      end
+
+    socket =
+      cond do
+        # Case 1: The requested step doesn't exist at all
+        is_nil(requested_step_data) ->
+          current_step = determine_current_step(socket.assigns.form_params)
+
+          socket
+          |> put_flash(:error, "The requested registration step doesn't exist.")
+          |> assign(:step, current_step.index)
+          |> assign(:current_step, current_step.name)
+          |> assign(:progress, current_step)
+
+        # Case 2: The requested step exists and all previous steps are completed
+        valid_step_navigation?(requested_step_data, completed_step_names) ->
+          # Allow navigation to the requested step
+          socket
+          |> assign(:step, requested_step_data.index)
+          |> assign(:current_step, requested_step_data.name)
+          |> assign(:progress, requested_step_data)
+
+        # Case 3: The requested step exists but previous steps are incomplete
+        true ->
+          # Go to the step after the last completed one
+          current_step = determine_current_step(socket.assigns.form_params)
+
+          # Simple, clear message
+          socket
+          |> put_flash(:info, "Please complete missing information first.")
+          |> assign(:step, current_step.index)
+          |> assign(:current_step, current_step.name)
+          |> assign(:progress, current_step)
+      end
+
     {:noreply, socket}
+  end
+
+  # Fallback for other routes or the root registration path
+  @impl true
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  # Helper function to validate if a step can be accessed based on previous step completion
+  defp valid_step_navigation?(requested_step, completed_step_names) do
+    # Special case: "start" step is always accessible
+    if requested_step.name == "start" do
+      true
+    else
+      # Special case: "email" step is accessible if we have any form params (meaning start was completed)
+      if requested_step.name == "email" && MapSet.size(completed_step_names) > 0 do
+        true
+      else
+        # For other steps, get all previous steps except "start" (which might not be explicitly saved)
+        previous_steps =
+          Enum.filter(@steps, fn step ->
+            step.index < requested_step.index && step.name != "start"
+          end)
+          |> Enum.map(& &1.name)
+
+        # Check if all previous steps (except possibly "start") are completed
+        Enum.all?(previous_steps, fn step -> MapSet.member?(completed_step_names, step) end)
+      end
+    end
   end
 
   @doc """
@@ -264,7 +357,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
         # Navigate to the error step and assign the form with errors
         socket
         |> put_flash(:error, "Sorry, we found an error.")
-        |> assign(:step, error_step_map.index + 1)
+        |> assign(:step, error_step_map.index)
         |> assign(:current_step, error_step_map.name)
         |> assign(:progress, error_step_map)
 
@@ -314,7 +407,7 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   def render(assigns) do
     ~H"""
     <PartnersWeb.Layouts.app current_scope={@current_scope} flash={@flash}>
-      <div class="overflow-x-hidden overflow-y-hidden w-full relative">
+      <div class="relative w-full overflow-x-hidden overflow-y-hidden">
         <.progress_indicator
           :if={@current_step !== "start"}
           current_step={@current_step}
@@ -337,15 +430,27 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   - Future steps show an empty dot
 
   Each step is color-coded and labeled to help users track their progress.
+
+  ## Indexing Note
+  All step indexing is now consistently 1-based throughout the application:
+  - In the code, steps are 1-indexed (start at 1)
+  - In URLs, steps are 1-indexed (start at 1)
+  - In UI display, steps are 1-indexed (start at 1)
+
+  For example:
+  - Step "start" with index 1 → URL: /users/registration/1
+  - Step "email" with index 2 → URL: /users/registration/2
+
+  This consistency simplifies the code and reduces potential indexing errors.
   """
   def progress_indicator(assigns) do
     ~H"""
-    <nav aria-label="Progress" class="flex items-center justify-center w-full my-6 px-4">
-      <ol role="list" class="flex items-center w-full max-w-xl">
-        <li :for={step <- @steps} class="relative flex flex-col items-center flex-1">
+    <nav aria-label="Progress" class="my-6 flex w-full items-center justify-center px-4">
+      <ol role="list" class="flex w-full max-w-xl items-center">
+        <li :for={step <- @steps} class="relative flex flex-1 flex-col items-center">
           <%!-- The connecting line element --%>
           <%= if step.name !== "terms" do %>
-            <div class="absolute left-1/2 top-[clamp(0.75rem,2.5vw,1rem)] w-full z-0">
+            <div class="top-[clamp(0.75rem,2.5vw,1rem)] absolute left-1/2 z-0 w-full">
               <div class={[
                 "h-[1.5px] w-full",
                 (is_completed_step?(step, @form_params) && "bg-primary") || "bg-base-content/30"
@@ -355,12 +460,12 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           <% end %>
 
           <%!-- Node container --%>
-          <div class="flex justify-center w-full z-0">
+          <div class="z-0 flex w-full justify-center">
             <%!-- Completed step --%>
             <%= if is_completed_step?(step,@form_params ) && step.name !== @current_step do %>
-              <a
-                href="#"
-                class="relative flex items-center justify-center rounded-full bg-primary hover:bg-primary-focus"
+              <.link
+                navigate={~p"/users/registration/#{step.index}"}
+                class="bg-primary relative flex items-center justify-center rounded-full hover:bg-primary-focus"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
               >
                 <svg
@@ -378,53 +483,60 @@ defmodule PartnersWeb.Registration.RegistrationLive do
                   />
                 </svg>
                 <span class="sr-only">{step.name}</span>
-              </a>
+              </.link>
             <% end %>
 
             <%!-- Current step --%>
             <%= if step.name == @current_step do %>
-              <a
-                href="#"
-                class="relative flex items-center justify-center rounded-full border-[1.5px] border-primary bg-base-100"
+              <.link
+                navigate={~p"/users/registration/#{step.index}"}
+                class="border-[1.5px] border-primary bg-base-100 relative flex items-center justify-center rounded-full"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
                 aria-current="step"
               >
                 <span
-                  class="rounded-full bg-primary"
+                  class="bg-primary rounded-full"
                   style="width: clamp(0.5rem, 1.7vw, 0.625rem); height: clamp(0.5rem, 1.7vw, 0.625rem);"
                   aria-hidden="true"
                 >
                 </span>
                 <span class="sr-only">{step.name}</span>
-              </a>
+              </.link>
             <% end %>
 
             <%!-- Future step --%>
             <%= if step.name !== @current_step and not is_completed_step?(step, @form_params) do %>
-              <a
-                href="#"
-                class="group relative flex items-center justify-center rounded-full border-[1.5px] border-base-content/30 bg-base-100 hover:border-base-content/50"
+              <.link
+                navigate={~p"/users/registration/#{step.index}"}
+                class="group border-[1.5px] border-base-content/30 bg-base-100 relative flex items-center justify-center rounded-full hover:border-base-content/50"
                 style="width: clamp(1.5rem, 5vw, 2rem); height: clamp(1.5rem, 5vw, 2rem);"
               >
                 <span
-                  class="rounded-full bg-base-content/10 group-hover:bg-base-content/20"
+                  class="bg-base-content/10 rounded-full group-hover:bg-base-content/20"
                   style="width: clamp(0.5rem, 1.7vw, 0.625rem); height: clamp(0.5rem, 1.7vw, 0.625rem);"
                   aria-hidden="true"
                 >
                 </span>
                 <span class="sr-only">{step.name}</span>
-              </a>
+              </.link>
             <% end %>
           </div>
 
           <%!-- Step label --%>
-          <div class="text-center w-full mt-[clamp(0.25rem,0.8vw,0.5rem)]">
-            <p
-              class="text-base-content/70 uppercase inline-block"
+          <div class="mt-[clamp(0.25rem,0.8vw,0.5rem)] w-full text-center">
+            <.link
+              navigate={~p"/users/registration/#{step.index}"}
+              class={[
+                "inline-block uppercase transition-colors duration-200 hover:text-primary",
+                (step.name == @current_step || is_completed_step?(step, @form_params)) &&
+                  "text-base-content/70",
+                !(step.name == @current_step || is_completed_step?(step, @form_params)) &&
+                  "text-base-content/50"
+              ]}
               style="font-size: clamp(0.5625rem, 1.2vw, 0.625rem);"
             >
               {step.name}
-            </p>
+            </.link>
           </div>
         </li>
       </ol>

@@ -50,8 +50,10 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
       <div class="hero-overlay"></div>
       <div class="hero-content text-neutral-content text-center">
         <div class="max-w-4xl space-y-6">
-          <Typography.h1 class="font-semibold text-balance">Let's get your free trial underway</Typography.h1>
-          <Typography.p_lg class="mb-5 text-balance">
+          <Typography.h1 class="text-balance font-semibold">
+            Let's get your free trial underway
+          </Typography.h1>
+          <Typography.p_lg class="text-balance mb-5">
             First, we just need a few details to create your account.<br />
             Then we'll transfer you to Paypal to start your free subscription.
           </Typography.p_lg>,
@@ -61,7 +63,7 @@ defmodule PartnersWeb.Registration.RegistrationComponents do
               %JS{}
               |> JS.push("start", value: %{direction: "forward"})
             }
-            class="btn btn-xl btn-info"
+            class="btn btn-xl btn-info text-white"
           >
             <Typography.p_lg>I'm ready</Typography.p_lg>
           </button>
