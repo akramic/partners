@@ -22,6 +22,9 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
   def render(assigns) do
     ~H"""
     <div class="flex h-full w-full flex-col items-center justify-center px-4">
+      <Typography.p_xs opacity={50} class="text-balance mb-4 text-center">
+        Use the progress bar to amend any information
+      </Typography.p_xs>
       <.form
         :let={f}
         for={@form}
@@ -34,7 +37,7 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
       >
         <Atoms.kangaroo_dialogue_left>
           <Typography.p_xs class="text-balance">
-            Please agree to the boring legal stuff!
+            Agree to the boring legal stuff!
           </Typography.p_xs>
         </Atoms.kangaroo_dialogue_left>
         <div class="relative mb-4">
@@ -55,8 +58,8 @@ defmodule PartnersWeb.Registration.Components.TermsComponent do
             </div>
             <div class="mt-2 text-center text-sm text-gray-600">
               By checking this box, you agree to our
-              <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a>
-              and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
+              <a href="/terms" class="text-blue-600 hover:underline">terms of service</a>
+              and <a href="/privacy" class="text-blue-600 hover:underline">privacy policy</a>.
             </div>
           </div>
         </div>

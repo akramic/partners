@@ -79,6 +79,10 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   # the most recently completed step by its index. Returns the next step after
   # the last completed step, or the first step if no steps are completed.
   #
+  # Special handling ensures that once registration has begun (any form_params exist),
+  # users are never sent back to the "start" step, but instead to the "email" step
+  # or the appropriate next step based on their progress.
+  #
   # Uses a with expression to handle the sequential data transformations and
   # early returns for edge cases.
   defp determine_current_step(form_params) do
@@ -96,8 +100,16 @@ defmodule PartnersWeb.Registration.RegistrationLive do
       # Found the next step after the last completed one
       next_step
     else
-      # No form params, empty keys, or no completed steps - start at beginning
-      _ -> List.first(@steps)
+      # No form params, empty keys, or no completed steps - determine first appropriate step
+      _ ->
+        # If we have any form params at all, we should never go back to "start"
+        if map_size(form_params) > 0 do
+          # Find the "email" step (index 2) as the first real step after "start"
+          Enum.find(@steps, fn step -> step.name == "email" end)
+        else
+          # Only use "start" if there are truly no form params at all (first time visitor)
+          List.first(@steps)
+        end
     end
   end
 
@@ -108,8 +120,12 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   by checking if all previous steps have been completed. If not, redirects to the appropriate
   step based on completion status and shows an explanatory flash message.
 
+  Special handling for the "start" step prevents users from returning to it once they've begun
+  the registration process, ensuring a forward-moving workflow.
+
   This enables direct navigation to specific registration steps via URLs like
-  '/users/registration/email' while preventing users from skipping required steps.
+  '/users/registration/email' while preventing users from skipping required steps or going
+  back to the beginning unnecessarily.
   """
   @impl true
   def handle_params(%{"requested_step" => requested_step_param}, _uri, socket) do
@@ -160,7 +176,18 @@ defmodule PartnersWeb.Registration.RegistrationLive do
           |> assign(:current_step, requested_step_data.name)
           |> assign(:progress, requested_step_data)
 
-        # Case 3: The requested step exists but previous steps are incomplete
+        # Case 3: Special case - trying to go to "start" after already starting registration
+        requested_step_data.name == "start" && MapSet.size(completed_step_names) > 0 ->
+          # Determine the appropriate step (which should be "email" or further along)
+          current_step = determine_current_step(socket.assigns.form_params)
+
+          socket
+          |> put_flash(:info, "Registration in progress. Continuing from your current step.")
+          |> assign(:step, current_step.index)
+          |> assign(:current_step, current_step.name)
+          |> assign(:progress, current_step)
+
+        # Case 4: The requested step exists but previous steps are incomplete
         true ->
           # Go to the step after the last completed one
           current_step = determine_current_step(socket.assigns.form_params)
@@ -183,10 +210,13 @@ defmodule PartnersWeb.Registration.RegistrationLive do
   end
 
   # Helper function to validate if a step can be accessed based on previous step completion
+  # The "start" step is only accessible if no other steps have been completed yet
+  # Once registration begins, users cannot go back to "start"
   defp valid_step_navigation?(requested_step, completed_step_names) do
-    # Special case: "start" step is always accessible
+    # Special case: "start" step is ONLY accessible if no steps have been completed
     if requested_step.name == "start" do
-      true
+      # If there are any completed steps, do not allow going back to "start"
+      MapSet.size(completed_step_names) == 0
     else
       # Special case: "email" step is accessible if we have any form params (meaning start was completed)
       if requested_step.name == "email" && MapSet.size(completed_step_names) > 0 do
